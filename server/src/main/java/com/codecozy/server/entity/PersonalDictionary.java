@@ -1,17 +1,17 @@
 package com.codecozy.server.entity;
 
+import com.codecozy.server.composite_key.PersonalDictionaryKey;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.lang.reflect.Member;
-
 @Entity
 @Getter
-@Table(name = "personal_dictionary")
+@IdClass(PersonalDictionaryKey.class)
+@Table(name = "PERSONAL_DICTIONARY")
 public class PersonalDictionary {
     @Id
     @ManyToOne
-    @JoinColumn(name = "memberId", referencedColumnName = "memberId")
+    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Id

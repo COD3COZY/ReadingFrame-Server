@@ -3,15 +3,13 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.lang.reflect.Member;
-
 @Entity
 @Getter
-@Table(name = "member_apple")
+@Table(name = "MEMBER_APPLE")
 public class MemberApple {
     @Id
     @OneToOne
-    @JoinColumn(name = "memberId", referencedColumnName = "memberId")
+    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Column(length = 250, nullable = false)

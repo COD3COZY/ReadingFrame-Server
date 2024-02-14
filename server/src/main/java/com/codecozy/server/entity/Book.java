@@ -5,10 +5,9 @@ import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "book")
+@Table(name = "BOOK")
 public class Book {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(length = 13)
     private String isbn;
 
@@ -24,6 +23,6 @@ public class Book {
     @Column(length = 4, nullable = false)
     private String category;
 
-    @Column(nullable = false)
+    @Column(name = "total_page", nullable = false)
     private int totalPage;
 }

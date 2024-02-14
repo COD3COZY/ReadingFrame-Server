@@ -5,13 +5,14 @@ import lombok.Getter;
 
 @Entity
 @Getter
-@Table(name = "location_list")
+@Table(name = "LOCATION_LIST")
 public class LocationList {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String locationId;
+    @Column(name = "location_id")
+    private long locationId;
 
-    @Column(length = 50, nullable = false)
+    @Column(name = "place_name", length = 50, nullable = false)
     private String placeName;
 
     @Column(length = 200, nullable = false)

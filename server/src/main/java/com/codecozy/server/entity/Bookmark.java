@@ -1,17 +1,17 @@
 package com.codecozy.server.entity;
 
+import com.codecozy.server.composite_key.BookmarkKey;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.lang.reflect.Member;
-
 @Entity
 @Getter
-@Table(name = "bookmark")
+@IdClass(BookmarkKey.class)
+@Table(name = "BOOKMARK")
 public class Bookmark {
     @Id
     @ManyToOne
-    @JoinColumn(name = "memberId", referencedColumnName = "memberId")
+    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Id
@@ -23,11 +23,12 @@ public class Bookmark {
     @Column(length = 40, nullable = false)
     private String uuid;
 
-    @Column(nullable = false)
+    @Column(name = "mark_page", nullable = false)
     private int markPage;
 
     @ManyToOne
-    @JoinColumn(name = "locationId", referencedColumnName = "locationId")
+    @JoinColumn(name = "location_id", referencedColumnName = "location_id")
+    @Column(name = "location_list")
     private LocationList locationList;
 
     @Column(length = 10, nullable = false)
