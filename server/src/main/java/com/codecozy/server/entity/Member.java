@@ -21,9 +21,9 @@ public class Member {
     @Column(length = 2, nullable = false)
     private String profile;
 
-    @OneToOne(mappedBy = "member")
-    @Column(name = "member_apple")
-    private MemberApple memberApple;
+    //@OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
+    //@Column(name = "member_apple")
+    //private MemberApple memberApple;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<Badge> badges;

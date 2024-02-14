@@ -26,7 +26,14 @@ public class LocationList {
     @Column(nullable = false)
     private long longitude;
 
-    @OneToMany(mappedBy = "location_list", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     @Column(name = "member_locations")
     private List<MemberLocation> memberLocations;
+
+    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    private List<Bookmark> bookmarks;
+
+    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @Column(name = "book_records")
+    private List<BookRecord> bookRecords;
 }

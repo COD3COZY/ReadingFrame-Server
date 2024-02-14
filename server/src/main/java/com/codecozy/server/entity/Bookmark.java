@@ -28,7 +28,6 @@ public class Bookmark {
 
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
-    @Column(name = "location_list")
     private LocationList locationList;
 
     @Column(length = 10, nullable = false)

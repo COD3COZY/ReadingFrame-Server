@@ -14,4 +14,5 @@ import java.io.Serializable;
 public class MemberLocationKey implements Serializable {
     private Member member;
     private LocationList locationList;
+    private String uuid;
 }

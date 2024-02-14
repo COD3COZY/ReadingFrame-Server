@@ -32,4 +32,3 @@ public class Memo {
     @Column(name = "memo_text", length = 1000, nullable = false)
     private String memoText;
 }
-

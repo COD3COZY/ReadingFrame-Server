@@ -17,7 +17,6 @@ public class MemberLocation {
     @Id
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
-    @Column(name = "location_list")
     private LocationList locationList;
 
     @Id
