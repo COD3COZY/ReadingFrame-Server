@@ -23,5 +23,4 @@ public class MemberLocation {
     @Id
     @Column(length = 40, nullable = false)
     private String uuid;
-
 }

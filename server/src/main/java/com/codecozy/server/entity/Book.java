@@ -3,6 +3,9 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Table(name = "BOOK")
@@ -25,4 +28,26 @@ public class Book {
 
     @Column(name = "total_page", nullable = false)
     private int totalPage;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    private List<Bookmark> bookmarks;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @Column(name = "book_records")
+    private List<BookRecord> bookRecords;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @Column(name = "book_reviews")
+    private List<BookReview> bookReviews;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @Column(name = "keyword_reviews")
+    private List<KeywordReview> keywordReviews;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    private List<Memo> memos;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @Column(name = "personal_dictionaries")
+    private List<PersonalDictionary> personalDictionaries;
 }

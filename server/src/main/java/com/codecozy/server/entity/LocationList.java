@@ -3,6 +3,8 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Table(name = "LOCATION_LIST")
@@ -23,4 +25,8 @@ public class LocationList {
 
     @Column(nullable = false)
     private long longitude;
+
+    @OneToMany(mappedBy = "location_list", cascade = CascadeType.REMOVE)
+    @Column(name = "member_locations")
+    private List<MemberLocation> memberLocations;
 }
