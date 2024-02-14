@@ -20,7 +20,7 @@ public class BookReview {
     private Book book;
 
     @Column(length = 200, nullable = false)
-    private String text;
+    private String review_text;
 
     @Column(name = "heart_count", nullable = false)
     private int heartCount;

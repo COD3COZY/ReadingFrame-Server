@@ -1,10 +1,12 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Entity
 @Getter
+@EqualsAndHashCode
 @Table(name = "MEMBER_APPLE")
 public class MemberApple {
     @Id
@@ -13,5 +15,5 @@ public class MemberApple {
     private Member member;
 
     @Column(length = 250, nullable = false)
-    private String key;
+    private String apple_id;
 }

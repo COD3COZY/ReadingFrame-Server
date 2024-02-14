@@ -22,7 +22,7 @@ public class Member {
     private String profile;
 
     //@OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
-    //@Column(name = "member_apple")
+    //@PrimaryKeyJoinColumn(name = "member_apple")
     //private MemberApple memberApple;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
