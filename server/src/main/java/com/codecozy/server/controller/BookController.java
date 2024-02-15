@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.*;
 public class BookController {
     private final BookService bookService;
 
+//    @PostMapping("/create")
+//    public ResponseEntity<Book> createBook(@PathVariable String isbn, @RequestBody BookCreateRequest request) {
+//        return ResponseEntity.ok(bookService.createBook(isbn, request));
+//    }
+
     @PostMapping("/create")
     public ResponseEntity<Book> createBook(@RequestBody BookCreateRequest request) {
         return ResponseEntity.ok(bookService.createBook(request));

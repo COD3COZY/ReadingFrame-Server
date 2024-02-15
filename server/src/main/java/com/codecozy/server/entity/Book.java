@@ -3,10 +3,12 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Entity
+@Setter
 @Getter
 @Table(name = "BOOK")
 public class Book {
@@ -51,12 +53,14 @@ public class Book {
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
 
-    @Builder
     public Book() { }
 
-    //public static Book create(Book book) {
-    //    return Book.builder()
-    //            .
-    //            .build();
-    //}
+    @Builder
+    public Book(String isbn) { this.isbn = isbn; }
+
+    public static Book create(String isbn) {
+        return Book.builder()
+                .isbn(isbn)
+                .build();
+    }
 }
