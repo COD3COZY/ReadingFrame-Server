@@ -1,11 +1,9 @@
 package com.codecozy.server.entity;
 
-import com.codecozy.server.dto.request.BookDTO;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -54,13 +52,11 @@ public class Book {
     private List<PersonalDictionary> personalDictionaries;
 
     @Builder
-    public Book(String isbn) {
-        this.isbn = isbn;
-    }
+    public Book() { }
 
-    public static Book create(String isbn) {
-        return Book.builder()
-                .isbn(isbn)
-                .build();
-    }
+    //public static Book create(Book book) {
+    //    return Book.builder()
+    //            .
+    //            .build();
+    //}
 }

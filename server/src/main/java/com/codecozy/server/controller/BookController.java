@@ -1,21 +1,20 @@
 package com.codecozy.server.controller;
 
-import com.codecozy.server.dto.request.BookDTO;
+import com.codecozy.server.dto.request.BookCreateRequest;
+import com.codecozy.server.entity.Book;
 import com.codecozy.server.service.BookService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/book")
+@RequiredArgsConstructor
 public class BookController {
-    private final BookService bookService = new BookService();
+    private final BookService bookService;
 
-    @GetMapping("/books/gets")
-    public String getBook() {
-        return "book";
-    }
-
-    @PostMapping("/books/create")
-    public void postBook(@RequestBody BookDTO bookDTO) {
-        bookService.create(bookDTO);
+    @PostMapping("/create")
+    public ResponseEntity<Book> createBook(@RequestBody BookCreateRequest request) {
+        return ResponseEntity.ok(bookService.createBook(request));
     }
 }
