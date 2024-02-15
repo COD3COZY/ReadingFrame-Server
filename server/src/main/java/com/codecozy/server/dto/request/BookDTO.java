@@ -1,4 +1,4 @@
-package com.codecozy.server.dto;
+package com.codecozy.server.dto.request;
 
 public class BookDTO {
     private String isbn;
@@ -7,4 +7,6 @@ public class BookDTO {
     private String author;
     private String category;
     private int totalPage;
+
+    public String getIsbn() { return isbn; }
 }

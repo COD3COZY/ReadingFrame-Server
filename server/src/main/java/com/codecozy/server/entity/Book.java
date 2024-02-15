@@ -1,6 +1,8 @@
 package com.codecozy.server.entity;
 
+import com.codecozy.server.dto.request.BookDTO;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -50,4 +52,15 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
+
+    @Builder
+    public Book(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public static Book create(String isbn) {
+        return Book.builder()
+                .isbn(isbn)
+                .build();
+    }
 }
