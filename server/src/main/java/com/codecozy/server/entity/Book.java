@@ -1,13 +1,17 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-
 import java.util.List;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "BOOK")
 public class Book {
     @Id
@@ -50,18 +54,6 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
-
-    public Book() { }
-
-    @Builder
-    public Book(String isbn, String cover, String title, String author, String category, int totalPage) {
-        this.isbn = isbn;
-        this.cover = cover;
-        this.title = title;
-        this.author = author;
-        this.category = category;
-        this.totalPage = totalPage;
-    }
 
     public static Book create(String isbn, String cover, String title, String author, String category, int totalPage) {
         return Book.builder()
