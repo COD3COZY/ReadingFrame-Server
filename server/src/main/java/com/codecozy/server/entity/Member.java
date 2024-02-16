@@ -53,4 +53,7 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
+    private List<BookReviewReviewer> bookReviewReviewers;
 }
