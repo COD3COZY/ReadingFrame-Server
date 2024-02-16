@@ -50,4 +50,10 @@ public class MemberController {
     public ResponseEntity deleteMember(@RequestHeader("xAuthToken") String token) {
         return memberService.deleteMember(token);
     }
+
+    // 마이페이지 조회
+    @GetMapping("/profile")
+    public ResponseEntity getProfile(@RequestHeader("xAuthToken") String token) {
+        return memberService.getProfile(token);
+    }
 }

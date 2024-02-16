@@ -3,10 +3,14 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetProfileResponse;
 import com.codecozy.server.dto.response.SignUpKakaoResponse;
+import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Member;
+import com.codecozy.server.repository.BadgeRepository;
 import com.codecozy.server.repository.MemberRepository;
 import com.codecozy.server.security.TokenProvider;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +19,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class MemberService {
-    private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
+    private final MemberRepository memberRepository;
+    private final BadgeRepository badgeRepository;
 
     // 닉네임 중복 검증
     public ResponseEntity<DefaultResponse> validateNickname(String nickname) {
@@ -82,6 +87,22 @@ public class MemberService {
         memberRepository.deleteById(memberId);
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 마이페이지 조회
+    public ResponseEntity<DefaultResponse> getProfile(String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+        List<Badge> badgeList = badgeRepository.findAllByMember(member);
+
+        // 보낼 데이터
+        String nickName = member.getNickname();
+        int badgeCount = badgeList.size();
+        String profileImgCode = member.getProfile();
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공",
+                new GetProfileResponse(nickName, badgeCount, profileImgCode)),
                 HttpStatus.OK);
     }
 }
