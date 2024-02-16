@@ -3,12 +3,10 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
 
 @Entity
-@Setter
 @Getter
 @Table(name = "BOOK")
 public class Book {
@@ -56,11 +54,23 @@ public class Book {
     public Book() { }
 
     @Builder
-    public Book(String isbn) { this.isbn = isbn; }
+    public Book(String isbn, String cover, String title, String author, String category, int totalPage) {
+        this.isbn = isbn;
+        this.cover = cover;
+        this.title = title;
+        this.author = author;
+        this.category = category;
+        this.totalPage = totalPage;
+    }
 
-    public static Book create(String isbn) {
+    public static Book create(String isbn, String cover, String title, String author, String category, int totalPage) {
         return Book.builder()
                 .isbn(isbn)
+                .cover(cover)
+                .title(title)
+                .author(author)
+                .category(category)
+                .totalPage(totalPage)
                 .build();
     }
 }
