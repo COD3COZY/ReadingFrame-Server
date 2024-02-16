@@ -75,4 +75,13 @@ public class MemberService {
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
+
+    // 회원 탈퇴
+    public ResponseEntity<DefaultResponse> deleteMember(String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        memberRepository.deleteById(memberId);
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
 }

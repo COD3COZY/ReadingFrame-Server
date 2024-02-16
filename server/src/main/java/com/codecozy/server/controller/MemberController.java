@@ -5,6 +5,7 @@ import com.codecozy.server.service.MemberService;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,5 +43,11 @@ public class MemberController {
     public ResponseEntity modifyProfileImg(@RequestHeader("xAuthToken") String token,
                                            @RequestBody Map<String, String> profileCodeMap) {
         return memberService.modifyProfileImg(token, profileCodeMap.get("profileImageCode"));
+    }
+
+    // 회원 탈퇴
+    @DeleteMapping("/deleteAccount")
+    public ResponseEntity deleteMember(@RequestHeader("xAuthToken") String token) {
+        return memberService.deleteMember(token);
     }
 }
