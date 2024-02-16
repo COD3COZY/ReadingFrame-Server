@@ -56,4 +56,10 @@ public class MemberController {
     public ResponseEntity getProfile(@RequestHeader("xAuthToken") String token) {
         return memberService.getProfile(token);
     }
+
+    // 얻은 배지 조회
+    @GetMapping("/badge")
+    public ResponseEntity getBadgeList(@RequestHeader("xAuthToken") String token) {
+        return memberService.getBadgeList(token);
+    }
 }
