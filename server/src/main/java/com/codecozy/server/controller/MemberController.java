@@ -1,9 +1,8 @@
 package com.codecozy.server.controller;
 
-import com.codecozy.server.dto.request.ModifyNicknameRequest;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.service.MemberService;
-import java.util.Optional;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +32,7 @@ public class MemberController {
 
     // 닉네임 변경
     @PatchMapping("/nickname")
-    public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token, @RequestBody ModifyNicknameRequest request) {
-        return memberService.modifyNickname(token, request.nickname());
+    public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token, @RequestBody Map<String, String> nicknameMap) {
+        return memberService.modifyNickname(token, nicknameMap.get("nickname"));
     }
 }
