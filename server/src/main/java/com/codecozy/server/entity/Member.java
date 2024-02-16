@@ -69,4 +69,12 @@ public class Member {
                 .profile(profile)
                 .build();
     }
+
+    public void modifyNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void modifyProfileImg(String profileCode) {
+        this.profile = profileCode;
+    }
 }
