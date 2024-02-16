@@ -1,18 +1,17 @@
 package com.codecozy.server.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import lombok.Getter;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Getter
+@Builder
 @Table(name = "BOOK_REVIEW_REACTION")
 public class BookReviewReaction {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long bookReviewReactionId;
+
     @OneToOne
     @JoinColumn(name = "comment_id", referencedColumnName = "comment_id")
     private BookReview bookReview;
@@ -37,4 +36,31 @@ public class BookReviewReaction {
 
     @Column(name = "report_spam_count", nullable = false)
     private int reportSpamCount;
+
+    public void setHeartCount() { heartCount += 1; }
+
+    public void setGoodCount() { goodCount += 1; }
+
+    public void setWowCount() { wowCount += 1; }
+
+    public void setSadCount() { sadCount += 1; }
+
+    public void setAngryCount() { angryCount += 1; }
+
+    public void setReportHatefulCount() { reportHatefulCount += 1; }
+
+    public void setReportSpamCountCount() { reportSpamCount += 1; }
+
+    public static BookReviewReaction create(BookReview bookReview, int heartCount, int goodCount, int wowCount, int sadCount, int angryCount, int reportHatefulCount, int reportSpamCount) {
+        return BookReviewReaction.builder()
+                .bookReview(bookReview)
+                .heartCount(heartCount)
+                .goodCount(goodCount)
+                .wowCount(wowCount)
+                .sadCount(sadCount)
+                .angryCount(angryCount)
+                .reportHatefulCount(reportHatefulCount)
+                .reportSpamCount(reportSpamCount)
+                .build();
+    }
 }

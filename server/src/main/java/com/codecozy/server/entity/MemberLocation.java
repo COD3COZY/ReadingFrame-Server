@@ -2,10 +2,16 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.MemberLocationKey;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(MemberLocationKey.class)
 @Table(name = "MEMBER_LOCATION")
 public class MemberLocation {
@@ -20,6 +26,14 @@ public class MemberLocation {
     private LocationList locationList;
 
     @Id
-    @Column(length = 40, nullable = false)
-    private String uuid;
+    @Column(nullable = false)
+    private String date;
+
+    public static MemberLocation create(Member member, LocationList locationList, String date) {
+        return MemberLocation.builder()
+                .member(member)
+                .locationList(locationList)
+                .date(date)
+                .build();
+    }
 }

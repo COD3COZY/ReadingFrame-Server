@@ -1,12 +1,18 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "LOCATION_LIST")
 public class LocationList {
     @Id
@@ -36,4 +42,13 @@ public class LocationList {
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     @Column(name = "book_records")
     private List<BookRecord> bookRecords;
+
+    public static LocationList create(String placeName, String address, long latitude, long longitude) {
+        return LocationList.builder()
+                .placeName(placeName)
+                .address(address)
+                .latitude(latitude)
+                .longitude(longitude)
+                .build();
+    }
 }

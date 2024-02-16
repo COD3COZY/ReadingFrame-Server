@@ -55,6 +55,8 @@ public class Book {
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
 
+    public Book(String isbn) { this.isbn = isbn; }
+
     public static Book create(String isbn, String cover, String title, String author, String category, int totalPage) {
         return Book.builder()
                 .isbn(isbn)

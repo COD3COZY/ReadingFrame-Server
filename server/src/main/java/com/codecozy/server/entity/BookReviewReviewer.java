@@ -8,10 +8,16 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(BookReviewReviewerKey.class)
 @Table(name = "BOOK_REVIEW_REVIEWER")
 public class BookReviewReviewer {
@@ -32,7 +38,7 @@ public class BookReviewReviewer {
     private boolean isGood;
 
     @Column(name = "is_wow", nullable = false)
-    private boolean isWOW;
+    private boolean isWow;
 
     @Column(name = "is_sad", nullable = false)
     private boolean isSad;
@@ -45,4 +51,27 @@ public class BookReviewReviewer {
 
     @Column(name = "is_report_spam", nullable = false)
     private boolean isReportSpam;
+
+    public void setIsHeartReverse() { isHeart = !isHeart; }
+    public void setIsGoodReverse() { isGood = !isGood; }
+    public void setIsWowReverse() { isWow = !isWow; }
+    public void setIsSadReverse() { isSad = !isSad; }
+    public void setIsAngryReverse() { isAngry = !isAngry; }
+    public void setIsReportHatefulReverse() { isReportHateful = !isReportHateful; }
+    public void setIsReportSpamReverse() { isReportSpam = !isReportSpam; }
+
+
+    public static BookReviewReviewer create(BookReview bookReview, Member member) {
+        return BookReviewReviewer.builder()
+                .bookReview(bookReview)
+                .member(member)
+                .isHeart(false)
+                .isGood(false)
+                .isWow(false)
+                .isSad(false)
+                .isAngry(false)
+                .isReportHateful(false)
+                .isReportSpam(false)
+                .build();
+    }
 }
