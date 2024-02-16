@@ -2,12 +2,18 @@ package com.codecozy.server.entity;
 
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-
 import java.util.List;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Table(name = "MEMBER")
 public class Member {
     @Id
@@ -56,4 +62,11 @@ public class Member {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;
+
+    public static Member create(String nickname, String profile) {
+        return Member.builder()
+                .nickname(nickname)
+                .profile(profile)
+                .build();
+    }
 }
