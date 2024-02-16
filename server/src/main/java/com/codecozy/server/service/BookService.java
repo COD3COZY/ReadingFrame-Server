@@ -3,6 +3,7 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.ReactionCommentRequest;
 import com.codecozy.server.dto.request.ReportCommentRequest;
+import com.codecozy.server.dto.request.ReadingBookCreateRequest;
 import com.codecozy.server.dto.request.ReviewCreateRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.entity.*;
@@ -28,10 +29,11 @@ public class BookService {
     private final BookReviewRepository bookReviewRepository;
     private final BookReviewReactionRepository bookReviewReactionRepository;
     private final BookReviewReviewerRepository bookReviewReviewerRepository;
+    private final KeywordReviewRepository keywordReviewRepository;
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
-    public ResponseEntity<DefaultResponse> createBook(String token, String isbn, ReviewCreateRequest request) {
+    public ResponseEntity<DefaultResponse> createBook(String token, String isbn, ReadingBookCreateRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
@@ -94,6 +96,7 @@ public class BookService {
     // 한줄평 신고
     public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기
+        // 문제! 이러면 본인이 등록한 한줄평만 검색할 수 있음. 사용자 닉네임을 받아와서 닉네임으로 한줄평 사용자 찾도록 수정
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -148,6 +151,7 @@ public class BookService {
 
     public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, ReactionCommentRequest request) {
         // 사용자 받아오기
+        // 문제! 이러면 본인이 등록한 한줄평만 검색할 수 있음. 사용자 닉네임을 받아와서 닉네임으로 한줄평 사용자 찾도록 수정
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -205,6 +209,37 @@ public class BookService {
         else if (request.commentReaction() == 4 && !bookReviewReviewer.isAngry()) {
             bookReviewReaction.setAngryCount();
             bookReviewReviewer.setIsAngryReverse();
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 리뷰 작성 API (키워드, 선택 리뷰, 한줄평 각 테이블에 추가)
+    public ResponseEntity<DefaultResponse> createReview(String token, String isbn, ReviewCreateRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 선택 리뷰가 있으면 레코드 추가
+        if (!request.select().isEmpty()) {
+            String selected = "";
+            for (int id = 0; id < request.select().size(); id++) {
+                selected += request.select().get(id);
+            }
+
+            KeywordReview keywordReview = KeywordReview.create(member, book, selected);
+            keywordReviewRepository.save(keywordReview);
+        }
+
+        // 한줄평이 있으면 레코드 추가
+        if (!request.comment().isEmpty()) {
+            BookReview bookReview = BookReview.create(member, book, request.comment());
+            bookReviewRepository.save(bookReview);
         }
 
         return new ResponseEntity<>(
