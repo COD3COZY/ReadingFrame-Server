@@ -1,6 +1,8 @@
 package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
+import com.codecozy.server.dto.request.ReactionCommentRequest;
+import com.codecozy.server.dto.request.ReportCommentRequest;
 import com.codecozy.server.dto.request.ReviewCreateRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.entity.*;
@@ -25,6 +27,7 @@ public class BookService {
     private final MemberLocationRepository memberLocationRepository;
     private final BookReviewRepository bookReviewRepository;
     private final BookReviewReactionRepository bookReviewReactionRepository;
+    private final BookReviewReviewerRepository bookReviewReviewerRepository;
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
@@ -89,7 +92,7 @@ public class BookService {
     }
 
     // 한줄평 신고
-    public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, int reportType) {
+    public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
@@ -97,13 +100,112 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 사용자와 책을 이용해 bookReview 테이블에서 검색 후 다시 이를 이용해 bookReviewReaction 테이블에서 검색
+        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
         BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+
+        if (bookReview == null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
 
-        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리기
-        if (reportType == 0) { bookReviewReaction.setReportHatefulCount(); }
-        else if (reportType == 1) { bookReviewReaction.setReportSpamCountCount(); }
+        // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
+        if (bookReviewReaction == null) {
+            bookReviewReaction = BookReviewReaction.create(bookReview, 0, 0, 0, 0, 0, 0, 0);
+            bookReviewReactionRepository.save(bookReviewReaction);
+            bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        }
+
+        // 한줄평에 반응을 등록한 유저인지 검색
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+
+        // 한줄평 반응을 처음 남기는 유저라면
+        if (bookReviewReviewer == null) {
+            // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
+            bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
+            bookReviewReviewerRepository.save(bookReviewReviewer);
+
+            // 검색해서 저장 후 카운트 수정에 사용
+            bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+        }
+
+        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
+        if (request.reportType() == 0 && !bookReviewReviewer.isReportHateful()) {
+            bookReviewReaction.setReportHatefulCount();
+            bookReviewReviewer.setIsReportHatefulReverse();
+        }
+        else if (request.reportType() == 1 && !bookReviewReviewer.isReportSpam()) {
+            bookReviewReaction.setReportSpamCountCount();
+            bookReviewReviewer.setIsReportSpamReverse();
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, ReactionCommentRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+
+        if (bookReview == null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
+        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+
+        // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
+        if (bookReviewReaction == null) {
+            bookReviewReaction = BookReviewReaction.create(bookReview, 0, 0, 0, 0, 0, 0, 0);
+            bookReviewReactionRepository.save(bookReviewReaction);
+            bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        }
+
+        // 한줄평에 반응을 등록한 유저인지 검색
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+
+        // 한줄평 반응을 처음 남기는 유저라면
+        if (bookReviewReviewer == null) {
+            // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
+            bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
+            bookReviewReviewerRepository.save(bookReviewReviewer);
+
+            // 검색해서 저장 후 카운트 수정에 사용
+            bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+        }
+        
+        // 코드에 맞는 반응 카운트 올리고, BOOK_REVIEW_REVIEWER (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
+        if (request.commentReaction() == 0 && !bookReviewReviewer.isHeart()) {
+            bookReviewReaction.setHeartCount();
+            bookReviewReviewer.setIsHeartReverse();
+        }
+        else if (request.commentReaction() == 1 && !bookReviewReviewer.isGood()) {
+            bookReviewReaction.setGoodCount();
+            bookReviewReviewer.setIsGoodReverse();
+        }
+        else if (request.commentReaction() == 2 && !bookReviewReviewer.isWow()) {
+            bookReviewReaction.setWowCount();
+            bookReviewReviewer.setIsWowReverse();
+        }
+        else if (request.commentReaction() == 3 && !bookReviewReviewer.isSad()) {
+            bookReviewReaction.setSadCount();
+            bookReviewReviewer.setIsSadReverse();
+        }
+        else if (request.commentReaction() == 4 && !bookReviewReviewer.isAngry()) {
+            bookReviewReaction.setAngryCount();
+            bookReviewReviewer.setIsAngryReverse();
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),

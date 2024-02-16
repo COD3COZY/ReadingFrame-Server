@@ -1,8 +1,8 @@
 package com.codecozy.server.controller;
 
-import com.codecozy.server.dto.request.BookCreateRequest;
+import com.codecozy.server.dto.request.ReactionCommentRequest;
+import com.codecozy.server.dto.request.ReportCommentRequest;
 import com.codecozy.server.dto.request.ReviewCreateRequest;
-import com.codecozy.server.entity.Book;
 import com.codecozy.server.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +19,13 @@ public class BookController {
         return ResponseEntity.ok(bookService.createBook(token, isbn, request));
     }
 
-    @PostMapping("/report")
-    public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody int reportType) {
-        return ResponseEntity.ok(bookService.reportComment(token, isbn, reportType));
+    @PostMapping("/report/{isbn}")
+    public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReportCommentRequest request) {
+        return ResponseEntity.ok(bookService.reportComment(token, isbn, request));
+    }
+
+    @PostMapping("/reaction/{isbn}")
+    public ResponseEntity reactionComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReactionCommentRequest request) {
+        return ResponseEntity.ok(bookService.reactionComment(token, isbn, request));
     }
 }
