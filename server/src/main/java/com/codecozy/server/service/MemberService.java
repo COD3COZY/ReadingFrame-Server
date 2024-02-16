@@ -44,4 +44,23 @@ public class MemberService {
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
+
+    // 닉네임 변경
+    public ResponseEntity<DefaultResponse> modifyNickname(String token, String nickname) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 닉네임이 이미 있다면
+        if (memberRepository.findByNickname(nickname) != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "사용 불가능한 닉네임입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        // 없을 시 그대로 변경 진행
+        member.modifyNickname(nickname);
+        memberRepository.save(member);
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
 }

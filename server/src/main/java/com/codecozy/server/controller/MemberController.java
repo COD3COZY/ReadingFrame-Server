@@ -1,13 +1,17 @@
 package com.codecozy.server.controller;
 
+import com.codecozy.server.dto.request.ModifyNicknameRequest;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.service.MemberService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,5 +29,11 @@ public class MemberController {
     @PostMapping("/sign-up/kakao")
     public ResponseEntity signUpKakao(@RequestBody SignUpKakaoRequest request) {
         return memberService.signUpKakao(request);
+    }
+
+    // 닉네임 변경
+    @PatchMapping("/nickname")
+    public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token, @RequestBody ModifyNicknameRequest request) {
+        return memberService.modifyNickname(token, request.nickname());
     }
 }
