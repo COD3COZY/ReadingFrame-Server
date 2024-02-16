@@ -18,4 +18,9 @@ public class BookController {
     public ResponseEntity createBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
         return ResponseEntity.ok(bookService.createBook(token, isbn, request));
     }
+
+    @PostMapping("/report")
+    public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody int reportType) {
+        return ResponseEntity.ok(bookService.reportComment(token, isbn, reportType));
+    }
 }

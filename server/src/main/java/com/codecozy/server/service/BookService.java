@@ -3,11 +3,7 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.ReviewCreateRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.entity.Book;
-import com.codecozy.server.entity.BookRecord;
-import com.codecozy.server.entity.LocationList;
-import com.codecozy.server.entity.Member;
-import com.codecozy.server.entity.MemberLocation;
+import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +23,11 @@ public class BookService {
     private final MemberRepository memberRepository;
     private final LocationRepository locationRepository;
     private final MemberLocationRepository memberLocationRepository;
+    private final BookReviewRepository bookReviewRepository;
+    private final BookReviewReactionRepository bookReviewReactionRepository;
     private final TokenProvider tokenProvider;
 
-    // 모든 사용자가 등록한 책
+    // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(String token, String isbn, ReviewCreateRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -84,6 +82,28 @@ public class BookService {
         // 등록하지 않은 책이면 등록
         BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.isHidden(), request.startDate(), request.recentDate());
         bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 한줄평 신고
+    public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, int reportType) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 사용자와 책을 이용해 bookReview 테이블에서 검색 후 다시 이를 이용해 bookReviewReaction 테이블에서 검색
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+
+        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리기
+        if (reportType == 0) { bookReviewReaction.setReportHatefulCount(); }
+        else if (reportType == 1) { bookReviewReaction.setReportSpamCountCount(); }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),

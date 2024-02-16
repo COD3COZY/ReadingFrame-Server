@@ -37,4 +37,7 @@ public class BookReviewReaction {
 
     @Column(name = "report_spam_count", nullable = false)
     private int reportSpamCount;
+
+    public void setReportHatefulCount() { reportHatefulCount += 1; }
+    public void setReportSpamCountCount() { reportSpamCount += 1; }
 }
