@@ -63,4 +63,16 @@ public class MemberService {
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
+
+    // 프로필 이미지 변경
+    public ResponseEntity<DefaultResponse> modifyProfileImg(String token, String profileImgCode) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        member.modifyProfileImg(profileImgCode);
+        memberRepository.save(member);
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
 }

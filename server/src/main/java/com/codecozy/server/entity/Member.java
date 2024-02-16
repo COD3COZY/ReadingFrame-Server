@@ -73,4 +73,8 @@ public class Member {
     public void modifyNickname(String nickname) {
         this.nickname = nickname;
     }
+
+    public void modifyProfileImg(String profileCode) {
+        this.profile = profileCode;
+    }
 }

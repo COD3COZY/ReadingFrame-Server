@@ -32,7 +32,15 @@ public class MemberController {
 
     // 닉네임 변경
     @PatchMapping("/nickname")
-    public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token, @RequestBody Map<String, String> nicknameMap) {
+    public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token,
+                                         @RequestBody Map<String, String> nicknameMap) {
         return memberService.modifyNickname(token, nicknameMap.get("nickname"));
+    }
+
+    // 프로필 이미지 변경
+    @PatchMapping("/profileImageCode")
+    public ResponseEntity modifyProfileImg(@RequestHeader("xAuthToken") String token,
+                                           @RequestBody Map<String, String> profileCodeMap) {
+        return memberService.modifyProfileImg(token, profileCodeMap.get("profileImageCode"));
     }
 }
