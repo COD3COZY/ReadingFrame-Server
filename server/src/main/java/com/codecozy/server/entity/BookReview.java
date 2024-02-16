@@ -3,12 +3,16 @@ package com.codecozy.server.entity;
 import jakarta.persistence.*;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "BOOK_REVIEW")
 public class BookReview {
     @Id

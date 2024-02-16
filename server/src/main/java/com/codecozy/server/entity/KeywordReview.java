@@ -2,12 +2,16 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.KeywordReviewKey;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(KeywordReviewKey.class)
 @Table(name = "KEYWORD_REVIEW")
 public class KeywordReview {
