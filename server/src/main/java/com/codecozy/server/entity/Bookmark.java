@@ -2,10 +2,16 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.BookmarkKey;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(BookmarkKey.class)
 @Table(name = "BOOKMARK")
 public class Bookmark {
@@ -32,4 +38,15 @@ public class Bookmark {
 
     @Column(length = 10, nullable = false)
     private String date;
+
+    public static Bookmark create(Member member, Book book, String uuid, int markPage, LocationList locationList, String date) {
+        return Bookmark.builder()
+                .member(member)
+                .book(book)
+                .uuid(uuid)
+                .markPage(markPage)
+                .locationList(locationList)
+                .date(date)
+                .build();
+    }
 }

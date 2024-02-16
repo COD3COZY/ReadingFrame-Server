@@ -47,6 +47,10 @@ public class BookRecord {
     @Column(name = "recent_date", length = 10)
     private String recentDate;
 
+    public void setLocationList(LocationList locationList) {
+        this.locationList = locationList;
+    }
+
     public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, boolean isHidden, String startDate, String recentDate) {
         return BookRecord.builder()
                 .member(member)

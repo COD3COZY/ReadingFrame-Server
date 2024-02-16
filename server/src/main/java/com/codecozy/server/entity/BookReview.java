@@ -2,10 +2,17 @@ package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
 import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "BOOK_REVIEW")
 public class BookReview {
     @Id
@@ -29,4 +36,12 @@ public class BookReview {
 
     @OneToMany(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;
+
+    public static BookReview create(Member member, Book book, String reviewText) {
+        return BookReview.builder()
+                .member(member)
+                .book(book)
+                .reviewText(reviewText)
+                .build();
+    }
 }
