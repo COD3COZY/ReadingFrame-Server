@@ -18,11 +18,11 @@ public class BookService {
     private final BookRepository bookRepository;
 
     // 모든 사용자가 등록한 책
-    public ResponseEntity createBook(BookCreateRequest request) {
+    public ResponseEntity<DefaultResponse> createBook(BookCreateRequest request) {
         Book book = Book.create(request.isbn(), request.cover(), request.title(), request.author(), request.category(), request.totalPage());
         bookRepository.save(book);
 
-        return new ResponseEntity(
+        return new ResponseEntity<DefaultResponse>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
