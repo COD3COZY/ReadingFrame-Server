@@ -27,6 +27,7 @@ public class BookService {
     private final BookReviewReactionRepository bookReviewReactionRepository;
     private final BookReviewReviewerRepository bookReviewReviewerRepository;
     private final KeywordReviewRepository keywordReviewRepository;
+    private final PersonalDictionaryRepository personalDictionaryRepository;
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
@@ -224,7 +225,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 선택 리뷰가 있으면 레코드 추가
-        if (!request.select().isEmpty()) {
+        if (request.select() != null) {
             String selected = "";
             for (int id = 0; id < request.select().size(); id++) {
                 selected += request.select().get(id);
@@ -235,7 +236,7 @@ public class BookService {
         }
 
         // 한줄평이 있으면 레코드 추가
-        if (!request.comment().isEmpty()) {
+        if (request.comment() != null) {
             BookReview bookReview = BookReview.create(member, book, request.comment());
             bookReviewRepository.save(bookReview);
         }
@@ -282,6 +283,26 @@ public class BookService {
     }
 
     public ResponseEntity<DefaultResponse> addpersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 해당 인물이 중복됐는지 검색
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+
+        // 중복된 인물이면 (이름이 중복됐으면)
+        if (personalDictionary != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 인물입니다."),
+                    HttpStatus.CONFLICT);
+        }
+        else {
+            // 인물사전에 등록
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
+            personalDictionaryRepository.save(personalDictionary);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),

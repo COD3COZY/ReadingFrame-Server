@@ -2,10 +2,16 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.PersonalDictionaryKey;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(PersonalDictionaryKey.class)
 @Table(name = "PERSONAL_DICTIONARY")
 public class PersonalDictionary {
@@ -31,4 +37,15 @@ public class PersonalDictionary {
 
     @Column(length = 1000)
     private String description;
+
+    public static PersonalDictionary create(Member member, Book book, String name, int emoji, String preview, String description) {
+        return PersonalDictionary.builder()
+                .member(member)
+                .book(book)
+                .name(name)
+                .emoji(emoji)
+                .preview(preview)
+                .description(description)
+                .build();
+    }
 }

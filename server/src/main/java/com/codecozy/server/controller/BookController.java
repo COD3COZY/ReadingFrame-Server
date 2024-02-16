@@ -47,5 +47,4 @@ public class BookController {
     public ResponseEntity addpersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
         return ResponseEntity.ok(bookService.addpersonalDictionary(token, isbn, request));
     }
-    
 }
