@@ -6,6 +6,8 @@ import lombok.*;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "BOOK_REVIEW_REACTION")
 public class BookReviewReaction {
     @Id

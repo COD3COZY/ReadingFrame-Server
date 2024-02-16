@@ -53,4 +53,10 @@ public class BookController {
     public ResponseEntity addMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
         return ResponseEntity.ok(bookService.addMemo(token, isbn, request));
     }
+
+    // 책갈피 등록 API
+    @PostMapping("/bookmark/{isbn}")
+    public ResponseEntity addBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
+        return ResponseEntity.ok(bookService.addBookmark(token, isbn, request));
+    }
 }

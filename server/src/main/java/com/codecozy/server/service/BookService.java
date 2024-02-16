@@ -29,6 +29,7 @@ public class BookService {
     private final KeywordReviewRepository keywordReviewRepository;
     private final PersonalDictionaryRepository personalDictionaryRepository;
     private final MemoRepository memoRepository;
+    private final BookmarkRepository bookmarkRepository;
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
@@ -323,6 +324,36 @@ public class BookService {
         // 메모 등록
         Memo memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
         memoRepository.save(memo);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 등록 API
+    public ResponseEntity<DefaultResponse> addBookmark(String token, String isbn, BookmarkRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 자주 사용하는 변수 따로 선언
+        long latitude = Long.parseLong(request.mainLocation().latitude());
+        long longitude = Long.parseLong(request.mainLocation().longitude());
+
+        // 주소 없으면 등록
+        LocationList locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+        if (locationList == null) {
+            locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+            locationRepository.save(locationList);
+            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+        }
+
+        // 책갈피 등록
+        Bookmark bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+        bookmarkRepository.save(bookmark);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
