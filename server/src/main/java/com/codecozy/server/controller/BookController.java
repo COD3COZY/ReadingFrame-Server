@@ -47,4 +47,10 @@ public class BookController {
     public ResponseEntity addpersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
         return ResponseEntity.ok(bookService.addpersonalDictionary(token, isbn, request));
     }
+
+    // 메모 등록 API
+    @PostMapping("/memo/{isbn}")
+    public ResponseEntity addMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
+        return ResponseEntity.ok(bookService.addMemo(token, isbn, request));
+    }
 }

@@ -28,6 +28,7 @@ public class BookService {
     private final BookReviewReviewerRepository bookReviewReviewerRepository;
     private final KeywordReviewRepository keywordReviewRepository;
     private final PersonalDictionaryRepository personalDictionaryRepository;
+    private final MemoRepository memoRepository;
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
@@ -282,6 +283,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 인물사전 등록 API
     public ResponseEntity<DefaultResponse> addpersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -303,6 +305,24 @@ public class BookService {
             personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 메모 등록 API
+    public ResponseEntity<DefaultResponse> addMemo(String token, String isbn, MemoRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 메모 등록
+        Memo memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+        memoRepository.save(memo);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
