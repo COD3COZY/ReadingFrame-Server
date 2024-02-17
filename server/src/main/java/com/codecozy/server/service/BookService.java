@@ -39,53 +39,53 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 자주 사용되는 객체 재사용 용도로 선언
-        Book book = new Book();
+        Book book = bookRepository.findByIsbn(isbn);
         LocationList locationList = null;
+        MemberLocation memberLocation = null;
 
-        // isbn을 이용해 책 등록이 중복되었는지 검사
-        if (bookRepository.findByIsbn(isbn) == null) {
+        // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
+        if (bookRecordRepository.findByMemberAndBook(member, book) != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 도서입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        // isbn을 이용해 책 등록이 중복되었는지 검색
+        if (book == null) {
             // 등록되지 않은 책이면 새로 등록
             book = Book.create(isbn, request.bookInformation().cover(), request.bookInformation().title(), request.bookInformation().author(), request.bookInformation().category(), Integer.parseInt(request.bookInformation().totalPage()));
             bookRepository.save(book);
+            book = bookRepository.findByIsbn(isbn);
         }
 
         if (request.mainLocation() != null) {
             long latitude = Long.parseLong(request.mainLocation().latitude());
             long longitude = Long.parseLong(request.mainLocation().longitude());
 
-            // latitude, longitude를 이용해 이미 등록한 위치인지 검사
-            if (locationRepository.findByLatitudeAndLongitude(latitude, longitude) == null) {
+            // 이미 있는 위치인지 검색
+            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            if (locationList == null) {
                 // 등록하지 않은 위치면 새로 등록
                 locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
                 locationRepository.save(locationList);
+                locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
             }
 
-            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
             // 최근 위치 검색 기록에 없으면 추가
-            if (memberLocationRepository.findByMemberAndLocationList(member, locationList) == null) {
-                // 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-                if (memberLocationRepository.count() >= 5) {
-                    List<MemberLocation> memberLocationList = memberLocationRepository.findAllByOrderByDateAsc();
+            if (memberLocation == null) {
+                // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+                if (memberLocationRepository.countAllByMember(member) >= 5) {
+                    List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
                     memberLocationRepository.delete(memberLocationList.get(0));
                 }
 
                 // 검색 기록에 추가
-                MemberLocation memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+                memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
                 memberLocationRepository.save(memberLocation);
             }
         }
 
-        // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
-        if (bookRecordRepository.findByMemberAndBook(member, book) != null) {
-            // 이미 등록한 책이면
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 도서입니다."),
-                    HttpStatus.CONFLICT);
-        }
-
-        // isbn으로 책 찾고, latitude와 longitude로 위치 찾아서 bookRecord 생성에 사용
-        book = bookRepository.findByIsbn(isbn);
-
-        // 등록하지 않은 책이면 등록
+        // 독서노트에 등록
         BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.isHidden(), request.startDate(), request.recentDate());
         bookRecordRepository.save(bookRecord);
 
@@ -101,6 +101,9 @@ public class BookService {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
+        // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
+
+
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
@@ -114,23 +117,20 @@ public class BookService {
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
-
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
-            bookReviewReaction = BookReviewReaction.create(bookReview, 0, 0, 0, 0, 0, 0, 0);
+            bookReviewReaction = BookReviewReaction.create(bookReview);
             bookReviewReactionRepository.save(bookReviewReaction);
             bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-
         // 한줄평 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
             // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
             bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
             bookReviewReviewerRepository.save(bookReviewReviewer);
-
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
@@ -150,11 +150,15 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 한줄평 반응 추가
     public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, ReactionCommentRequest request) {
         // 사용자 받아오기
         // 문제! 이러면 본인이 등록한 한줄평만 검색할 수 있음. 사용자 닉네임을 받아와서 닉네임으로 한줄평 사용자 찾도록 수정
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
+
+        // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
+
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -169,23 +173,20 @@ public class BookService {
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
-
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
-            bookReviewReaction = BookReviewReaction.create(bookReview, 0, 0, 0, 0, 0, 0, 0);
+            bookReviewReaction = BookReviewReaction.create(bookReview);
             bookReviewReactionRepository.save(bookReviewReaction);
             bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-
         // 한줄평 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
             // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
             bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
             bookReviewReviewerRepository.save(bookReviewReviewer);
-
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
@@ -217,7 +218,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 리뷰 작성 API (키워드, 선택 리뷰, 한줄평 각 테이블에 추가)
+    // 리뷰 작성 (키워드, 선택 리뷰, 한줄평 각 테이블에 추가)
     public ResponseEntity<DefaultResponse> createReview(String token, String isbn, ReviewCreateRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -228,18 +229,32 @@ public class BookService {
 
         // 선택 리뷰가 있으면 레코드 추가
         if (request.select() != null) {
-            String selected = "";
-            for (int id = 0; id < request.select().size(); id++) {
-                selected += request.select().get(id);
+            // 이미 등록한 선택 리뷰면 CONFLICT 응답
+            KeywordReview keywordReview = keywordReviewRepository.findByMemberAndBook(member, book);
+            if (keywordReview != null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 리뷰입니다."),
+                        HttpStatus.CONFLICT);
             }
 
-            KeywordReview keywordReview = KeywordReview.create(member, book, selected);
+            String selected = "";
+            for (int id = 0; id < request.select().size(); id++) {
+                selected += request.select().get(id) + ",";
+            }
+
+            keywordReview = KeywordReview.create(member, book, selected);
             keywordReviewRepository.save(keywordReview);
         }
 
         // 한줄평이 있으면 레코드 추가
         if (request.comment() != null) {
-            BookReview bookReview = BookReview.create(member, book, request.comment());
+            // 이미 등록한 한줄평이면 CONFLICT 응답
+            BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+            if (bookReview != null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 한줄평입니다."),
+                        HttpStatus.CONFLICT);
+            }
+
+            bookReview = BookReview.create(member, book, request.comment());
             bookReviewRepository.save(bookReview);
         }
 
@@ -248,7 +263,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 책별 대표 위치 등록 API (주소 테이블에 추가, 해당 책에 대표 위치 등록)
+    // 책별 대표 위치 등록 (주소 테이블에 추가, 해당 책에 대표 위치 등록)
     public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationCreateRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -263,7 +278,6 @@ public class BookService {
 
         // 위도, 경도로 해당 주소 찾기
         LocationList locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
-
         // 등록되지 않은 주소면 새로 등록
         if(locationList == null) {
             locationList = LocationList.create(request.placeName(), request.address(), latitude, longitude);
@@ -273,10 +287,30 @@ public class BookService {
 
         // 사용자 독서노트 검색
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        if (bookRecord != null) {
+            // 대표 위치가 이미 있으면 CONFLICT 응답
+            if (bookRecord.getLocationList() != null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "대표 위치가 이미 있습니다."),
+                        HttpStatus.CONFLICT);
+            }
+            else { // 대표 위치가 있으면 대표위치 등록
+                bookRecord.setLocationList(locationList);
+            }
+        }
 
-        // 대표 위치가 없으면 위치 등록
-        if (bookRecord.getLocationList() == null) {
-            bookRecord.setLocationList(locationList);
+        // 사용자 최근 검색 위치에 등록
+        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+        // 최근 위치 검색 기록에 없으면 추가
+        if (memberLocation == null) {
+            // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+            if (memberLocationRepository.countAllByMember(member) >= 5) {
+                List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+                memberLocationRepository.delete(memberLocationList.get(0));
+            }
+
+            // 검색 기록에 추가
+            memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+            memberLocationRepository.save(memberLocation);
         }
 
         return new ResponseEntity<>(
@@ -284,7 +318,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 인물사전 등록 API
+    // 인물사전 등록
     public ResponseEntity<DefaultResponse> addpersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -312,7 +346,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 메모 등록 API
+    // 메모 등록
     public ResponseEntity<DefaultResponse> addMemo(String token, String isbn, MemoRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -321,8 +355,14 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (memo != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 메모입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
         // 메모 등록
-        Memo memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
         memoRepository.save(memo);
 
         return new ResponseEntity<>(
@@ -330,7 +370,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 책갈피 등록 API
+    // 책갈피 등록
     public ResponseEntity<DefaultResponse> addBookmark(String token, String isbn, BookmarkRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -339,20 +379,44 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 자주 사용하는 변수 따로 선언
-        long latitude = Long.parseLong(request.mainLocation().latitude());
-        long longitude = Long.parseLong(request.mainLocation().longitude());
+        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (bookmark != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 책갈피입니다."),
+                    HttpStatus.CONFLICT);
+        }
 
-        // 주소 없으면 등록
-        LocationList locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
-        if (locationList == null) {
-            locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
-            locationRepository.save(locationList);
+        LocationList locationList = null;
+        if (request.mainLocation() != null) {
+            // 자주 사용하는 변수 따로 선언
+            long latitude = Long.parseLong(request.mainLocation().latitude());
+            long longitude = Long.parseLong(request.mainLocation().longitude());
+
+            // 주소 없으면 등록
             locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            if (locationList == null) {
+                locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                locationRepository.save(locationList);
+                locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            }
+
+            // 사용자 최근 검색 위치에 등록
+            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            // 최근 위치 검색 기록에 없으면 추가
+            if (memberLocation == null) {
+                // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+                if (memberLocationRepository.countAllByMember(member) >= 5) {
+                    List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+                    memberLocationRepository.delete(memberLocationList.get(0));
+                }
+
+                // 검색 기록에 추가
+                memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+                memberLocationRepository.save(memberLocation);
+            }
         }
 
         // 책갈피 등록
-        Bookmark bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
         bookmarkRepository.save(bookmark);
 
         return new ResponseEntity<>(
