@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MemberLocationRepository extends JpaRepository<MemberLocation, Long> {
+    long countAllByMember(Member member);
     MemberLocation findByMemberAndLocationList(Member member, LocationList locationList);
-    List<MemberLocation> findAllByOrderByDateAsc();
+    List<MemberLocation> findByMemberOrderByDateAsc(Member member);
 }

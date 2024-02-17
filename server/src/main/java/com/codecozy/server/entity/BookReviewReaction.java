@@ -53,16 +53,16 @@ public class BookReviewReaction {
 
     public void setReportSpamCountCount() { reportSpamCount += 1; }
 
-    public static BookReviewReaction create(BookReview bookReview, int heartCount, int goodCount, int wowCount, int sadCount, int angryCount, int reportHatefulCount, int reportSpamCount) {
+    public static BookReviewReaction create(BookReview bookReview) {
         return BookReviewReaction.builder()
                 .bookReview(bookReview)
-                .heartCount(heartCount)
-                .goodCount(goodCount)
-                .wowCount(wowCount)
-                .sadCount(sadCount)
-                .angryCount(angryCount)
-                .reportHatefulCount(reportHatefulCount)
-                .reportSpamCount(reportSpamCount)
+                .heartCount(0)
+                .goodCount(0)
+                .wowCount(0)
+                .sadCount(0)
+                .angryCount(0)
+                .reportHatefulCount(0)
+                .reportSpamCount(0)
                 .build();
     }
 }
