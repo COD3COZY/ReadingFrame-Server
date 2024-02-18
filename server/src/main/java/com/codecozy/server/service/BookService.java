@@ -2,16 +2,14 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
-import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.dto.response.GetAllLocationResponse;
-import com.codecozy.server.dto.response.GetPersonalDictionaryResponse;
-import com.codecozy.server.dto.response.GetRecentLocationResponse;
+import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -491,12 +489,45 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        // 메모 등록
-        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
-        memoRepository.save(memo);
+        // 종이책이면
+        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+            // 페이지 그대로 메모 등록
+            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+            memoRepository.save(memo);
+        }
+        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+            memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
+            memoRepository.save(memo);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 메모 조회
+    public ResponseEntity<DefaultResponse> getMemo(String token, String isbn) {
+        // 응답으로 보낼 메모 List
+        List<GetMemoResponse> memoList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 메모 전체 검색
+        List<Memo> memos = memoRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < memos.size(); i++) {
+            Memo memo = memos.get(i);
+
+            // 응답으로 보낼 내용에 더하기
+            memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", memoList),
                 HttpStatus.OK);
     }
 
@@ -545,9 +576,16 @@ public class BookService {
             }
         }
 
-        // 책갈피 등록
-        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
-        bookmarkRepository.save(bookmark);
+        // 종이책이면
+        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+            // 페이지 그대로 책갈피 등록
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+            bookmarkRepository.save(bookmark);
+        }
+        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
+            bookmarkRepository.save(bookmark);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),

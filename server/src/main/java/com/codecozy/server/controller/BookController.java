@@ -60,16 +60,21 @@ public class BookController {
         return bookService.addpersonalDictionary(token, isbn, request);
     }
 
+    // 인물사전 전체조회 API
     @GetMapping("/getPersonalDictionary/{isbn}")
     public ResponseEntity getPersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         return bookService.getPersonalDictionary(token, isbn);
     }
 
-
     // 메모 등록 API
     @PostMapping("/memo/{isbn}")
     public ResponseEntity addMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
         return bookService.addMemo(token, isbn, request);
+    }
+
+    @GetMapping("/getMemo/{isbn}")
+    public ResponseEntity getMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.getMemo(token, isbn);
     }
 
     // 책갈피 등록 API
