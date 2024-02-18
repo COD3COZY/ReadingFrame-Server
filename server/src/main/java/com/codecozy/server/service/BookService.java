@@ -4,6 +4,7 @@ import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.GetAllLocationResponse;
+import com.codecozy.server.dto.response.GetPersonalDictionaryResponse;
 import com.codecozy.server.dto.response.GetRecentLocationResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
@@ -440,12 +441,38 @@ public class BookService {
         }
         else {
             // 인물사전에 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), request.emoji(), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 인물사전 조회
+    public ResponseEntity<DefaultResponse> getPersonalDictionary(String token, String isbn) {
+        // 응답으로 보낼 인물사전 List
+        List<GetPersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 인물사전 전체 검색
+        List<PersonalDictionary> personalDictionaries = personalDictionaryRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < personalDictionaries.size(); i++) {
+            PersonalDictionary personalDictionary = personalDictionaries.get(i);
+
+            // 응답으로 보낼 내용에 더하기
+            personalDictionaryList.add(new GetPersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(), personalDictionary.getPreview(), personalDictionary.getDescription()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", personalDictionaryList),
                 HttpStatus.OK);
     }
 
