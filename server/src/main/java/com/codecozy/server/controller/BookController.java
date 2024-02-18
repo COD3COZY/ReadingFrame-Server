@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/book")
 @RequiredArgsConstructor
@@ -40,8 +38,14 @@ public class BookController {
 
     // 책별 대표 위치 등록 API
     @PostMapping("/mainLocation/{isbn}")
-    public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationCreateRequest request) {
+    public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
         return bookService.addMainLocation(token, isbn, request);
+    }
+
+    // 책별 대표 위치 변경 API
+    @PatchMapping("/patchMainLocation/{isbn}")
+    public  ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
+        return bookService.patchMainLocation(token, isbn, request);
     }
 
     // 인물사전 등록 API
