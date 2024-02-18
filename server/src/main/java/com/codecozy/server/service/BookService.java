@@ -270,6 +270,41 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 한줄평 삭제
+    public ResponseEntity<DefaultResponse> deleteComment(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        // 한줄평이 있으면
+        if (bookReview != null) {
+            // 한줄평에 대한 반응 종류, 여부 레코드 찾기
+            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+
+            // 해당 한줄평에 대한 반응 종류 레코드 지우기
+            if (bookReviewReaction != null) bookReviewReactionRepository.deleteById(bookReview);
+            // 해당 한줄평에 대한 반응 여부 레코드 지우기
+            if (bookReviewReviewer != null) bookReviewReviewerRepository.deleteById(bookReview);
+
+            // 한줄평 지우기
+            bookReviewRepository.delete(bookReview);
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 책별 대표 위치 등록 (주소 테이블에 추가, 해당 책에 대표 위치 등록)
     public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationRequest request) {
         // 사용자 받아오기

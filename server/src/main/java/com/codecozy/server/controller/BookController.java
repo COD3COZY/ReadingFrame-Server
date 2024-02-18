@@ -36,6 +36,12 @@ public class BookController {
         return bookService.createReview(token, isbn, request);
     }
 
+    // 한줄평 삭제 API
+    @DeleteMapping("/deleteComment/{isbn}")
+    public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteComment(token, isbn);
+    }
+
     // 책별 대표 위치 등록 API
     @PostMapping("/mainLocation/{isbn}")
     public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
@@ -90,6 +96,7 @@ public class BookController {
         return bookService.modifyMemo(token, isbn, request);
     }
 
+    // 메모 삭제 API
     @DeleteMapping("/deleteMemo/{isbn}")
     public ResponseEntity deleteMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
         return bookService.deleteMemo(token, isbn, request);
