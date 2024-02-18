@@ -9,7 +9,6 @@ import com.codecozy.server.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -327,7 +326,7 @@ public class BookService {
     }
 
     // 책별 대표 위치 변경
-    public ResponseEntity<DefaultResponse> patchMainLocation(String token, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> modifyMainLocation(String token, String isbn, LocationRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
@@ -441,6 +440,34 @@ public class BookService {
             // 인물사전에 등록
             personalDictionary = PersonalDictionary.create(member, book, request.name(), request.emoji(), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 인물사전 수정
+    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 해당 인물이 있는지 검색
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+
+        // 중복된 인물이면 (이름이 중복됐으면)
+        if (personalDictionary != null) {
+            // 인물사전에서 수정 등록
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), request.emoji(), request.preview(), request.description());
+            personalDictionaryRepository.save(personalDictionary);
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 인물입니다."),
+                    HttpStatus.CONFLICT);
         }
 
         return new ResponseEntity<>(

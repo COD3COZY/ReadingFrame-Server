@@ -43,9 +43,9 @@ public class BookController {
     }
 
     // 책별 대표 위치 변경 API
-    @PatchMapping("/patchMainLocation/{isbn}")
-    public ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
-        return bookService.patchMainLocation(token, isbn, request);
+    @PatchMapping("/modifyMainLocation/{isbn}")
+    public ResponseEntity modifyMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
+        return bookService.modifyMainLocation(token, isbn, request);
     }
 
     // 책별 대표 위치 삭제 API
@@ -58,6 +58,12 @@ public class BookController {
     @PostMapping("/personalDictionary/{isbn}")
     public ResponseEntity addpersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
         return bookService.addpersonalDictionary(token, isbn, request);
+    }
+
+    // 인물사전 수정 API
+    @PatchMapping("modifyPersonalDictionary/{isbn}")
+    public ResponseEntity modifyPersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
+        return  bookService.modifyPersonalDictionary(token, isbn, request);
     }
 
     // 인물사전 전체조회 API
