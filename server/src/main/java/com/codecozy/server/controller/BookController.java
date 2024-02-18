@@ -73,4 +73,10 @@ public class BookController {
     public ResponseEntity getRecentLocation(@RequestHeader("xAuthToken") String token) {
         return bookService.getRecentLocation(token);
     }
+
+    // 최근 등록 위치 삭제 API
+    @DeleteMapping("/deleteRecentLocation")
+    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody deleteRecentLocationRequest request) {
+        return bookService.deleteRecentLocation(token, request);
+    }
 }

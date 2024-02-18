@@ -510,9 +510,8 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
-        int size = memberLocationList.size();
-        for (int i = 0; i < size; i++) {
-            LocationList memberLocation = memberLocationList.get(i).getLocationList();
+        for (MemberLocation value : memberLocationList) {
+            LocationList memberLocation = value.getLocationList();
 
             // 응답으로 보낼 객체에 추가
             location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(), memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
@@ -520,6 +519,35 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", location),
+                HttpStatus.OK);
+    }
+
+    // 최근 등록 위치 삭제
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, deleteRecentLocationRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 전체 위치에서 검색
+        LocationList locationList = locationRepository.findByLocationId(request.locationId());
+        if (locationList != null) {
+            // 최근 등록 위치에서 해당 위치가 있는지 확인하고 삭제
+            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            if (memberLocation != null) {
+                memberLocationRepository.delete(memberLocation);
+            }
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+
+            if (bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                locationRepository.delete(locationList);
+            }
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
 }
