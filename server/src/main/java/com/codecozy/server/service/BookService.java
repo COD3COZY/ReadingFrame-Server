@@ -755,6 +755,41 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 책갈피 삭제
+    public ResponseEntity<DefaultResponse> deleteBookmark(String token, String isbn, DeleteBookmarkRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 책갈피가 있으면
+        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (bookmark != null) {
+            // 참조하고 있는 위치 받아오기
+            LocationList deleteLocation = locationRepository.findByLocationId(bookmark.getLocationList().getLocationId());
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            if (deleteLocation != null) {
+                Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+
+                if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                    locationRepository.delete(deleteLocation);
+                }
+            }
+            
+            // 책갈피 삭제
+            bookmarkRepository.delete(bookmark);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 책갈피 전체조회
     public ResponseEntity<DefaultResponse> getBookmark(String token, String isbn) {
         // 응답으로 보낼 메모 List

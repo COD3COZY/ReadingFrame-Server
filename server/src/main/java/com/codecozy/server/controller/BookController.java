@@ -102,9 +102,16 @@ public class BookController {
         return bookService.addBookmark(token, isbn, request);
     }
 
+    // 책갈피 수정 API
     @PatchMapping("/modifyBookmark/{isbn}")
     public ResponseEntity modifyBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
         return bookService.modifyBookmark(token, isbn, request);
+    }
+
+    // 책갈피 삭제 API
+    @DeleteMapping("/deleteBookmark/{isbn}")
+    public ResponseEntity deleteBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteBookmarkRequest request) {
+        return bookService.deleteBookmark(token, isbn, request);
     }
 
     // 책갈피 전체조회 API
