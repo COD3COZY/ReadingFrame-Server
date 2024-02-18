@@ -43,9 +43,9 @@ public class BookController {
     }
 
     // 책별 대표 위치 변경 API
-    @PatchMapping("/patchMainLocation/{isbn}")
-    public ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
-        return bookService.patchMainLocation(token, isbn, request);
+    @PatchMapping("/modifyMainLocation/{isbn}")
+    public ResponseEntity modifyMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
+        return bookService.modifyMainLocation(token, isbn, request);
     }
 
     // 책별 대표 위치 삭제 API
@@ -60,16 +60,69 @@ public class BookController {
         return bookService.addpersonalDictionary(token, isbn, request);
     }
 
+    // 인물사전 수정 API
+    @PatchMapping("/modifyPersonalDictionary/{isbn}")
+    public ResponseEntity modifyPersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
+        return bookService.modifyPersonalDictionary(token, isbn, request);
+    }
+
+    // 인물사전 삭제 API
+    @DeleteMapping("/deletePersonalDictionary/{isbn}")
+    public ResponseEntity deletePersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeletePersonalDictionaryRequest request) {
+        return bookService.deletePersonalDictionary(token, isbn, request);
+    }
+
+    // 인물사전 전체조회 API
+    @GetMapping("/getPersonalDictionary/{isbn}")
+    public ResponseEntity getPersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.getPersonalDictionary(token, isbn);
+    }
+
     // 메모 등록 API
     @PostMapping("/memo/{isbn}")
     public ResponseEntity addMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
         return bookService.addMemo(token, isbn, request);
     }
 
+    // 메모 수정 API
+    @PatchMapping("/modifyMemo/{isbn}")
+    public ResponseEntity modifyMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
+        return bookService.modifyMemo(token, isbn, request);
+    }
+
+    @DeleteMapping("/deleteMemo/{isbn}")
+    public ResponseEntity deleteMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
+        return bookService.deleteMemo(token, isbn, request);
+    }
+
+    // 메모 전체조회 API
+    @GetMapping("/getMemo/{isbn}")
+    public ResponseEntity getMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.getMemo(token, isbn);
+    }
+
     // 책갈피 등록 API
     @PostMapping("/bookmark/{isbn}")
     public ResponseEntity addBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
         return bookService.addBookmark(token, isbn, request);
+    }
+
+    // 책갈피 수정 API
+    @PatchMapping("/modifyBookmark/{isbn}")
+    public ResponseEntity modifyBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
+        return bookService.modifyBookmark(token, isbn, request);
+    }
+
+    // 책갈피 삭제 API
+    @DeleteMapping("/deleteBookmark/{isbn}")
+    public ResponseEntity deleteBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
+        return bookService.deleteBookmark(token, isbn, request);
+    }
+
+    // 책갈피 전체조회 API
+    @GetMapping("/getBookmark/{isbn}")
+    public  ResponseEntity getBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return  bookService.getBookmark(token, isbn);
     }
 
     // 전체 위치 조회 API
@@ -86,7 +139,7 @@ public class BookController {
 
     // 최근 등록 위치 삭제 API
     @DeleteMapping("/deleteRecentLocation")
-    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody deleteRecentLocationRequest request) {
+    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody DeleteRecentLocationRequest request) {
         return bookService.deleteRecentLocation(token, request);
     }
 }

@@ -2,9 +2,7 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
-import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.dto.response.GetAllLocationResponse;
-import com.codecozy.server.dto.response.GetRecentLocationResponse;
+import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
@@ -328,7 +326,7 @@ public class BookService {
     }
 
     // 책별 대표 위치 변경
-    public ResponseEntity<DefaultResponse> patchMainLocation(String token, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> modifyMainLocation(String token, String isbn, LocationRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
@@ -353,16 +351,18 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) { // 해당 독서 노트가 있는 경우에만
             // 쓰이지 않는 위치면 삭제하기 위해 변경 전 위치를 받아옴
-            LocationList deleteLocation = bookRecord.getLocationList();
+            LocationList preLocation = bookRecord.getLocationList();
             bookRecord.setLocationList(locationList);
 
-            // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+            if (preLocation != null) {
+                // 다른 곳에서 사용중이 아닌 위치면 삭제
+                Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
 
-            if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(deleteLocation);
+                if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                    locationRepository.delete(preLocation);
+                }
             }
         }
 
@@ -400,19 +400,19 @@ public class BookService {
 
         if (bookRecord != null) {
             // 대표위치 삭제 전 위치 객체 받아오기
-            LocationList locationList = bookRecord.getLocationList();
+            LocationList preLocation = bookRecord.getLocationList();
 
             //  대표위치 삭제
             bookRecord.deleteLocationList();
             bookRecordRepository.save(bookRecord);
 
             // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long memberLocationCnt = memberLocationRepository.countByLocationList(locationList);
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+            Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
 
             if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(locationList);
+                locationRepository.delete(preLocation);
             }
         }
 
@@ -449,6 +449,82 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 인물사전 수정
+    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 해당 인물이 있는지 검색
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+
+        // 중복된 인물이면 (이름이 중복됐으면)
+        if (personalDictionary != null) {
+            // 인물사전에서 수정 등록
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
+            personalDictionaryRepository.save(personalDictionary);
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 인물입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 인물사전 삭제
+    public ResponseEntity<DefaultResponse> deletePersonalDictionary(String token, String isbn, DeletePersonalDictionaryRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 해당 인물이 있는지 검색
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        if (personalDictionary != null) {
+            // 인물사전에서 삭제
+            personalDictionaryRepository.delete(personalDictionary);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+
+    }
+
+    // 인물사전 전체조회
+    public ResponseEntity<DefaultResponse> getPersonalDictionary(String token, String isbn) {
+        // 응답으로 보낼 인물사전 List
+        List<GetPersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 인물사전 전체 검색
+        List<PersonalDictionary> personalDictionaries = personalDictionaryRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < personalDictionaries.size(); i++) {
+            PersonalDictionary personalDictionary = personalDictionaries.get(i);
+
+            // 응답으로 보낼 내용에 더하기
+            personalDictionaryList.add(new GetPersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(), personalDictionary.getPreview(), personalDictionary.getDescription()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", personalDictionaryList),
+                HttpStatus.OK);
+    }
+
     // 메모 등록
     public ResponseEntity<DefaultResponse> addMemo(String token, String isbn, MemoRequest request) {
         // 사용자 받아오기
@@ -464,12 +540,99 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        // 메모 등록
-        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
-        memoRepository.save(memo);
+        // 종이책이면
+        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+            // 페이지 그대로 메모 등록
+            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+            memoRepository.save(memo);
+        }
+        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+            memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
+            memoRepository.save(memo);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 메모 수정
+    public ResponseEntity<DefaultResponse> modifyMemo(String token, String isbn, MemoRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 메모가 있으면
+        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (memo != null) {
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 그대로 메모 등록
+                memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+                memoRepository.save(memo);
+            }
+            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+                memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
+                memoRepository.save(memo);
+            }
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 메모 삭제
+    public ResponseEntity<DefaultResponse> deleteMemo(String token, String isbn, DeleteUuidRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 메모가 있으면
+        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (memo != null) {
+            // 메모 삭제
+            memoRepository.delete(memo);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 메모 전체조회
+    public ResponseEntity<DefaultResponse> getMemo(String token, String isbn) {
+        // 응답으로 보낼 메모 List
+        List<GetMemoResponse> memoList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 메모 전체 검색
+        List<Memo> memos = memoRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < memos.size(); i++) {
+            Memo memo = memos.get(i);
+
+            // 응답으로 보낼 내용에 더하기
+            memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), memo.getMarkPage() / book.getTotalPage(), memo.getMemoText(), memo.getUuid()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", memoList),
                 HttpStatus.OK);
     }
 
@@ -518,12 +681,166 @@ public class BookService {
             }
         }
 
-        // 책갈피 등록
-        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
-        bookmarkRepository.save(bookmark);
+        // 종이책이면
+        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+            // 페이지 그대로 책갈피 등록
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+            bookmarkRepository.save(bookmark);
+        }
+        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
+            bookmarkRepository.save(bookmark);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 수정
+    public ResponseEntity<DefaultResponse> modifyBookmark(String token, String isbn, BookmarkRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 책갈피가 있으면
+        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (bookmark != null) {
+
+            // 수정할 위치를 받았으면
+            LocationList locationList = null;
+            if (request.mainLocation() != null) {
+                // 자주 사용하는 변수 따로 선언
+                double latitude = Double.parseDouble(request.mainLocation().latitude());
+                double longitude = Double.parseDouble(request.mainLocation().longitude());
+
+                // 변경 전 위치가 아무데도 사용중이 아니면 삭제하기 위해 받아옴
+                LocationList preLocation = bookmark.getLocationList();
+
+                // 새로 받은 위치가 주소 테이블에 없으면 등록
+                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                if (locationList == null) {
+                    locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                    locationRepository.save(locationList);
+                    locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                }
+
+                // 사용자 최근 검색 위치에 등록
+                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+                // 최근 위치 검색 기록에 없으면 추가
+                if (memberLocation == null) {
+                    // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+                    if (memberLocationRepository.countAllByMember(member) >= 5) {
+                        List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+                        memberLocationRepository.delete(memberLocationList.get(0));
+                    }
+
+                    // 검색 기록에 추가
+                    memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+                    memberLocationRepository.save(memberLocation);
+                }
+
+                if (preLocation != null) {
+                    // 다른 곳에서 사용중이 아닌 위치면 삭제
+                    Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
+
+                    if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                        locationRepository.delete(preLocation);
+                    }
+                }
+            }
+
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 그대로 책갈피 등록
+                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+                bookmarkRepository.save(bookmark);
+            }
+            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
+                bookmarkRepository.save(bookmark);
+            }
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 삭제
+    public ResponseEntity<DefaultResponse> deleteBookmark(String token, String isbn, DeleteUuidRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 책갈피가 있으면
+        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (bookmark != null) {
+            // 참조하고 있는 위치 받아오기
+            LocationList deleteLocation = locationRepository.findByLocationId(bookmark.getLocationList().getLocationId());
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            if (deleteLocation != null) {
+                Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+
+                if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                    locationRepository.delete(deleteLocation);
+                }
+            }
+            
+            // 책갈피 삭제
+            bookmarkRepository.delete(bookmark);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 전체조회
+    public ResponseEntity<DefaultResponse> getBookmark(String token, String isbn) {
+        // 응답으로 보낼 메모 List
+        List<GetBookmarkResponse> bookmarkList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 메모 전체 검색
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < bookmarks.size(); i++) {
+            Bookmark bookmark = bookmarks.get(i);
+
+            // 위치 List 저장
+            List<String> location = new ArrayList<>();
+            location.add(bookmark.getLocationList().getPlaceName());
+            location.add(bookmark.getLocationList().getAddress());
+            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
+
+            // 응답으로 보낼 내용에 더하기
+            bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), bookmark.getMarkPage() / book.getTotalPage(), location, bookmark.getUuid()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", bookmarkList),
                 HttpStatus.OK);
     }
 
@@ -617,7 +934,7 @@ public class BookService {
     }
 
     // 최근 등록 위치 삭제
-    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, deleteRecentLocationRequest request) {
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, DeleteRecentLocationRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);

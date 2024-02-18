@@ -13,5 +13,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     // 특정 유저의 모든 책갈피 가져오기
     List<Bookmark> findAllByMember(Member member);
 
+    List<Bookmark> findAllByMemberAndBook(Member member, Book book);
     Long countByLocationList(LocationList locationList);
 }

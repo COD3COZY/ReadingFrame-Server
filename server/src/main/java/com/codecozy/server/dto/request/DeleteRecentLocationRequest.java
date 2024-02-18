@@ -1,5 +1,5 @@
 package com.codecozy.server.dto.request;
 
-public record deleteRecentLocationRequest(
+public record DeleteRecentLocationRequest(
         long locationId
 ) {}

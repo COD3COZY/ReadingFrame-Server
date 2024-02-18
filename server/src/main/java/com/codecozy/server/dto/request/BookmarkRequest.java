@@ -1,8 +1,8 @@
 package com.codecozy.server.dto.request;
 
 public record BookmarkRequest(
-    String uuid,
+    String date,
     int markPage,
     LocationRequest mainLocation,
-    String date
+    String uuid
 ) {}
