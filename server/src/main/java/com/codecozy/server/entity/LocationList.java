@@ -27,10 +27,10 @@ public class LocationList {
     private String address;
 
     @Column(nullable = false)
-    private long latitude;
+    private double latitude;
 
     @Column(nullable = false)
-    private long longitude;
+    private double longitude;
 
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     @Column(name = "member_locations")
@@ -43,7 +43,12 @@ public class LocationList {
     @Column(name = "book_records")
     private List<BookRecord> bookRecords;
 
-    public static LocationList create(String placeName, String address, long latitude, long longitude) {
+    public void setPlaceName(String placeName) { this.placeName = placeName; }
+    public void setAddress(String address) { this.address = address; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
+
+    public static LocationList create(String placeName, String address, double latitude, double longitude) {
         return LocationList.builder()
                 .placeName(placeName)
                 .address(address)

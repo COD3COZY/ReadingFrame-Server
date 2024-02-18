@@ -47,9 +47,12 @@ public class BookRecord {
     @Column(name = "recent_date", length = 10)
     private String recentDate;
 
-    public void setLocationList(LocationList locationList) {
-        this.locationList = locationList;
-    }
+    @Column(name = "key_word")
+    private String keyWord;
+
+    public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
+
+    public void setLocationList(LocationList locationList) { this.locationList = locationList; }
 
     public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, boolean isHidden, String startDate, String recentDate) {
         return BookRecord.builder()
@@ -62,6 +65,7 @@ public class BookRecord {
                 .isHidden(isHidden)
                 .startDate(startDate)
                 .recentDate(recentDate)
+                .keyWord(null)
                 .build();
     }
 }

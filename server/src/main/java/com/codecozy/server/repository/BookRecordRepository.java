@@ -5,6 +5,10 @@ import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface BookRecordRepository extends JpaRepository<BookRecord, String> {
     BookRecord findByMemberAndBook(Member member, Book book);
+    // 특정 유저의 모든 독서 노트 가져오기
+    List<BookRecord> findAllByMember(Member member);
 }

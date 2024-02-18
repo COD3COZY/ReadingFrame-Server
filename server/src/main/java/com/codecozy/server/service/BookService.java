@@ -3,6 +3,7 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetAllLocationResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -58,16 +60,16 @@ public class BookService {
         }
 
         if (request.mainLocation() != null) {
-            long latitude = Long.parseLong(request.mainLocation().latitude());
-            long longitude = Long.parseLong(request.mainLocation().longitude());
+            double latitude = Double.parseDouble(request.mainLocation().latitude());
+            double longitude = Double.parseDouble(request.mainLocation().longitude());
 
             // 이미 있는 위치인지 검색
-            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
                 // 등록하지 않은 위치면 새로 등록
                 locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
                 locationRepository.save(locationList);
-                locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             }
 
             memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
@@ -227,6 +229,12 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 키워드 리뷰가 있으면 독서 노트에 수정
+        if (request.keyword() != null) {
+            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+            bookRecord.setKeyWord(request.keyword());
+        }
+
         // 선택 리뷰가 있으면 레코드 추가
         if (request.select() != null) {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
@@ -273,16 +281,16 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 자주 사용하는 위도, 경도 변수 따로 저장
-        long latitude = Long.parseLong(request.latitude());
-        long longitude = Long.parseLong(request.longitude());
+        double latitude = Double.parseDouble(request.latitude());
+        double longitude = Double.parseDouble(request.longitude());
 
-        // 위도, 경도로 해당 주소 찾기
-        LocationList locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+        // 장소명으로 해당 주소 찾기
+        LocationList locationList = locationRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
         if(locationList == null) {
             locationList = LocationList.create(request.placeName(), request.address(), latitude, longitude);
             locationRepository.save(locationList);
-            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            locationList = locationRepository.findByPlaceName(request.placeName());
         }
 
         // 사용자 독서노트 검색
@@ -293,7 +301,7 @@ public class BookService {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "대표 위치가 이미 있습니다."),
                         HttpStatus.CONFLICT);
             }
-            else { // 대표 위치가 있으면 대표위치 등록
+            else { // 대표 위치가 없으면 대표위치 등록
                 bookRecord.setLocationList(locationList);
             }
         }
@@ -388,15 +396,15 @@ public class BookService {
         LocationList locationList = null;
         if (request.mainLocation() != null) {
             // 자주 사용하는 변수 따로 선언
-            long latitude = Long.parseLong(request.mainLocation().latitude());
-            long longitude = Long.parseLong(request.mainLocation().longitude());
+            double latitude = Double.parseDouble(request.mainLocation().latitude());
+            double longitude = Double.parseDouble(request.mainLocation().longitude());
 
             // 주소 없으면 등록
-            locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+            locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
                 locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
                 locationRepository.save(locationList);
-                locationList = locationRepository.findByLatitudeAndLongitude(latitude, longitude);
+                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             }
 
             // 사용자 최근 검색 위치에 등록
@@ -421,6 +429,72 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    public ResponseEntity<DefaultResponse> getAllLocation(String token, GetAllLocationRequest request) {
+        // 응답으로 보낼 객체 리스트
+        List<GetAllLocationResponse> locationInfo = new ArrayList<>();
+
+        int orderNumber = request.orderNumber();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // Response 전달 시 들어가는 데이터
+        String date;
+        String title;
+        int readPage;
+
+        // 독서노트에서 정보 받아오기
+        List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
+        int size = bookRecords.size();
+        BookRecord bookRecord;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
+            if (i >= size) break;
+
+            bookRecord = bookRecords.get(i);
+            if (bookRecord.getLocationList() == null) break;
+
+            date = bookRecord.getStartDate();
+            title = bookRecord.getBook().getTitle();
+
+            List<String> location = new ArrayList<>();
+            location.add(bookRecord.getLocationList().getPlaceName());
+            location.add(bookRecord.getLocationList().getAddress());
+            location.add(String.valueOf(bookRecord.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookRecord.getLocationList().getLongitude()));
+
+            locationInfo.add(new GetAllLocationResponse(date, false, title, 0, location));
+        }
+
+        // 책갈피에서 정보 받아오기
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
+        size = bookmarks.size();
+        Bookmark bookmark;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            if (i >= size) break;
+
+            bookmark = bookmarks.get(i);
+            if (bookmark.getLocationList() == null) break;
+
+            date = bookmark.getDate();
+            title = bookmark.getBook().getTitle();
+            readPage = bookmark.getMarkPage();
+
+            List<String> location = new ArrayList<>();
+            location.add(bookmark.getLocationList().getPlaceName());
+            location.add(bookmark.getLocationList().getAddress());
+            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
+
+            locationInfo.add(new GetAllLocationResponse(date, true, title, readPage, location));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", locationInfo),
                 HttpStatus.OK);
     }
 }
