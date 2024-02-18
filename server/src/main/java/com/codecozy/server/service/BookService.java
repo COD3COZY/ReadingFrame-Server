@@ -3,6 +3,7 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetAllLocationResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -421,6 +423,73 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    public ResponseEntity<DefaultResponse> getAllLocation(String token, GetAllLocationRequest request) {
+        // 응답으로 보낼 객체 리스트
+        List<GetAllLocationResponse> locationInfo = new ArrayList<>();
+
+        int orderNumber = request.orderNumber();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // Response 전달 시 들어가는 데이터
+        String date;
+        String title;
+        int readPage;
+        List<String> location = new ArrayList<>();
+
+        // 독서노트에서 정보 받아오기
+        List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
+        int size = bookRecords.size();
+        BookRecord bookRecord;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
+            if (i >= size) break;
+
+            bookRecord = bookRecords.get(i);
+            if (bookRecord.getLocationList() == null) break;
+
+            date = bookRecord.getStartDate();
+            title = bookRecord.getBook().getTitle();
+
+            location.clear();
+            location.add(bookRecord.getLocationList().getPlaceName());
+            location.add(bookRecord.getLocationList().getAddress());
+            location.add(String.valueOf(bookRecord.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookRecord.getLocationList().getLongitude()));
+
+            locationInfo.add(new GetAllLocationResponse(date, false, title, size, location));
+        }
+
+        // 책갈피에서 정보 받아오기
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
+        size = bookmarks.size();
+        Bookmark bookmark;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            if (i >= size) break;
+
+            bookmark = bookmarks.get(i);
+            if (bookmark.getLocationList() == null) break;
+
+            date = bookmark.getDate();
+            title = bookmark.getBook().getTitle();
+            readPage = bookmark.getMarkPage();
+
+            location.clear();
+            location.add(bookmark.getLocationList().getPlaceName());
+            location.add(bookmark.getLocationList().getAddress());
+            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
+
+            locationInfo.add(new GetAllLocationResponse(date, true, title, readPage, location));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", locationInfo),
                 HttpStatus.OK);
     }
 }
