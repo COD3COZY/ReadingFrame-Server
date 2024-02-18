@@ -87,7 +87,12 @@ public class BookController {
     // 메모 수정 API
     @PatchMapping("/modifyMemo/{isbn}")
     public ResponseEntity modifyMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
-        return  bookService.modifyMemo(token, isbn, request);
+        return bookService.modifyMemo(token, isbn, request);
+    }
+
+    @DeleteMapping("/deleteMemo/{isbn}")
+    public ResponseEntity deleteMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
+        return bookService.deleteMemo(token, isbn, request);
     }
 
     // 메모 전체조회 API
@@ -110,7 +115,7 @@ public class BookController {
 
     // 책갈피 삭제 API
     @DeleteMapping("/deleteBookmark/{isbn}")
-    public ResponseEntity deleteBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteBookmarkRequest request) {
+    public ResponseEntity deleteBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
         return bookService.deleteBookmark(token, isbn, request);
     }
 

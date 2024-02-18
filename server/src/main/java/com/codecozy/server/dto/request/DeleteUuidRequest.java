@@ -1,5 +1,5 @@
 package com.codecozy.server.dto.request;
 
-public record DeleteBookmarkRequest(
+public record DeleteUuidRequest(
    String uuid
 ) {}
