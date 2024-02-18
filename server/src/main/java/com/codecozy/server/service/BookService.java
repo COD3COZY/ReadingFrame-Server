@@ -270,6 +270,48 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 리뷰 전체 삭제 (키워드, 선택 리뷰, 한줄평)
+    public ResponseEntity<DefaultResponse> deleteReview(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 독서노트 찾기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        if (bookRecord != null) {
+            bookRecordRepository.delete(bookRecord);
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        // 선택리뷰 찾기
+        KeywordReview keywordReview = keywordReviewRepository.findByMemberAndBook(member, book);
+        if (keywordReview != null) keywordReviewRepository.delete(keywordReview);
+
+        // 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+
+        // 한줄평 반응 종류 찾기
+        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        if (bookReviewReaction != null) bookReviewReactionRepository.delete(bookReviewReaction);
+        // 한줄평 반응 여부 찾기
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+        if (bookReviewReviewer != null) bookReviewReviewerRepository.delete(bookReviewReviewer);
+
+        // 한줄평 삭제
+        if (bookReview != null) bookReviewRepository.delete(bookReview);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 한줄평 삭제
     public ResponseEntity<DefaultResponse> deleteComment(String token, String isbn) {
         // 사용자 받아오기
