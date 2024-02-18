@@ -347,6 +347,26 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 읽기 시작한 날짜 변경
+    public ResponseEntity<DefaultResponse> modifyStartDate(String token, String isbn, String startDate) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 독서노트 찾기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 읽기 시작한 날짜 변경
+        if (bookRecord != null) bookRecord.setStartDate(startDate);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 책별 대표 위치 등록 (주소 테이블에 추가, 해당 책에 대표 위치 등록)
     public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationRequest request) {
         // 사용자 받아오기

@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/book")
 @RequiredArgsConstructor
@@ -46,6 +48,12 @@ public class BookController {
     @DeleteMapping("/deleteComment/{isbn}")
     public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         return bookService.deleteComment(token, isbn);
+    }
+
+    // 읽기 시작한 날짜 변경 API
+    @PatchMapping("/modifyStartDate/{isbn}")
+    public ResponseEntity modifyStartDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, String> startDateMap) {
+        return bookService.modifyStartDate(token, isbn, startDateMap.get("startDate"));
     }
 
     // 책별 대표 위치 등록 API
