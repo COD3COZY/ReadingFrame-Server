@@ -30,7 +30,7 @@ public class PersonalDictionary {
     private String name;
 
     @Column(nullable = false)
-    private String emoji;
+    private int emoji;
 
     @Column(length = 30)
     private String preview;
@@ -38,7 +38,7 @@ public class PersonalDictionary {
     @Column(length = 1000)
     private String description;
 
-    public static PersonalDictionary create(Member member, Book book, String name, String emoji, String preview, String description) {
+    public static PersonalDictionary create(Member member, Book book, String name, int emoji, String preview, String description) {
         return PersonalDictionary.builder()
                 .member(member)
                 .book(book)

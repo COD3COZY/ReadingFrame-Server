@@ -440,7 +440,7 @@ public class BookService {
         }
         else {
             // 인물사전에 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(), request.emoji(), request.preview(), request.description());
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
 
@@ -464,7 +464,7 @@ public class BookService {
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
             // 인물사전에서 수정 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(), request.emoji(), request.preview(), request.description());
+            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
         else {
@@ -628,7 +628,7 @@ public class BookService {
             Memo memo = memos.get(i);
 
             // 응답으로 보낼 내용에 더하기
-            memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+            memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), memo.getMarkPage() / book.getTotalPage(), memo.getMemoText(), memo.getUuid()));
         }
 
         return new ResponseEntity<>(
@@ -836,7 +836,7 @@ public class BookService {
             location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
 
             // 응답으로 보낼 내용에 더하기
-            bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), location, bookmark.getUuid()));
+            bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), bookmark.getMarkPage() / book.getTotalPage(), location, bookmark.getUuid()));
         }
 
         return new ResponseEntity<>(

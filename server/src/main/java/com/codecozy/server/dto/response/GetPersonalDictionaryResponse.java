@@ -1,7 +1,7 @@
 package com.codecozy.server.dto.response;
 
 public record GetPersonalDictionaryResponse(
-   String emoji,
+   int emoji,
    String name,
    String preview,
    String description
