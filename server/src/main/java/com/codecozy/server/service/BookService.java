@@ -534,6 +534,39 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 메모 수정
+    public ResponseEntity<DefaultResponse> modifyMemo(String token, String isbn, MemoRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 메모가 있으면
+        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (memo != null) {
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 그대로 메모 등록
+                memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+                memoRepository.save(memo);
+            }
+            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+                memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
+                memoRepository.save(memo);
+            }
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 메모 전체조회
     public ResponseEntity<DefaultResponse> getMemo(String token, String isbn) {
         // 응답으로 보낼 메모 List
@@ -689,6 +722,10 @@ public class BookService {
                 bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
                 bookmarkRepository.save(bookmark);
             }
+        }
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
+                    HttpStatus.CONFLICT);
         }
 
         return new ResponseEntity<>(

@@ -78,6 +78,12 @@ public class BookController {
         return bookService.addMemo(token, isbn, request);
     }
 
+    // 메모 수정 API
+    @PatchMapping("/modifyMemo/{isbn}")
+    public ResponseEntity modifyMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody MemoRequest request) {
+        return  bookService.modifyMemo(token, isbn, request);
+    }
+
     // 메모 전체조회 API
     @GetMapping("/getMemo/{isbn}")
     public ResponseEntity getMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
