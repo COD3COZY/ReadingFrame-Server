@@ -67,4 +67,10 @@ public class BookController {
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token, @RequestBody GetAllLocationRequest request) {
         return bookService.getAllLocation(token, request);
     }
+
+    // 최근 등록 위치 조회 API
+    @GetMapping("/getRecentLocation")
+    public ResponseEntity getRecentLocation(@RequestHeader("xAuthToken") String token) {
+        return bookService.getRecentLocation(token);
+    }
 }

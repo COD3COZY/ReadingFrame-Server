@@ -4,6 +4,7 @@ import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.GetAllLocationResponse;
+import com.codecozy.server.dto.response.GetRecentLocationResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
@@ -432,6 +433,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 전체 위치 조회
     public ResponseEntity<DefaultResponse> getAllLocation(String token, GetAllLocationRequest request) {
         // 응답으로 보낼 객체 리스트
         List<GetAllLocationResponse> locationInfo = new ArrayList<>();
@@ -495,6 +497,29 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", locationInfo),
+                HttpStatus.OK);
+    }
+
+    // 최근 등록 위치 조회
+    public ResponseEntity<DefaultResponse> getRecentLocation(String token) {
+        // 응답으로 보낼 객체 리스트
+        List<GetRecentLocationResponse> location = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
+        int size = memberLocationList.size();
+        for (int i = 0; i < size; i++) {
+            LocationList memberLocation = memberLocationList.get(i).getLocationList();
+
+            // 응답으로 보낼 객체에 추가
+            location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(), memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", location),
                 HttpStatus.OK);
     }
 }
