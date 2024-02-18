@@ -477,6 +477,28 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 인물사전 삭제
+    public ResponseEntity<DefaultResponse> deletePersonalDictionary(String token, String isbn, DeletePersonalDictionaryRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 해당 인물이 있는지 검색
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        if (personalDictionary != null) {
+            // 인물사전에서 삭제
+            personalDictionaryRepository.delete(personalDictionary);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+
+    }
+
     // 인물사전 전체조회
     public ResponseEntity<DefaultResponse> getPersonalDictionary(String token, String isbn) {
         // 응답으로 보낼 인물사전 List
@@ -856,7 +878,7 @@ public class BookService {
     }
 
     // 최근 등록 위치 삭제
-    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, deleteRecentLocationRequest request) {
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, DeleteRecentLocationRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);

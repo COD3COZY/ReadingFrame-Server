@@ -61,9 +61,15 @@ public class BookController {
     }
 
     // 인물사전 수정 API
-    @PatchMapping("modifyPersonalDictionary/{isbn}")
+    @PatchMapping("/modifyPersonalDictionary/{isbn}")
     public ResponseEntity modifyPersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody PersonalDictionaryRequest request) {
-        return  bookService.modifyPersonalDictionary(token, isbn, request);
+        return bookService.modifyPersonalDictionary(token, isbn, request);
+    }
+
+    // 인물사전 삭제 API
+    @DeleteMapping("/deletePersonalDictionary/{isbn}")
+    public ResponseEntity deletePersonalDictionary(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeletePersonalDictionaryRequest request) {
+        return bookService.deletePersonalDictionary(token, isbn, request);
     }
 
     // 인물사전 전체조회 API
@@ -121,7 +127,7 @@ public class BookController {
 
     // 최근 등록 위치 삭제 API
     @DeleteMapping("/deleteRecentLocation")
-    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody deleteRecentLocationRequest request) {
+    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody DeleteRecentLocationRequest request) {
         return bookService.deleteRecentLocation(token, request);
     }
 }
