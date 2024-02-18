@@ -4,6 +4,7 @@ import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.GetAllLocationResponse;
+import com.codecozy.server.dto.response.GetRecentLocationResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import com.codecozy.server.security.TokenProvider;
@@ -272,7 +273,7 @@ public class BookService {
     }
 
     // 책별 대표 위치 등록 (주소 테이블에 추가, 해당 책에 대표 위치 등록)
-    public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationCreateRequest request) {
+    public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationRequest request) {
         // 사용자 받아오기
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
@@ -319,6 +320,100 @@ public class BookService {
             // 검색 기록에 추가
             memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
             memberLocationRepository.save(memberLocation);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책별 대표 위치 변경
+    public ResponseEntity<DefaultResponse> patchMainLocation(String token, String isbn, LocationRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 자주 사용하는 위도, 경도 변수 따로 저장
+        double latitude = Double.parseDouble(request.latitude());
+        double longitude = Double.parseDouble(request.longitude());
+
+        // 장소명으로 해당 주소 찾기
+        LocationList locationList = locationRepository.findByPlaceName(request.placeName());
+        // 등록되지 않은 주소면 새로 등록
+        if(locationList == null) {
+            locationList = LocationList.create(request.placeName(), request.address(), latitude, longitude);
+            locationRepository.save(locationList);
+            locationList = locationRepository.findByPlaceName(request.placeName());
+        }
+
+        // 사용자 독서노트 검색
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        if (bookRecord != null) { // 해당 독서 노트가 있는 경우에만
+            // 쓰이지 않는 위치면 삭제하기 위해 변경 전 위치를 받아옴
+            LocationList deleteLocation = bookRecord.getLocationList();
+            bookRecord.setLocationList(locationList);
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+
+            if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                locationRepository.delete(deleteLocation);
+            }
+        }
+
+        // 사용자 최근 검색 위치에 등록
+        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+        // 최근 위치 검색 기록에 없으면 추가
+        if (memberLocation == null) {
+            // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+            if (memberLocationRepository.countAllByMember(member) >= 5) {
+                List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+                memberLocationRepository.delete(memberLocationList.get(0));
+            }
+
+            // 검색 기록에 추가
+            memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+            memberLocationRepository.save(memberLocation);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책별 대표 위치 삭제
+    public ResponseEntity<DefaultResponse> deleteMainLocation(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 독서노트 검색
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        if (bookRecord != null) {
+            // 대표위치 삭제 전 위치 객체 받아오기
+            LocationList locationList = bookRecord.getLocationList();
+
+            //  대표위치 삭제
+            bookRecord.deleteLocationList();
+            bookRecordRepository.save(bookRecord);
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            Long memberLocationCnt = memberLocationRepository.countByLocationList(locationList);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+
+            if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                locationRepository.delete(locationList);
+            }
         }
 
         return new ResponseEntity<>(
@@ -432,6 +527,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 전체 위치 조회
     public ResponseEntity<DefaultResponse> getAllLocation(String token, GetAllLocationRequest request) {
         // 응답으로 보낼 객체 리스트
         List<GetAllLocationResponse> locationInfo = new ArrayList<>();
@@ -495,6 +591,57 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", locationInfo),
+                HttpStatus.OK);
+    }
+
+    // 최근 등록 위치 조회
+    public ResponseEntity<DefaultResponse> getRecentLocation(String token) {
+        // 응답으로 보낼 객체 리스트
+        List<GetRecentLocationResponse> location = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
+        for (MemberLocation value : memberLocationList) {
+            LocationList memberLocation = value.getLocationList();
+
+            // 응답으로 보낼 객체에 추가
+            location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(), memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", location),
+                HttpStatus.OK);
+    }
+
+    // 최근 등록 위치 삭제
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, deleteRecentLocationRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 전체 위치에서 검색
+        LocationList locationList = locationRepository.findByLocationId(request.locationId());
+        if (locationList != null) {
+            // 최근 등록 위치에서 해당 위치가 있는지 확인하고 삭제
+            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            if (memberLocation != null) {
+                memberLocationRepository.delete(memberLocation);
+            }
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+
+            if (bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                locationRepository.delete(locationList);
+            }
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
 }

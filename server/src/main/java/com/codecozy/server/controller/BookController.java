@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/book")
 @RequiredArgsConstructor
@@ -40,8 +38,20 @@ public class BookController {
 
     // 책별 대표 위치 등록 API
     @PostMapping("/mainLocation/{isbn}")
-    public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationCreateRequest request) {
+    public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
         return bookService.addMainLocation(token, isbn, request);
+    }
+
+    // 책별 대표 위치 변경 API
+    @PatchMapping("/patchMainLocation/{isbn}")
+    public ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
+        return bookService.patchMainLocation(token, isbn, request);
+    }
+
+    // 책별 대표 위치 삭제 API
+    @DeleteMapping("/deleteMainLocation/{isbn}")
+    public ResponseEntity deleteMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteMainLocation(token, isbn);
     }
 
     // 인물사전 등록 API
@@ -66,5 +76,17 @@ public class BookController {
     @GetMapping("/getAllLocation")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token, @RequestBody GetAllLocationRequest request) {
         return bookService.getAllLocation(token, request);
+    }
+
+    // 최근 등록 위치 조회 API
+    @GetMapping("/getRecentLocation")
+    public ResponseEntity getRecentLocation(@RequestHeader("xAuthToken") String token) {
+        return bookService.getRecentLocation(token);
+    }
+
+    // 최근 등록 위치 삭제 API
+    @DeleteMapping("/deleteRecentLocation")
+    public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token, @RequestBody deleteRecentLocationRequest request) {
+        return bookService.deleteRecentLocation(token, request);
     }
 }

@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.request;
 
-public record LocationCreateRequest (
+public record LocationRequest(
    String placeName,
    String address,
    String latitude,

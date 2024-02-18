@@ -11,4 +11,6 @@ public interface MemberLocationRepository extends JpaRepository<MemberLocation, 
     long countAllByMember(Member member);
     MemberLocation findByMemberAndLocationList(Member member, LocationList locationList);
     List<MemberLocation> findByMemberOrderByDateAsc(Member member);
+    List<MemberLocation> findAllByMember(Member member);
+    Long countByLocationList(LocationList locationList);
 }
