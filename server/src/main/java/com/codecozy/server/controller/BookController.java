@@ -72,6 +72,7 @@ public class BookController {
         return bookService.addMemo(token, isbn, request);
     }
 
+    // 메모 전체조회 API
     @GetMapping("/getMemo/{isbn}")
     public ResponseEntity getMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         return bookService.getMemo(token, isbn);
@@ -81,6 +82,12 @@ public class BookController {
     @PostMapping("/bookmark/{isbn}")
     public ResponseEntity addBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
         return bookService.addBookmark(token, isbn, request);
+    }
+
+    // 책갈피 전체조회 API
+    @GetMapping("/getBookmark/{isbn}")
+    public  ResponseEntity getBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return  bookService.getBookmark(token, isbn);
     }
 
     // 전체 위치 조회 API

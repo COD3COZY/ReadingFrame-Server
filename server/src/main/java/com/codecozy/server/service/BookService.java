@@ -448,7 +448,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 인물사전 조회
+    // 인물사전 전체조회
     public ResponseEntity<DefaultResponse> getPersonalDictionary(String token, String isbn) {
         // 응답으로 보낼 인물사전 List
         List<GetPersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
@@ -505,7 +505,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 메모 조회
+    // 메모 전체조회
     public ResponseEntity<DefaultResponse> getMemo(String token, String isbn) {
         // 응답으로 보낼 메모 List
         List<GetMemoResponse> memoList = new ArrayList<>();
@@ -589,6 +589,39 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 전체조회
+    public ResponseEntity<DefaultResponse> getBookmark(String token, String isbn) {
+        // 응답으로 보낼 메모 List
+        List<GetBookmarkResponse> bookmarkList = new ArrayList<>();
+
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한 유저의 한 책에 대한 메모 전체 검색
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMemberAndBook(member, book);
+        for (int i = 0; i < bookmarks.size(); i++) {
+            Bookmark bookmark = bookmarks.get(i);
+
+            // 위치 List 저장
+            List<String> location = new ArrayList<>();
+            location.add(bookmark.getLocationList().getPlaceName());
+            location.add(bookmark.getLocationList().getAddress());
+            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
+            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
+
+            // 응답으로 보낼 내용에 더하기
+            bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), location, bookmark.getUuid()));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", bookmarkList),
                 HttpStatus.OK);
     }
 
