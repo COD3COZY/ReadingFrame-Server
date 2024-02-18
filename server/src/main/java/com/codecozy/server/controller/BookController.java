@@ -44,8 +44,14 @@ public class BookController {
 
     // 책별 대표 위치 변경 API
     @PatchMapping("/patchMainLocation/{isbn}")
-    public  ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
+    public ResponseEntity patchMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
         return bookService.patchMainLocation(token, isbn, request);
+    }
+
+    // 책별 대표 위치 삭제 API
+    @DeleteMapping("/deleteMainLocation/{isbn}")
+    public ResponseEntity deleteMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteMainLocation(token, isbn);
     }
 
     // 인물사전 등록 API

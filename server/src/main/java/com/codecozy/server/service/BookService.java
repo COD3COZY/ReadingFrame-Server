@@ -386,6 +386,40 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 책별 대표 위치 삭제
+    public ResponseEntity<DefaultResponse> deleteMainLocation(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 독서노트 검색
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        if (bookRecord != null) {
+            // 대표위치 삭제 전 위치 객체 받아오기
+            LocationList locationList = bookRecord.getLocationList();
+
+            //  대표위치 삭제
+            bookRecord.deleteLocationList();
+            bookRecordRepository.save(bookRecord);
+
+            // 다른 곳에서 사용중이 아닌 위치면 삭제
+            Long memberLocationCnt = memberLocationRepository.countByLocationList(locationList);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+
+            if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                locationRepository.delete(locationList);
+            }
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
 
     // 인물사전 등록
     public ResponseEntity<DefaultResponse> addpersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
