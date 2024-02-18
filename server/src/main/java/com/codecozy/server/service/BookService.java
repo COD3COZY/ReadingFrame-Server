@@ -351,16 +351,18 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) { // 해당 독서 노트가 있는 경우에만
             // 쓰이지 않는 위치면 삭제하기 위해 변경 전 위치를 받아옴
-            LocationList deleteLocation = bookRecord.getLocationList();
+            LocationList preLocation = bookRecord.getLocationList();
             bookRecord.setLocationList(locationList);
 
-            // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+            if (preLocation != null) {
+                // 다른 곳에서 사용중이 아닌 위치면 삭제
+                Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
 
-            if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(deleteLocation);
+                if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                    locationRepository.delete(preLocation);
+                }
             }
         }
 
@@ -398,19 +400,19 @@ public class BookService {
 
         if (bookRecord != null) {
             // 대표위치 삭제 전 위치 객체 받아오기
-            LocationList locationList = bookRecord.getLocationList();
+            LocationList preLocation = bookRecord.getLocationList();
 
             //  대표위치 삭제
             bookRecord.deleteLocationList();
             bookRecordRepository.save(bookRecord);
 
             // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long memberLocationCnt = memberLocationRepository.countByLocationList(locationList);
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+            Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
 
             if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(locationList);
+                locationRepository.delete(preLocation);
             }
         }
 
@@ -612,6 +614,81 @@ public class BookService {
         else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
             bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
             bookmarkRepository.save(bookmark);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책갈피 수정
+    public ResponseEntity<DefaultResponse> modifyBookmark(String token, String isbn, BookmarkRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 책갈피가 있으면
+        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        if (bookmark != null) {
+
+            // 수정할 위치를 받았으면
+            LocationList locationList = null;
+            if (request.mainLocation() != null) {
+                // 자주 사용하는 변수 따로 선언
+                double latitude = Double.parseDouble(request.mainLocation().latitude());
+                double longitude = Double.parseDouble(request.mainLocation().longitude());
+
+                // 변경 전 위치가 아무데도 사용중이 아니면 삭제하기 위해 받아옴
+                LocationList preLocation = bookmark.getLocationList();
+
+                // 새로 받은 위치가 주소 테이블에 없으면 등록
+                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                if (locationList == null) {
+                    locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                    locationRepository.save(locationList);
+                    locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                }
+
+                // 사용자 최근 검색 위치에 등록
+                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+                // 최근 위치 검색 기록에 없으면 추가
+                if (memberLocation == null) {
+                    // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
+                    if (memberLocationRepository.countAllByMember(member) >= 5) {
+                        List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+                        memberLocationRepository.delete(memberLocationList.get(0));
+                    }
+
+                    // 검색 기록에 추가
+                    memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
+                    memberLocationRepository.save(memberLocation);
+                }
+
+                if (preLocation != null) {
+                    // 다른 곳에서 사용중이 아닌 위치면 삭제
+                    Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
+                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
+                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
+
+                    if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                        locationRepository.delete(preLocation);
+                    }
+                }
+            }
+
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 그대로 책갈피 등록
+                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+                bookmarkRepository.save(bookmark);
+            }
+            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
+                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
+                bookmarkRepository.save(bookmark);
+            }
         }
 
         return new ResponseEntity<>(

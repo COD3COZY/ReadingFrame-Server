@@ -90,6 +90,11 @@ public class BookController {
         return bookService.addBookmark(token, isbn, request);
     }
 
+    @PatchMapping("/modifyBookmark/{isbn}")
+    public ResponseEntity modifyBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookmarkRequest request) {
+        return bookService.modifyBookmark(token, isbn, request);
+    }
+
     // 책갈피 전체조회 API
     @GetMapping("/getBookmark/{isbn}")
     public  ResponseEntity getBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
