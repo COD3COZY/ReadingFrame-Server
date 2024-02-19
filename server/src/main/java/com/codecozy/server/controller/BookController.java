@@ -56,6 +56,12 @@ public class BookController {
         return bookService.modifyStartDate(token, isbn, startDateMap.get("startDate"));
     }
 
+    // 마지막 읽은 날짜 변경 API
+    @PatchMapping("/modifyRecentDate/{isbn}")
+    public ResponseEntity modifyRecentDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, String> recentDateMap) {
+        return bookService.modifyRecentDate(token, isbn, recentDateMap.get("recentDate"));
+    }
+
     // 책별 대표 위치 등록 API
     @PostMapping("/mainLocation/{isbn}")
     public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {

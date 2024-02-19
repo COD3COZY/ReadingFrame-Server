@@ -9,6 +9,7 @@ import com.codecozy.server.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -361,6 +362,34 @@ public class BookService {
 
         // 읽기 시작한 날짜 변경
         if (bookRecord != null) bookRecord.setStartDate(startDate);
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 마지막 읽은 날짜 (최근 날짜) 변경
+    public ResponseEntity<DefaultResponse> modifyRecentDate(String token, String isbn, String recentDate) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 독서노트 찾기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 마지막 읽은 날짜 변경
+        if (bookRecord != null) bookRecord.setRecentDate(recentDate);
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
