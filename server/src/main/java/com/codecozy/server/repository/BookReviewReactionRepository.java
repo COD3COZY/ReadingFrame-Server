@@ -6,6 +6,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BookReviewReactionRepository extends JpaRepository<BookReviewReaction, BookReview> {
     BookReviewReaction findByBookReview(BookReview bookReview);
-
-
 }

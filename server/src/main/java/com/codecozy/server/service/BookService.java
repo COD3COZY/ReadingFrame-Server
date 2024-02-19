@@ -88,7 +88,7 @@ public class BookService {
         }
 
         // 독서노트에 등록
-        BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.isHidden(), request.startDate(), request.recentDate());
+        BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -613,7 +613,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.characterName());
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);
@@ -666,16 +666,8 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        // 종이책이면
-        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
-            // 페이지 그대로 메모 등록
-            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
-            memoRepository.save(memo);
-        }
-        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
-            memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
-            memoRepository.save(memo);
-        }
+        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+        memoRepository.save(memo);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -694,16 +686,8 @@ public class BookService {
         // 메모가 있으면
         Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (memo != null) {
-            // 종이책이면
-            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
-                // 페이지 그대로 메모 등록
-                memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
-                memoRepository.save(memo);
-            }
-            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
-                memo = Memo.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), request.date(), request.memoText());
-                memoRepository.save(memo);
-            }
+            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+            memoRepository.save(memo);
         }
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
@@ -753,8 +737,22 @@ public class BookService {
         for (int i = 0; i < memos.size(); i++) {
             Memo memo = memos.get(i);
 
-            // 응답으로 보낼 내용에 더하기
-            memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), memo.getMarkPage() / book.getTotalPage(), memo.getMemoText(), memo.getUuid()));
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 -> 퍼센트 계산
+                int percent = (int) Math.round(100.0 * memo.getMarkPage() / book.getTotalPage());
+
+                // 응답으로 보낼 내용에 더하기
+                memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+            }
+            else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
+                // 페이지 -> 퍼센트 계산
+                int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
+
+                // 응답으로 보낼 내용에 더하기
+                memoList.add(new GetMemoResponse(memo.getDate(), page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+
+            }
         }
 
         return new ResponseEntity<>(
@@ -807,16 +805,8 @@ public class BookService {
             }
         }
 
-        // 종이책이면
-        if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
-            // 페이지 그대로 책갈피 등록
-            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
-            bookmarkRepository.save(bookmark);
-        }
-        else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
-            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
-            bookmarkRepository.save(bookmark);
-        }
+        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+        bookmarkRepository.save(bookmark);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -881,16 +871,9 @@ public class BookService {
                 }
             }
 
-            // 종이책이면
-            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
-                // 페이지 그대로 책갈피 등록
-                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
-                bookmarkRepository.save(bookmark);
-            }
-            else { // 전자책, 오디오북이면 퍼센트 계산해서 메모 등록
-                bookmark = Bookmark.create(member, book, request.uuid(), request.markPage() / book.getTotalPage(), locationList, request.date());
-                bookmarkRepository.save(bookmark);
-            }
+            // 페이지 그대로 책갈피 등록
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+            bookmarkRepository.save(bookmark);
         }
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
@@ -961,8 +944,21 @@ public class BookService {
             location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
             location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
 
-            // 응답으로 보낼 내용에 더하기
-            bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), bookmark.getMarkPage() / book.getTotalPage(), location, bookmark.getUuid()));
+            // 종이책이면
+            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+                // 페이지 -> 퍼센트 계산
+                int percent = (int) Math.round(100.0 * bookmark.getMarkPage() / book.getTotalPage());
+
+                // 응답으로 보낼 내용에 더하기
+                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
+            }
+            else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
+                // 페이지 -> 퍼센트 계산
+                int page = (int) Math.round(book.getTotalPage() / 100.0 / bookmark.getMarkPage());
+
+                // 응답으로 보낼 내용에 더하기
+                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+            }
         }
 
         return new ResponseEntity<>(

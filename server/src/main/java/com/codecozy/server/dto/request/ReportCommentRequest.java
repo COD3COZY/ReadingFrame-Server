@@ -1,5 +1,6 @@
 package com.codecozy.server.dto.request;
 
 public record ReportCommentRequest(
-        int reportType
+        int reportType,
+        String name
 ) {}
