@@ -19,3 +19,8 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: true
         show_sql: true
+
+  # 콘솔 색상 출력을 위함
+  output:
+    ansi:
+      enabled: always
