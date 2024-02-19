@@ -39,7 +39,7 @@ public class BookReviewReaction {
     @Column(name = "report_spam_count", nullable = false)
     private int reportSpamCount;
 
-    public void setCountUp(int reactionCode) {
+    public void setReactionCountUp(int reactionCode) {
         if (reactionCode == 0) heartCount += 1;
         else if (reactionCode == 1) goodCount += 1;
         else if (reactionCode == 2) wowCount += 1;
@@ -47,17 +47,18 @@ public class BookReviewReaction {
         else if (reactionCode == 4) angryCount += 1;
     }
 
-    public void setCountDown(int reactionCode) {
+    public void setReportCountUp(int reportType) {
+        if (reportType == 0) reportHatefulCount += 1;
+        else if (reportType == 1) reportSpamCount += 1;
+    }
+
+    public void setReactionCountDown(int reactionCode) {
         if (reactionCode == 0) heartCount -= 1;
         else if (reactionCode == 1) goodCount -= 1;
         else if (reactionCode == 2) wowCount -= 1;
         else if (reactionCode == 3) sadCount -= 1;
         else if (reactionCode == 4) angryCount -= 1;
     }
-
-    public void setReportHatefulCount() { reportHatefulCount += 1; }
-
-    public void setReportSpamCountCount() { reportSpamCount += 1; }
 
     public static BookReviewReaction create(BookReview bookReview) {
         return BookReviewReaction.builder()

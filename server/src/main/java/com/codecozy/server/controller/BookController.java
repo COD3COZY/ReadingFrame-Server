@@ -28,14 +28,20 @@ public class BookController {
 
     // 한줄평 반응 추가 API
     @PostMapping("/reaction/{isbn}")
-    public ResponseEntity reactionComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReactionCommentRequest request) {
+    public ResponseEntity reactionComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody CommentReactionRequest request) {
         return bookService.reactionComment(token, isbn, request);
     }
 
     // 한줄평 반응 수정 API
     @PatchMapping("/modifyReaction/{isbn}")
-    public ResponseEntity modifyReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReactionCommentRequest request) {
+    public ResponseEntity modifyReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody CommentReactionRequest request) {
         return bookService.modifyReaction(token, isbn, request);
+    }
+
+    // 한줄평 반응 삭제 API
+    @DeleteMapping("/deleteReaction/{isbn}")
+    public ResponseEntity deleteReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteReactionRequest request) {
+        return bookService.deleteReaction(token, isbn, request);
     }
 
     // 리뷰 작성 API
