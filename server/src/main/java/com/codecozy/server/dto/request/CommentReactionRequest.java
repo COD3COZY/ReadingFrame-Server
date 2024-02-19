@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.request;
 
-public record ReactionCommentRequest(
+public record CommentReactionRequest(
     String name,
-    long commentReaction
+    int commentReaction
 ) {}

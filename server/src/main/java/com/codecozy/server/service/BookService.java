@@ -9,7 +9,6 @@ import com.codecozy.server.security.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -99,18 +98,17 @@ public class BookService {
     // 한줄평 신고
     public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기
-        // 문제! 이러면 본인이 등록한 한줄평만 검색할 수 있음. 사용자 닉네임을 받아와서 닉네임으로 한줄평 사용자 찾도록 수정
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
-
+        Member commentMember = memberRepository.findByNickname(request.name());
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
-        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
@@ -127,24 +125,21 @@ public class BookService {
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
-        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
         // 한줄평 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
-            // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
+            // 반응(신고) 여부, 인 인스턴스 생성 및 저장
             bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
             bookReviewReviewerRepository.save(bookReviewReviewer);
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
 
-        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
-        if (request.reportType() == 0 && !bookReviewReviewer.isReportHateful()) {
-            bookReviewReaction.setReportHatefulCount();
-            bookReviewReviewer.setIsReportHatefulReverse();
-        }
-        else if (request.reportType() == 1 && !bookReviewReviewer.isReportSpam()) {
-            bookReviewReaction.setReportSpamCountCount();
-            bookReviewReviewer.setIsReportSpamReverse();
+        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, 신고 여부와 종류 수정
+        if (!bookReviewReviewer.isReport()) {
+            bookReviewReaction.setReportCountUp(request.reportType());
+            bookReviewReviewer.setIsReportReverse();
+            bookReviewReviewer.setReportType(request.reportType());
         }
 
         return new ResponseEntity<>(
@@ -153,20 +148,19 @@ public class BookService {
     }
 
     // 한줄평 반응 추가
-    public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, ReactionCommentRequest request) {
+    public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, CommentReactionRequest request) {
         // 사용자 받아오기
-        // 문제! 이러면 본인이 등록한 한줄평만 검색할 수 있음. 사용자 닉네임을 받아와서 닉네임으로 한줄평 사용자 찾도록 수정
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
-
+        Member commentMember = memberRepository.findByNickname(request.name());
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
-        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
@@ -183,36 +177,130 @@ public class BookService {
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
-        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-        // 한줄평 반응을 처음 남기는 유저라면
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+        // 현재 한줄평에 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
-            // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
+            // 반응 여부 false, 종류 0인 인스턴스 생성 및 저장
             bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
             bookReviewReviewerRepository.save(bookReviewReviewer);
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
         
-        // 코드에 맞는 반응 카운트 올리고, BOOK_REVIEW_REVIEWER (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
-        if (request.commentReaction() == 0 && !bookReviewReviewer.isHeart()) {
-            bookReviewReaction.setHeartCount();
-            bookReviewReviewer.setIsHeartReverse();
+        // 코드에 맞는 반응 카운트 올리고, 반응 여부와 종류 설정
+        if (!bookReviewReviewer.isReaction()) {
+            // 카운트 올리기
+            bookReviewReaction.setReactionCountUp(request.commentReaction());
+            
+            // 반응 여부, 종류 설정
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(request.commentReaction());
+            bookReviewReviewerRepository.save(bookReviewReviewer);
         }
-        else if (request.commentReaction() == 1 && !bookReviewReviewer.isGood()) {
-            bookReviewReaction.setGoodCount();
-            bookReviewReviewer.setIsGoodReverse();
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 한줄평 반응 수정
+    public ResponseEntity<DefaultResponse> modifyReaction(String token, String isbn, CommentReactionRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
+        Member commentMember = memberRepository.findByNickname(request.name());
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
+
+        if (bookReview != null) {
+            // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
+            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
+            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+
+            if ((bookReviewReaction != null) && (bookReviewReviewer != null)) {
+                if (bookReviewReviewer.isReaction()) { // 현재 한줄평에 반응을 남긴적이 있으면
+                    // 기존 반응 카운트 하나 내리기
+                    bookReviewReaction.setReactionCountDown(bookReviewReviewer.getReactionCode());
+
+                    // 새 반응 종류 저장하기
+                    bookReviewReviewer.setReactionCode(request.commentReaction());
+                    // 새 반응 카운트 하나 올리기
+                    bookReviewReaction.setReactionCountUp(request.commentReaction());
+                }
+                else {
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
+                            HttpStatus.CONFLICT);
+                }
+            }
+            else {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
+                        HttpStatus.CONFLICT);
+            }
         }
-        else if (request.commentReaction() == 2 && !bookReviewReviewer.isWow()) {
-            bookReviewReaction.setWowCount();
-            bookReviewReviewer.setIsWowReverse();
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
+                    HttpStatus.CONFLICT);
         }
-        else if (request.commentReaction() == 3 && !bookReviewReviewer.isSad()) {
-            bookReviewReaction.setSadCount();
-            bookReviewReviewer.setIsSadReverse();
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 한줄평 반응 삭제
+    public ResponseEntity<DefaultResponse> deleteReaction(String token, String isbn, DeleteReactionRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
+        Member commentMember = memberRepository.findByNickname(request.name());
+
+        // isbn으로 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
+
+        if (bookReview != null) {
+            // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
+            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
+            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+
+            if ((bookReviewReaction != null) && (bookReviewReviewer != null)) {
+                if (bookReviewReviewer.isReaction()) { // 현재 한줄평에 반응을 남긴적이 있으면
+                    // 기존 반응 카운트 하나 내리기
+                    bookReviewReaction.setReactionCountDown(bookReviewReviewer.getReactionCode());
+
+                    // 반응이 하나도 없으면 반응 카운트 레코드 삭제
+                    int cnt = bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
+                            + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount();
+                    if (cnt <= 0) bookReviewReactionRepository.delete(bookReviewReaction);
+
+                    // 신고 여부도 없다면 반응 여부, 종류 레코드 삭제
+                    if (!bookReviewReviewer.isReport()) bookReviewReviewerRepository.delete(bookReviewReviewer);
+                }
+                else {
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
+                            HttpStatus.CONFLICT);
+                }
+            }
+            else {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
+                        HttpStatus.CONFLICT);
+            }
         }
-        else if (request.commentReaction() == 4 && !bookReviewReviewer.isAngry()) {
-            bookReviewReaction.setAngryCount();
-            bookReviewReviewer.setIsAngryReverse();
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
+                    HttpStatus.CONFLICT);
         }
 
         return new ResponseEntity<>(
