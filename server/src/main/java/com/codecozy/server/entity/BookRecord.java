@@ -54,6 +54,10 @@ public class BookRecord {
 
     public void setLocationList(LocationList locationList) { this.locationList = locationList; }
 
+    public void setStartDate(String startDate) { this.startDate = startDate; }
+
+    public void setRecentDate(String recentDate) { this.recentDate = recentDate; }
+
     public void deleteLocationList() { this.locationList = null; }
 
     public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, boolean isHidden, String startDate, String recentDate) {

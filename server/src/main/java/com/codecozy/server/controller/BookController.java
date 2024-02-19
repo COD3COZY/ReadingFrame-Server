@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/book")
 @RequiredArgsConstructor
@@ -34,6 +36,30 @@ public class BookController {
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
         return bookService.createReview(token, isbn, request);
+    }
+
+    // 리뷰 전체 삭제 API
+    @DeleteMapping("/deleteReview/{isbn}")
+    public ResponseEntity deleteReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteReview(token, isbn);
+    }
+
+    // 한줄평 삭제 API
+    @DeleteMapping("/deleteComment/{isbn}")
+    public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteComment(token, isbn);
+    }
+
+    // 읽기 시작한 날짜 변경 API
+    @PatchMapping("/modifyStartDate/{isbn}")
+    public ResponseEntity modifyStartDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, String> startDateMap) {
+        return bookService.modifyStartDate(token, isbn, startDateMap.get("startDate"));
+    }
+
+    // 마지막 읽은 날짜 변경 API
+    @PatchMapping("/modifyRecentDate/{isbn}")
+    public ResponseEntity modifyRecentDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, String> recentDateMap) {
+        return bookService.modifyRecentDate(token, isbn, recentDateMap.get("recentDate"));
     }
 
     // 책별 대표 위치 등록 API
@@ -90,6 +116,7 @@ public class BookController {
         return bookService.modifyMemo(token, isbn, request);
     }
 
+    // 메모 삭제 API
     @DeleteMapping("/deleteMemo/{isbn}")
     public ResponseEntity deleteMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody DeleteUuidRequest request) {
         return bookService.deleteMemo(token, isbn, request);
