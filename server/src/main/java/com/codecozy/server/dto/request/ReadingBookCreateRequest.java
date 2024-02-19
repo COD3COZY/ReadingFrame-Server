@@ -5,7 +5,6 @@ public record ReadingBookCreateRequest(
     int bookType,
     LocationRequest mainLocation,
     boolean isMine,
-    boolean isHidden,
     String startDate,
     String recentDate,
     BookCreateRequest bookInformation

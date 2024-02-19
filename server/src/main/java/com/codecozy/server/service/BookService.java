@@ -88,7 +88,7 @@ public class BookService {
         }
 
         // 독서노트에 등록
-        BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.isHidden(), request.startDate(), request.recentDate());
+        BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -613,7 +613,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.characterName());
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);

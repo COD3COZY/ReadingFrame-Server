@@ -47,7 +47,7 @@ public class BookRecord {
     @Column(name = "recent_date", length = 10)
     private String recentDate;
 
-    @Column(name = "key_word")
+    @Column(name = "key_word", length = 15)
     private String keyWord;
 
     public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
@@ -60,7 +60,7 @@ public class BookRecord {
 
     public void deleteLocationList() { this.locationList = null; }
 
-    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, boolean isHidden, String startDate, String recentDate) {
+    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, String startDate, String recentDate) {
         return BookRecord.builder()
                 .member(member)
                 .book(book)
@@ -68,7 +68,7 @@ public class BookRecord {
                 .bookType(bookType)
                 .locationList(locationList)
                 .isMine(isMine)
-                .isHidden(isHidden)
+                .isHidden(false)
                 .startDate(startDate)
                 .recentDate(recentDate)
                 .keyWord(null)
