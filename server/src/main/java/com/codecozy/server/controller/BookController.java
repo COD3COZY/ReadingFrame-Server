@@ -32,6 +32,12 @@ public class BookController {
         return bookService.reactionComment(token, isbn, request);
     }
 
+    // 한줄평 반응 수정 API
+    @PatchMapping("/modifyReaction/{isbn}")
+    public ResponseEntity modifyReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReactionCommentRequest request) {
+        return bookService.modifyReaction(token, isbn, request);
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
