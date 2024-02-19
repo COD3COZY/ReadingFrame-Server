@@ -39,14 +39,17 @@ public class BookService {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
-        // 자주 사용되는 객체 재사용 용도로 선언
+        // 책 검색
         Book book = bookRepository.findByIsbn(isbn);
+
+        // 자주 사용되는 객체 재사용 용도로 선언
         LocationList locationList = null;
         MemberLocation memberLocation = null;
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
-        if (bookRecordRepository.findByMemberAndBook(member, book) != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 도서입니다."),
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        if (bookRecord != null && bookRecord.getBookType() != -1) { // -1: reading_status가 '읽고싶은'(0)인 경우
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 독서 노트입니다."),
                     HttpStatus.CONFLICT);
         }
 
@@ -87,7 +90,7 @@ public class BookService {
         }
 
         // 독서노트에 등록
-        BookRecord bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
+        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -146,6 +149,36 @@ public class BookService {
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
+
+    // 읽고싶은 책 등록
+    public ResponseEntity<DefaultResponse> wantToRead(String token, String isbn, BookCreateRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 책 검색
+        Book book = bookRepository.findByIsbn(isbn);
+        // isbn을 이용해 책 등록이 중복되었는지 검색
+        if (book == null) {
+            // 등록되지 않은 책이면 새로 등록
+            book = Book.create(isbn, request.cover(), request.title(), request.author(), request.category(), Integer.parseInt(request.totalPage()));
+            bookRepository.save(book);
+            book = bookRepository.findByIsbn(isbn);
+        }
+
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        if (bookRecord != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "독서 노트에 등록한 도서는 읽고 싶은 도서로 등록할 수 없습니다."),
+                    HttpStatus.CONFLICT);
+        }
+        // 읽고싶은 책 등록 시에는 독서노트 생성 전이므로 member, book, reading_status 외에는 임시 데이터로 book_record 레코드 생성 후 저장
+        bookRecordRepository.save(BookRecord.create(member, book));
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
 
     // 한줄평 반응 추가
     public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, CommentReactionRequest request) {

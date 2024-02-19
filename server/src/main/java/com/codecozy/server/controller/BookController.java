@@ -20,10 +20,22 @@ public class BookController {
         return bookService.createBook(token, isbn, request);
     }
 
-    // 신고하기 API
-    @PostMapping("/report/{isbn}")
-    public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReportCommentRequest request) {
-        return bookService.reportComment(token, isbn, request);
+    // 리뷰 작성 API
+    @PostMapping("/review/{isbn}")
+    public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
+        return bookService.createReview(token, isbn, request);
+    }
+
+    // 리뷰 전체 삭제 API
+    @DeleteMapping("/deleteReview/{isbn}")
+    public ResponseEntity deleteReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteReview(token, isbn);
+    }
+
+    // 한줄평 삭제 API
+    @DeleteMapping("/deleteComment/{isbn}")
+    public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteComment(token, isbn);
     }
 
     // 한줄평 반응 추가 API
@@ -44,22 +56,16 @@ public class BookController {
         return bookService.deleteReaction(token, isbn, request);
     }
 
-    // 리뷰 작성 API
-    @PostMapping("/review/{isbn}")
-    public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
-        return bookService.createReview(token, isbn, request);
+    // 신고하기 API
+    @PostMapping("/report/{isbn}")
+    public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReportCommentRequest request) {
+        return bookService.reportComment(token, isbn, request);
     }
 
-    // 리뷰 전체 삭제 API
-    @DeleteMapping("/deleteReview/{isbn}")
-    public ResponseEntity deleteReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
-        return bookService.deleteReview(token, isbn);
-    }
-
-    // 한줄평 삭제 API
-    @DeleteMapping("/deleteComment/{isbn}")
-    public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
-        return bookService.deleteComment(token, isbn);
+    // 읽고싶은 책 등록 API
+    @PostMapping("/wantToRead/{isbn}")
+    public ResponseEntity wantToRead(@RequestHeader ("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody BookCreateRequest request) {
+        return bookService.wantToRead(token, isbn, request);
     }
 
     // 읽기 시작한 날짜 변경 API
