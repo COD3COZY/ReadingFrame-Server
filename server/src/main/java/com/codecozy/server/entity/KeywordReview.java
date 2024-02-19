@@ -28,6 +28,8 @@ public class KeywordReview {
     @Column(name = "select_review_code", length = 14, nullable = false)
     private String selectReviewCode;
 
+    public void setSelectReviewCode(String selectReviewCode) { this.selectReviewCode = selectReviewCode; }
+
     public static KeywordReview create(Member member, Book book, String selectReviewCode) {
         return KeywordReview.builder()
                 .member(member)

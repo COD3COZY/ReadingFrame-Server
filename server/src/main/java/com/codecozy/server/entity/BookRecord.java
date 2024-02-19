@@ -60,6 +60,21 @@ public class BookRecord {
 
     public void deleteLocationList() { this.locationList = null; }
 
+    public static BookRecord create(Member member, Book book) {
+        return BookRecord.builder()
+                .member(member)
+                .book(book)
+                .readingStatus(0)
+                .bookType(-1)
+                .locationList(null)
+                .isMine(false)
+                .isHidden(false)
+                .startDate("1970/01/01")
+                .recentDate(null)
+                .keyWord(null)
+                .build();
+    }
+
     public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, String startDate, String recentDate) {
         return BookRecord.builder()
                 .member(member)
