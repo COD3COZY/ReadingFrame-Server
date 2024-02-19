@@ -37,6 +37,8 @@ public class BookReview {
     @OneToMany(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;
 
+    public void setReviewText(String reviewText) { this.reviewText = reviewText; }
+
     public static BookReview create(Member member, Book book, String reviewText) {
         return BookReview.builder()
                 .member(member)

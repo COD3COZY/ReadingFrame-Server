@@ -26,6 +26,12 @@ public class BookController {
         return bookService.createReview(token, isbn, request);
     }
 
+    // 리뷰 전체 수정 API
+    @PatchMapping("/modifyReview/{isbn}")
+    public ResponseEntity modifyReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
+        return bookService.modifyReview(token, isbn, request);
+    }
+
     // 리뷰 전체 삭제 API
     @DeleteMapping("/deleteReview/{isbn}")
     public ResponseEntity deleteReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
