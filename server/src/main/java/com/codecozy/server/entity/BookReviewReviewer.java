@@ -31,47 +31,30 @@ public class BookReviewReviewer {
     @JoinColumn(name = "reviewer_id", referencedColumnName = "member_id")
     private Member member;
 
-    @Column(name = "is_heart", nullable = false)
-    private boolean isHeart;
+    @Column(name = "is_reaction", nullable = false)
+    private boolean isReaction;
 
-    @Column(name = "is_good", nullable = false)
-    private boolean isGood;
+    @Column(name = "reaction_code", nullable = false)
+    private int reactionCode;
 
-    @Column(name = "is_wow", nullable = false)
-    private boolean isWow;
+    @Column(name = "is_report", nullable = false)
+    private boolean isReport;
 
-    @Column(name = "is_sad", nullable = false)
-    private boolean isSad;
+    @Column(name = "report_type", nullable = false)
+    private int reportType;
 
-    @Column(name = "is_angry", nullable = false)
-    private boolean isAngry;
+    public void setIsReactionReverse() { isReaction = !isReaction; }
+    public void setReactionCode(int reactionCode) { this.reactionCode = reactionCode; }
 
-    @Column(name = "is_report_hateful", nullable = false)
-    private boolean isReportHateful;
-
-    @Column(name = "is_report_spam", nullable = false)
-    private boolean isReportSpam;
-
-    public void setIsHeartReverse() { isHeart = !isHeart; }
-    public void setIsGoodReverse() { isGood = !isGood; }
-    public void setIsWowReverse() { isWow = !isWow; }
-    public void setIsSadReverse() { isSad = !isSad; }
-    public void setIsAngryReverse() { isAngry = !isAngry; }
-    public void setIsReportHatefulReverse() { isReportHateful = !isReportHateful; }
-    public void setIsReportSpamReverse() { isReportSpam = !isReportSpam; }
-
+    public void setIsReportReverse() { isReport = !isReport; }
+    public void setReportType(int reportType) { this.reportType = reportType; }
 
     public static BookReviewReviewer create(BookReview bookReview, Member member) {
         return BookReviewReviewer.builder()
                 .bookReview(bookReview)
                 .member(member)
-                .isHeart(false)
-                .isGood(false)
-                .isWow(false)
-                .isSad(false)
-                .isAngry(false)
-                .isReportHateful(false)
-                .isReportSpam(false)
+                .isReaction(false)
+                .reactionCode(0)
                 .build();
     }
 }

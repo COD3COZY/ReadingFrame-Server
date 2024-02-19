@@ -104,13 +104,13 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
-
+        Member commentMember = memberRepository.findByNickname(request.name());
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
-        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
@@ -130,21 +130,23 @@ public class BookService {
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         // 한줄평 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
-            // 모든 반응, 신고 플래그가 false인 인스턴스 생성 및 저장
+            // 반응(신고) 여부, 인 인스턴스 생성 및 저장
             bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
             bookReviewReviewerRepository.save(bookReviewReviewer);
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
 
-        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
-        if (request.reportType() == 0 && !bookReviewReviewer.isReportHateful()) {
+        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, 신고 여부와 종류 수정
+        if (request.reportType() == 0 && !bookReviewReviewer.isReport()) {
             bookReviewReaction.setReportHatefulCount();
-            bookReviewReviewer.setIsReportHatefulReverse();
+            bookReviewReviewer.setIsReportReverse();
+            bookReviewReviewer.setReportType(0);
         }
-        else if (request.reportType() == 1 && !bookReviewReviewer.isReportSpam()) {
+        else if (request.reportType() == 1 && !bookReviewReviewer.isReport()) {
             bookReviewReaction.setReportSpamCountCount();
-            bookReviewReviewer.setIsReportSpamReverse();
+            bookReviewReviewer.setIsReportReverse();
+            bookReviewReviewer.setReportType(1);
         }
 
         return new ResponseEntity<>(
@@ -160,13 +162,13 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
-
+        Member commentMember = memberRepository.findByNickname(request.name());
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        // 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
-        BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+        // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
+        BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
@@ -193,26 +195,31 @@ public class BookService {
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
         
-        // 코드에 맞는 반응 카운트 올리고, BOOK_REVIEW_REVIEWER (한줄평을 등록한 유저) 테이블에서 반응 여부 수정
-        if (request.commentReaction() == 0 && !bookReviewReviewer.isHeart()) {
+        // 코드에 맞는 반응 카운트 올리고, 반응 여부와 종류 수정
+        if (request.commentReaction() == 0 && !bookReviewReviewer.isReaction()) {
             bookReviewReaction.setHeartCount();
-            bookReviewReviewer.setIsHeartReverse();
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(0);
         }
-        else if (request.commentReaction() == 1 && !bookReviewReviewer.isGood()) {
+        else if (request.commentReaction() == 1 && !bookReviewReviewer.isReaction()) {
             bookReviewReaction.setGoodCount();
-            bookReviewReviewer.setIsGoodReverse();
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(1);
         }
-        else if (request.commentReaction() == 2 && !bookReviewReviewer.isWow()) {
+        else if (request.commentReaction() == 2 && !bookReviewReviewer.isReaction()) {
             bookReviewReaction.setWowCount();
-            bookReviewReviewer.setIsWowReverse();
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(2);
         }
-        else if (request.commentReaction() == 3 && !bookReviewReviewer.isSad()) {
+        else if (request.commentReaction() == 3 && !bookReviewReviewer.isReaction()) {
             bookReviewReaction.setSadCount();
-            bookReviewReviewer.setIsSadReverse();
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(3);
         }
-        else if (request.commentReaction() == 4 && !bookReviewReviewer.isAngry()) {
+        else if (request.commentReaction() == 4 && !bookReviewReviewer.isReaction()) {
             bookReviewReaction.setAngryCount();
-            bookReviewReviewer.setIsAngryReverse();
+            bookReviewReviewer.setIsReactionReverse();
+            bookReviewReviewer.setReactionCode(4);
         }
 
         return new ResponseEntity<>(
