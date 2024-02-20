@@ -21,4 +21,11 @@ public class BookshelfController {
                                           @PathVariable("bookshelfType") int bookshelfType) {
         return bookshelfService.getAllBookshelf(token, bookshelfType);
     }
+
+    // 책장 리스트용 조회
+    @GetMapping("/detail/{bookshelfCode}")
+    public ResponseEntity getDetailBookshelf(@RequestHeader("xAuthToken") String token,
+                                             @PathVariable("bookshelfCode") String bookshelfCode) {
+        return bookshelfService.getDetailBookshelf(token, bookshelfCode);
+    }
 }
