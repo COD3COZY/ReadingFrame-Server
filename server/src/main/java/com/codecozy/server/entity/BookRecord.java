@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Getter
@@ -46,6 +47,10 @@ public class BookRecord {
 
     @Column(name = "recent_date", length = 10)
     private String recentDate;
+
+    @ColumnDefault("0")
+    @Column(name = "mark_page", nullable = false)
+    private int markPage;
 
     @Column(name = "key_word", length = 15)
     private String keyWord;
