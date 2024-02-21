@@ -55,6 +55,8 @@ public class BookRecord {
     @Column(name = "key_word", length = 15)
     private String keyWord;
 
+    public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
+
     public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
 
     public void setLocationList(LocationList locationList) { this.locationList = locationList; }

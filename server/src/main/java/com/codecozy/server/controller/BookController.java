@@ -26,6 +26,12 @@ public class BookController {
         return bookService.deleteBook(token, isbn);
     }
 
+    // 독서상태 변경 API
+    @PatchMapping("/readingStatus/{isbn}")
+    public ResponseEntity modifyReadingStatus(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, Integer> readingStatusMap) {
+        return bookService.modifyReadingStatus(token, isbn, readingStatusMap.get("readingStatus"));
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
