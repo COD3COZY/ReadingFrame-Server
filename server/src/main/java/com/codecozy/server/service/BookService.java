@@ -154,6 +154,35 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 읽은 페이지 변경
+    public ResponseEntity<DefaultResponse> modifyReadingPage(String token, String isbn, ModifyPageRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 페이지 단위일 경우
+        if (request.type()) {
+            bookRecord.setMarkPage(request.page());
+        }
+        // 퍼센트 단위일 경우
+        else {
+            int totalPage = book.getTotalPage();
+            int markPage = (int) (request.page() / 100.0 * totalPage);
+            bookRecord.setMarkPage(markPage);
+        }
+
+        // 변경사항 반영
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 한줄평 신고
     public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기

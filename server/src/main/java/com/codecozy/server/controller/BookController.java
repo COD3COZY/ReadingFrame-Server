@@ -38,6 +38,12 @@ public class BookController {
         return bookService.modifyIsMine(token, isbn, isMineMap.get("isMine"));
     }
 
+    // 읽은 페이지 변경 API
+    @PatchMapping("/page/{isbn}")
+    public ResponseEntity modifyReadingPage(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ModifyPageRequest request) {
+        return bookService.modifyReadingPage(token, isbn, request);
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
