@@ -154,6 +154,25 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 책 유형 변경
+    public ResponseEntity<DefaultResponse> modifyBookType(String token, String isbn, int bookType) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 변경 후 저장
+        bookRecord.setBookType(bookType);
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 읽은 페이지 변경
     public ResponseEntity<DefaultResponse> modifyReadingPage(String token, String isbn, ModifyPageRequest request) {
         // 사용자 받아오기
