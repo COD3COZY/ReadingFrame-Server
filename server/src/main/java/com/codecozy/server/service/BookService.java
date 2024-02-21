@@ -135,6 +135,25 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 소장 여부 변경
+    public ResponseEntity<DefaultResponse> modifyIsMine(String token, String isbn, boolean isMine) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 변경 후 저장
+        bookRecord.setIsMine(isMine);
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 한줄평 신고
     public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기

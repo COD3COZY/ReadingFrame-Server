@@ -57,6 +57,8 @@ public class BookRecord {
 
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 
+    public void setIsMine(boolean isMine) { this.isMine = isMine; }
+
     public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
 
     public void setLocationList(LocationList locationList) { this.locationList = locationList; }
