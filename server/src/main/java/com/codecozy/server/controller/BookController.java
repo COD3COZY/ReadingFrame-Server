@@ -20,6 +20,12 @@ public class BookController {
         return bookService.createBook(token, isbn, request);
     }
 
+    // 책 삭제 API
+    @DeleteMapping("/delete/{isbn}")
+    public ResponseEntity deleteBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteBook(token, isbn);
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReviewCreateRequest request) {
