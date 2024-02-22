@@ -1,6 +1,7 @@
 package com.codecozy.server.controller;
 
 import com.codecozy.server.dto.request.*;
+import com.codecozy.server.dto.response.GetReadingNoteResponse;
 import com.codecozy.server.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,12 @@ public class BookController {
     @DeleteMapping("/delete/{isbn}")
     public ResponseEntity deleteBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         return bookService.deleteBook(token, isbn);
+    }
+
+    // 책별 독서노트 조회 API
+    @GetMapping("/readingNote")
+    public ResponseEntity getReadingNote(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.getReadingNote(token, isbn);
     }
 
     // 독서상태 변경 API
