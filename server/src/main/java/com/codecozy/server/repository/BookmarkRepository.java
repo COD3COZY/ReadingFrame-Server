@@ -15,4 +15,7 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     List<Bookmark> findAllByMemberAndBook(Member member, Book book);
     Long countByLocationList(LocationList locationList);
+
+    // 특정 유저의 최근 책갈피 3개 가져오기
+    List<Bookmark> findTop3ByMemberAndBookOrderByDateDesc(Member member, Book book);
 }

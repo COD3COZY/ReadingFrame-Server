@@ -1,6 +1,7 @@
 package com.codecozy.server.controller;
 
 import com.codecozy.server.dto.request.*;
+import com.codecozy.server.dto.response.GetReadingNoteResponse;
 import com.codecozy.server.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,42 @@ public class BookController {
     @PostMapping("/create/{isbn}")
     public ResponseEntity createBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ReadingBookCreateRequest request) {
         return bookService.createBook(token, isbn, request);
+    }
+
+    // 책 삭제 API
+    @DeleteMapping("/delete/{isbn}")
+    public ResponseEntity deleteBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.deleteBook(token, isbn);
+    }
+
+    // 책별 독서노트 조회 API
+    @GetMapping("/readingNote")
+    public ResponseEntity getReadingNote(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
+        return bookService.getReadingNote(token, isbn);
+    }
+
+    // 독서상태 변경 API
+    @PatchMapping("/readingStatus/{isbn}")
+    public ResponseEntity modifyReadingStatus(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, Integer> readingStatusMap) {
+        return bookService.modifyReadingStatus(token, isbn, readingStatusMap.get("readingStatus"));
+    }
+
+    // 소장여부 변경 API
+    @PatchMapping("/isMine/{isbn}")
+    public ResponseEntity modifyIsMine(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, Boolean> isMineMap) {
+        return bookService.modifyIsMine(token, isbn, isMineMap.get("isMine"));
+    }
+
+    // 책 유형 변경 API
+    @PatchMapping("/bookType/{isbn}")
+    public ResponseEntity modifyBookType(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody Map<String, Integer> bookTypeMap) {
+        return bookService.modifyBookType(token, isbn, bookTypeMap.get("bookType"));
+    }
+
+    // 읽은 페이지 변경 API
+    @PatchMapping("/page/{isbn}")
+    public ResponseEntity modifyReadingPage(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn, @RequestBody ModifyPageRequest request) {
+        return bookService.modifyReadingPage(token, isbn, request);
     }
 
     // 리뷰 작성 API

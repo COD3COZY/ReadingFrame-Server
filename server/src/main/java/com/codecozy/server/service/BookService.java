@@ -98,6 +98,205 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 독서노트 삭제
+    public ResponseEntity<DefaultResponse> deleteBook(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 삭제
+        bookRecordRepository.delete(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 독서노트 조회
+    public ResponseEntity<DefaultResponse> getReadingNote(String token, String isbn) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // ---- 정보 가져오기 ---- \\
+        String cover = book.getCover();
+        String title = book.getTitle();
+        String author = book.getAuthor();
+        String categoryName = book.getCategory();
+        int totalPage = book.getTotalPage();
+        int readPage = bookRecord.getMarkPage();
+        int readingPercent = (int) ((double) readPage / totalPage * 100);
+        String keywordReview = bookRecord.getKeyWord();
+        String commentReview = bookReviewRepository.findByMemberAndBook(member, book).getReviewText();
+
+        String selectReviewStr = keywordReviewRepository.findByMemberAndBook(member, book).getSelectReviewCode();
+        String[] selectReviewStrList = selectReviewStr.split(",");
+        List<Integer> selectReview = new ArrayList<>();
+        for (String s : selectReviewStrList) {
+            selectReview.add(Integer.valueOf(s));
+        }
+
+        boolean isMine = bookRecord.isMine();
+        int bookType = bookRecord.getBookType();
+        int readingStatus = bookRecord.getReadingStatus();
+        String mainLocation = bookRecord.getLocationList().getPlaceName();
+        String startDate = bookRecord.getStartDate();
+        String recentDate = bookRecord.getRecentDate();
+
+        List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
+        List<GetBookmarkPreviewResponse> bookmarks = new ArrayList<>();
+        for (Bookmark bookmark : bookmarkList) {
+            int markPercent = (int) ((double) bookmark.getMarkPage() / totalPage * 100);
+            bookmarks.add(new GetBookmarkPreviewResponse(
+                    bookmark.getDate(),
+                    bookmark.getMarkPage(),
+                    markPercent,
+                    bookmark.getLocationList().getPlaceName(),
+                    bookmark.getUuid()
+            ));
+        }
+
+        List<Memo> memoList = memoRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
+        List<GetMemoResponse> memos = new ArrayList<>();
+        for (Memo memo : memoList) {
+            int markPercent = (int) ((double) memo.getMarkPage() / totalPage * 100);
+            memos.add(new GetMemoResponse(
+               memo.getDate(),
+               memo.getMarkPage(),
+               markPercent,
+               memo.getMemoText(),
+               memo.getUuid()
+            ));
+        }
+
+        List<PersonalDictionary> personalDictionaryList = personalDictionaryRepository.findTop3ByMemberAndBookOrderByNameAsc(member, book);
+        List<GetPersonalDictionaryPreviewResponse> characters = new ArrayList<>();
+        for (PersonalDictionary personalDictionary : personalDictionaryList) {
+            characters.add(new GetPersonalDictionaryPreviewResponse(
+                    personalDictionary.getEmoji(),
+                    personalDictionary.getName(),
+                    personalDictionary.getPreview()
+            ));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", new GetReadingNoteResponse(
+                                cover,
+                                title,
+                                author,
+                                categoryName,
+                                totalPage,
+                                readPage,
+                                readingPercent,
+                                keywordReview,
+                                commentReview,
+                                selectReview,
+                                isMine,
+                                bookType,
+                                readingStatus,
+                                mainLocation,
+                                startDate,
+                                recentDate,
+                                bookmarks,
+                                memos,
+                                characters)),
+                HttpStatus.OK);
+    }
+
+    // 독서상태 변경
+    public ResponseEntity<DefaultResponse> modifyReadingStatus(String token, String isbn, int readingStatus) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 변경 후 저장
+        bookRecord.setReadingStatus(readingStatus);
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 소장 여부 변경
+    public ResponseEntity<DefaultResponse> modifyIsMine(String token, String isbn, boolean isMine) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 변경 후 저장
+        bookRecord.setIsMine(isMine);
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 책 유형 변경
+    public ResponseEntity<DefaultResponse> modifyBookType(String token, String isbn, int bookType) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 변경 후 저장
+        bookRecord.setBookType(bookType);
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 읽은 페이지 변경
+    public ResponseEntity<DefaultResponse> modifyReadingPage(String token, String isbn, ModifyPageRequest request) {
+        // 사용자 받아오기
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // 페이지 단위일 경우
+        if (request.type()) {
+            bookRecord.setMarkPage(request.page());
+        }
+        // 퍼센트 단위일 경우
+        else {
+            int totalPage = book.getTotalPage();
+            int markPage = (int) (request.page() / 100.0 * totalPage);
+            bookRecord.setMarkPage(markPage);
+        }
+
+        // 변경사항 반영
+        bookRecordRepository.save(bookRecord);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
     // 한줄평 신고
     public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기
@@ -219,12 +418,12 @@ public class BookService {
             // 검색해서 저장 후 카운트 수정에 사용
             bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
         }
-        
+
         // 코드에 맞는 반응 카운트 올리고, 반응 여부와 종류 설정
         if (!bookReviewReviewer.isReaction()) {
             // 카운트 올리기
             bookReviewReaction.setReactionCountUp(request.commentReaction());
-            
+
             // 반응 여부, 종류 설정
             bookReviewReviewer.setIsReactionReverse();
             bookReviewReviewer.setReactionCode(request.commentReaction());
@@ -1100,7 +1299,7 @@ public class BookService {
                     locationRepository.delete(deleteLocation);
                 }
             }
-            
+
             // 책갈피 삭제
             bookmarkRepository.delete(bookmark);
         }
