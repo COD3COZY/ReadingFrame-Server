@@ -61,6 +61,8 @@ public class BookRecord {
 
     public void setIsMine(boolean isMine) { this.isMine = isMine; }
 
+    public void setIsHidden(boolean isHidden) { this.isHidden = isHidden; }
+
     public void setMarkPage(int markPage) { this.markPage = markPage; }
 
     public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
