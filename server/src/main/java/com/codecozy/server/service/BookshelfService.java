@@ -23,50 +23,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BookshelfService {
     private final TokenProvider tokenProvider;
+    private final ConverterService converterService;
     private final MemberRepository memberRepository;
     private final BookRecordRepository bookRecordRepository;
-
-    // 장르 이름 -> 코드로 변경하는 메소드
-    public int categoryNameToCode(String name) {
-        if (name.equals("인문사회")) {
-            return 0;
-        } else if (name.equals("문학")) {
-            return 1;
-        } else if (name.equals("에세이")) {
-            return 2;
-        } else if (name.equals("과학")) {
-            return 3;
-        } else if (name.equals("자기계발")) {
-            return 4;
-        } else if (name.equals("예술")) {
-            return 5;
-        } else if (name.equals("원서")) {
-            return 6;
-        } else {  // 기타
-            return 7;
-        }
-    }
-
-    // 장르 코드 -> 이름으로 변경하는 메소드
-    public String categoryCodeToName(int code) {
-        if (code == 0) {
-            return "인문사회";
-        } else if (code == 1) {
-            return "문학";
-        } else if (code == 2) {
-            return "에세이";
-        } else if (code == 3) {
-            return "과학";
-        } else if (code == 4) {
-            return "자기계발";
-        } else if (code == 5) {
-            return "예술";
-        } else if (code == 6) {
-            return "원서";
-        } else {  // 기타
-            return "기타";
-        }
-    }
 
     // 책장 초기 조회
     public ResponseEntity<DefaultResponse> getAllBookshelf(String token, int bookshelfType) {
@@ -256,7 +215,7 @@ public class BookshelfService {
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),
                             null,
-                            categoryNameToCode(bookRecord.getBook().getCategory()),
+                            converterService.categoryNameToCode(bookRecord.getBook().getCategory()),
                             bookRecord.isMine(),
                             bookRecord.getBook().getTotalPage(),
                             readingPage,
@@ -283,7 +242,7 @@ public class BookshelfService {
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),
                             bookRecord.getBookType(),
-                            categoryNameToCode(bookRecord.getBook().getCategory()),
+                            converterService.categoryNameToCode(bookRecord.getBook().getCategory()),
                             bookRecord.isMine(),
                             bookRecord.getBook().getTotalPage(),
                             readingPage,
@@ -296,7 +255,7 @@ public class BookshelfService {
         else if (bookshelfCode.charAt(0) == '2') {
             log.info("책장 리스트용 조회 - 장르 관련 불러오기");
 
-            String categoryName = categoryCodeToName(bookshelfCode.charAt(1) - '0');
+            String categoryName = converterService.categoryCodeToName(bookshelfCode.charAt(1) - '0');
 
             for (BookRecord bookRecord : bookRecordList) {
                 if (bookRecord.getBook().getCategory().equals(categoryName) && bookRecord.getReadingStatus() != 0) {
@@ -310,7 +269,7 @@ public class BookshelfService {
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),
                             bookRecord.getBookType(),
-                            categoryNameToCode(bookRecord.getBook().getCategory()),
+                            converterService.categoryNameToCode(bookRecord.getBook().getCategory()),
                             bookRecord.isMine(),
                             bookRecord.getBook().getTotalPage(),
                             readingPage,
