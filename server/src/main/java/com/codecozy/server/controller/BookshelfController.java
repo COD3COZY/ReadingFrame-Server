@@ -1,5 +1,6 @@
 package com.codecozy.server.controller;
 
+import com.codecozy.server.security.TokenProvider;
 import com.codecozy.server.service.BookshelfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,19 +14,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/bookshelf")
 @RequiredArgsConstructor
 public class BookshelfController {
+    private final TokenProvider tokenProvider;
     private final BookshelfService bookshelfService;
 
     // 책장 초기 조회
     @GetMapping("/{bookshelfType}")
     public ResponseEntity getAllBookshelf(@RequestHeader("xAuthToken") String token,
                                           @PathVariable("bookshelfType") int bookshelfType) {
-        return bookshelfService.getAllBookshelf(token, bookshelfType);
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookshelfService.getAllBookshelf(memberId, bookshelfType);
     }
 
     // 책장 리스트용 조회
     @GetMapping("/detail/{bookshelfCode}")
     public ResponseEntity getDetailBookshelf(@RequestHeader("xAuthToken") String token,
                                              @PathVariable("bookshelfCode") String bookshelfCode) {
-        return bookshelfService.getDetailBookshelf(token, bookshelfCode);
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookshelfService.getDetailBookshelf(memberId, bookshelfCode);
     }
 }

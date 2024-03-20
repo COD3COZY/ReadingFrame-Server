@@ -34,9 +34,8 @@ public class BookService {
     private final TokenProvider tokenProvider;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
-    public ResponseEntity<DefaultResponse> createBook(String token, String isbn, ReadingBookCreateRequest request) {
+    public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 책 검색
@@ -99,9 +98,8 @@ public class BookService {
     }
 
     // 독서노트 삭제
-    public ResponseEntity<DefaultResponse> deleteBook(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> deleteBook(Long memberId, String isbn) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -117,9 +115,8 @@ public class BookService {
     }
 
     // 독서노트 조회
-    public ResponseEntity<DefaultResponse> getReadingNote(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> getReadingNote(Long memberId, String isbn) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -212,9 +209,8 @@ public class BookService {
     }
 
     // 독서상태 변경
-    public ResponseEntity<DefaultResponse> modifyReadingStatus(String token, String isbn, int readingStatus) {
+    public ResponseEntity<DefaultResponse> modifyReadingStatus(Long memberId, String isbn, int readingStatus) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -231,9 +227,8 @@ public class BookService {
     }
 
     // 소장 여부 변경
-    public ResponseEntity<DefaultResponse> modifyIsMine(String token, String isbn, boolean isMine) {
+    public ResponseEntity<DefaultResponse> modifyIsMine(Long memberId, String isbn, boolean isMine) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -250,9 +245,8 @@ public class BookService {
     }
 
     // 책 유형 변경
-    public ResponseEntity<DefaultResponse> modifyBookType(String token, String isbn, int bookType) {
+    public ResponseEntity<DefaultResponse> modifyBookType(Long memberId, String isbn, int bookType) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -269,9 +263,8 @@ public class BookService {
     }
 
     // 읽은 페이지 변경
-    public ResponseEntity<DefaultResponse> modifyReadingPage(String token, String isbn, ModifyPageRequest request) {
+    public ResponseEntity<DefaultResponse> modifyReadingPage(Long memberId, String isbn, ModifyPageRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
@@ -298,9 +291,8 @@ public class BookService {
     }
 
     // 한줄평 신고
-    public ResponseEntity<DefaultResponse> reportComment(String token, String isbn, ReportCommentRequest request) {
+    public ResponseEntity<DefaultResponse> reportComment(Long memberId, String isbn, ReportCommentRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
@@ -350,9 +342,8 @@ public class BookService {
     }
 
     // 읽고싶은 책 등록
-    public ResponseEntity<DefaultResponse> wantToRead(String token, String isbn, BookCreateRequest request) {
+    public ResponseEntity<DefaultResponse> wantToRead(Long memberId, String isbn, BookCreateRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 책 검색
@@ -380,9 +371,8 @@ public class BookService {
 
 
     // 한줄평 반응 추가
-    public ResponseEntity<DefaultResponse> reactionComment(String token, String isbn, CommentReactionRequest request) {
+    public ResponseEntity<DefaultResponse> reactionComment(Long memberId, String isbn, CommentReactionRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
@@ -436,9 +426,8 @@ public class BookService {
     }
 
     // 한줄평 반응 수정
-    public ResponseEntity<DefaultResponse> modifyReaction(String token, String isbn, CommentReactionRequest request) {
+    public ResponseEntity<DefaultResponse> modifyReaction(Long memberId, String isbn, CommentReactionRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
@@ -487,9 +476,8 @@ public class BookService {
     }
 
     // 한줄평 반응 삭제
-    public ResponseEntity<DefaultResponse> deleteReaction(String token, String isbn, DeleteReactionRequest request) {
+    public ResponseEntity<DefaultResponse> deleteReaction(Long memberId, String isbn, DeleteReactionRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자 닉네임으로 한줄평 남긴 사용자 찾기
@@ -541,9 +529,8 @@ public class BookService {
     }
 
     // 리뷰 작성 (키워드, 선택 리뷰, 한줄평 각 테이블에 추가)
-    public ResponseEntity<DefaultResponse> createReview(String token, String isbn, ReviewCreateRequest request) {
+    public ResponseEntity<DefaultResponse> createReview(Long memberId, String isbn, ReviewCreateRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -593,9 +580,8 @@ public class BookService {
     }
 
     // 리뷰 전체 수정 (키워드, 선택 리뷰, 한줄평)
-    public ResponseEntity<DefaultResponse> modifyReview(String token, String isbn, ReviewCreateRequest request) {
+    public ResponseEntity<DefaultResponse> modifyReview(Long memberId, String isbn, ReviewCreateRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -659,9 +645,8 @@ public class BookService {
     }
 
     // 리뷰 전체 삭제 (키워드, 선택 리뷰, 한줄평)
-    public ResponseEntity<DefaultResponse> deleteReview(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> deleteReview(Long memberId, String isbn) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -703,9 +688,8 @@ public class BookService {
     }
 
     // 한줄평 삭제
-    public ResponseEntity<DefaultResponse> deleteComment(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> deleteComment(Long memberId, String isbn) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -738,9 +722,8 @@ public class BookService {
     }
 
     // 읽기 시작한 날짜 변경
-    public ResponseEntity<DefaultResponse> modifyStartDate(String token, String isbn, String startDate) {
+    public ResponseEntity<DefaultResponse> modifyStartDate(Long memberId, String isbn, String startDate) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -762,9 +745,8 @@ public class BookService {
     }
 
     // 마지막 읽은 날짜 (최근 날짜) 변경
-    public ResponseEntity<DefaultResponse> modifyRecentDate(String token, String isbn, String recentDate) {
+    public ResponseEntity<DefaultResponse> modifyRecentDate(Long memberId, String isbn, String recentDate) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -786,9 +768,8 @@ public class BookService {
     }
 
     // 책별 대표 위치 등록 (주소 테이블에 추가, 해당 책에 대표 위치 등록)
-    public ResponseEntity<DefaultResponse> addMainLocation(String token, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> addMainLocation(Long memberId, String isbn, LocationRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -841,9 +822,8 @@ public class BookService {
     }
 
     // 책별 대표 위치 변경
-    public ResponseEntity<DefaultResponse> modifyMainLocation(String token, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> modifyMainLocation(Long memberId, String isbn, LocationRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -902,9 +882,8 @@ public class BookService {
     }
 
     // 책별 대표 위치 삭제
-    public ResponseEntity<DefaultResponse> deleteMainLocation(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> deleteMainLocation(Long memberId, String isbn) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -937,9 +916,8 @@ public class BookService {
     }
 
     // 인물사전 등록
-    public ResponseEntity<DefaultResponse> addpersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> addpersonalDictionary(Long memberId, String isbn, PersonalDictionaryRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -965,9 +943,8 @@ public class BookService {
     }
 
     // 인물사전 수정
-    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(String token, String isbn, PersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(Long memberId, String isbn, PersonalDictionaryRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -993,9 +970,8 @@ public class BookService {
     }
 
     // 인물사전 삭제
-    public ResponseEntity<DefaultResponse> deletePersonalDictionary(String token, String isbn, DeletePersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> deletePersonalDictionary(Long memberId, String isbn, DeletePersonalDictionaryRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1015,12 +991,11 @@ public class BookService {
     }
 
     // 인물사전 전체조회
-    public ResponseEntity<DefaultResponse> getPersonalDictionary(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> getPersonalDictionary(Long memberId, String isbn) {
         // 응답으로 보낼 인물사전 List
         List<GetPersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
 
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1041,9 +1016,8 @@ public class BookService {
     }
 
     // 메모 등록
-    public ResponseEntity<DefaultResponse> addMemo(String token, String isbn, MemoRequest request) {
+    public ResponseEntity<DefaultResponse> addMemo(Long memberId, String isbn, MemoRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1064,9 +1038,8 @@ public class BookService {
     }
 
     // 메모 수정
-    public ResponseEntity<DefaultResponse> modifyMemo(String token, String isbn, MemoRequest request) {
+    public ResponseEntity<DefaultResponse> modifyMemo(Long memberId, String isbn, MemoRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1089,9 +1062,8 @@ public class BookService {
     }
 
     // 메모 삭제
-    public ResponseEntity<DefaultResponse> deleteMemo(String token, String isbn, DeleteUuidRequest request) {
+    public ResponseEntity<DefaultResponse> deleteMemo(Long memberId, String isbn, DeleteUuidRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1110,12 +1082,11 @@ public class BookService {
     }
 
     // 메모 전체조회
-    public ResponseEntity<DefaultResponse> getMemo(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> getMemo(Long memberId, String isbn) {
         // 응답으로 보낼 메모 List
         List<GetMemoResponse> memoList = new ArrayList<>();
 
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1150,9 +1121,8 @@ public class BookService {
     }
 
     // 책갈피 등록
-    public ResponseEntity<DefaultResponse> addBookmark(String token, String isbn, BookmarkRequest request) {
+    public ResponseEntity<DefaultResponse> addBookmark(Long memberId, String isbn, BookmarkRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1203,9 +1173,8 @@ public class BookService {
     }
 
     // 책갈피 수정
-    public ResponseEntity<DefaultResponse> modifyBookmark(String token, String isbn, BookmarkRequest request) {
+    public ResponseEntity<DefaultResponse> modifyBookmark(Long memberId, String isbn, BookmarkRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1275,9 +1244,8 @@ public class BookService {
     }
 
     // 책갈피 삭제
-    public ResponseEntity<DefaultResponse> deleteBookmark(String token, String isbn, DeleteUuidRequest request) {
+    public ResponseEntity<DefaultResponse> deleteBookmark(Long memberId, String isbn, DeleteUuidRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1310,12 +1278,11 @@ public class BookService {
     }
 
     // 책갈피 전체조회
-    public ResponseEntity<DefaultResponse> getBookmark(String token, String isbn) {
+    public ResponseEntity<DefaultResponse> getBookmark(Long memberId, String isbn) {
         // 응답으로 보낼 메모 List
         List<GetBookmarkResponse> bookmarkList = new ArrayList<>();
 
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
@@ -1356,14 +1323,13 @@ public class BookService {
     }
 
     // 전체 위치 조회
-    public ResponseEntity<DefaultResponse> getAllLocation(String token, GetAllLocationRequest request) {
+    public ResponseEntity<DefaultResponse> getAllLocation(Long memberId, GetAllLocationRequest request) {
         // 응답으로 보낼 객체 리스트
         List<GetAllLocationResponse> locationInfo = new ArrayList<>();
 
         int orderNumber = request.orderNumber();
 
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // Response 전달 시 들어가는 데이터
@@ -1423,12 +1389,11 @@ public class BookService {
     }
 
     // 최근 등록 위치 조회
-    public ResponseEntity<DefaultResponse> getRecentLocation(String token) {
+    public ResponseEntity<DefaultResponse> getRecentLocation(Long memberId) {
         // 응답으로 보낼 객체 리스트
         List<GetRecentLocationResponse> location = new ArrayList<>();
 
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
@@ -1445,9 +1410,8 @@ public class BookService {
     }
 
     // 최근 등록 위치 삭제
-    public ResponseEntity<DefaultResponse> deleteRecentLocation(String token, DeleteRecentLocationRequest request) {
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(Long memberId, DeleteRecentLocationRequest request) {
         // 사용자 받아오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 전체 위치에서 검색

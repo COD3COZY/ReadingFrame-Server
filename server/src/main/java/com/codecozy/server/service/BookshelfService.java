@@ -9,7 +9,6 @@ import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.MemberRepository;
-import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,15 +21,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class BookshelfService {
-    private final TokenProvider tokenProvider;
     private final ConverterService converterService;
     private final MemberRepository memberRepository;
     private final BookRecordRepository bookRecordRepository;
 
     // 책장 초기 조회
-    public ResponseEntity<DefaultResponse> getAllBookshelf(String token, int bookshelfType) {
+    public ResponseEntity<DefaultResponse> getAllBookshelf(Long memberId, int bookshelfType) {
         // 유저 정보 가져오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
@@ -186,9 +183,8 @@ public class BookshelfService {
     }
 
     // 책장 리스트용 조회
-    public ResponseEntity<DefaultResponse> getDetailBookshelf(String token, String bookshelfCode) {
+    public ResponseEntity<DefaultResponse> getDetailBookshelf(Long memberId, String bookshelfCode) {
         // 유저 정보 가져오기
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
