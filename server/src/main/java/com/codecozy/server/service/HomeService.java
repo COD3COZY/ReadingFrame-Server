@@ -59,6 +59,22 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
+    // 읽고 있는 책 조회
+    public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
+        // 해당 유저 가져오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 1. 읽고 있는 책 중, 숨기지 않은 책들만 먼저 가져오기
+        List<BookRecord> notHiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(member,
+                READING, false);
+
+        // 2. 읽고 있는 책 중, 숨긴 책들도 가져오기
+        List<BookRecord> hiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(member,
+                READING, true);
+
+
+    }
+
     // 읽고 있는 책 숨기기 & 꺼내기
     public ResponseEntity<DefaultResponse> modifyHidden(Long memberId, String isbn, boolean isHidden) {
         // 해당 유저 가져오기
