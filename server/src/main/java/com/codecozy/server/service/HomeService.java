@@ -62,6 +62,34 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
+    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
+    private GetReadingResponse getReadingBookInfo(Member member, BookRecord bookRecord) {
+        // 책 정보 가져오기
+        Book book = bookRecord.getBook();
+
+        // readingPercent 계산
+        int totalPage = book.getTotalPage();
+        int readPage = bookRecord.getMarkPage();
+        Double readingPercent = (double) readPage / totalPage * 100;
+
+        // 리뷰의 유무 가져오기
+        Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
+
+        return new GetReadingResponse(
+                book.getIsbn(),
+                book.getCover(),
+                book.getTitle(),
+                book.getAuthor(),
+                readingPercent,
+                totalPage,
+                readPage,
+                bookRecord.isHidden(),
+                converterService.categoryNameToCode(book.getCategory()),
+                bookRecord.getBookType(),
+                bookRecord.isMine(),
+                isWriteReview);
+    }
+
     // 읽고 있는 책 조회
     public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
         // 해당 유저 가져오기
@@ -80,60 +108,12 @@ public class HomeService {
 
         // 숨기지 않은 책들 먼저 정보 넣기
         for (BookRecord bookRecord : notHiddenBooks) {
-            // 책 정보 가져오기
-            Book book = bookRecord.getBook();
-
-            // readingPercent 계산
-            int totalPage = book.getTotalPage();
-            int readPage = bookRecord.getMarkPage();
-            Double readingPercent = (double) readPage / totalPage * 100;
-
-            // 리뷰의 유무 가져오기
-            Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
-
-            readingBooks.add(new GetReadingResponse(
-                    book.getIsbn(),
-                    book.getCover(),
-                    book.getTitle(),
-                    book.getAuthor(),
-                    readingPercent,
-                    totalPage,
-                    readPage,
-                    bookRecord.isHidden(),
-                    converterService.categoryNameToCode(book.getCategory()),
-                    bookRecord.getBookType(),
-                    bookRecord.isMine(),
-                    isWriteReview
-            ));
+            readingBooks.add(getReadingBookInfo(member, bookRecord));
         }
 
         // 숨긴 책들 정보 넣기
         for (BookRecord bookRecord : hiddenBooks) {
-            // 책 정보 가져오기
-            Book book = bookRecord.getBook();
-
-            // readingPercent 계산
-            int totalPage = book.getTotalPage();
-            int readPage = bookRecord.getMarkPage();
-            Double readingPercent = (double) readPage / totalPage * 100;
-
-            // 리뷰의 유무 가져오기
-            Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
-
-            readingBooks.add(new GetReadingResponse(
-                    book.getIsbn(),
-                    book.getCover(),
-                    book.getTitle(),
-                    book.getAuthor(),
-                    readingPercent,
-                    totalPage,
-                    readPage,
-                    bookRecord.isHidden(),
-                    converterService.categoryNameToCode(book.getCategory()),
-                    bookRecord.getBookType(),
-                    bookRecord.isMine(),
-                    isWriteReview
-            ));
+            readingBooks.add(getReadingBookInfo(member, bookRecord));
         }
 
         // 응답 보내기
