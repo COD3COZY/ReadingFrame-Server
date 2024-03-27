@@ -2,12 +2,14 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetReadingResponse;
 import com.codecozy.server.dto.response.GetWantToReadResponse;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
+import com.codecozy.server.repository.BookReviewRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ public class HomeService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
+    private final BookReviewRepository bookReviewRepository;
 
     // 독서 상태 상수 값
     private final int UNREGISTERED = -1;    // 미등록
@@ -56,6 +59,66 @@ public class HomeService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", wantToReadBooks),
+                HttpStatus.OK);
+    }
+
+    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
+    private GetReadingResponse getReadingBookInfo(Member member, BookRecord bookRecord) {
+        // 책 정보 가져오기
+        Book book = bookRecord.getBook();
+
+        // readingPercent 계산
+        int totalPage = book.getTotalPage();
+        int readPage = bookRecord.getMarkPage();
+        Double readingPercent = (double) readPage / totalPage * 100;
+
+        // 리뷰의 유무 가져오기
+        Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
+
+        return new GetReadingResponse(
+                book.getIsbn(),
+                book.getCover(),
+                book.getTitle(),
+                book.getAuthor(),
+                readingPercent,
+                totalPage,
+                readPage,
+                bookRecord.isHidden(),
+                converterService.categoryNameToCode(book.getCategory()),
+                bookRecord.getBookType(),
+                bookRecord.isMine(),
+                isWriteReview);
+    }
+
+    // 읽고 있는 책 조회
+    public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
+        // 해당 유저 가져오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 1. 읽고 있는 책 중, 숨기지 않은 책들만 먼저 가져오기
+        List<BookRecord> notHiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(member,
+                READING, false);
+
+        // 2. 읽고 있는 책 중, 숨긴 책들도 가져오기
+        List<BookRecord> hiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(member,
+                READING, true);
+
+        // dto 정보 넣기
+        List<GetReadingResponse> readingBooks = new ArrayList<>();
+
+        // 숨기지 않은 책들 먼저 정보 넣기
+        for (BookRecord bookRecord : notHiddenBooks) {
+            readingBooks.add(getReadingBookInfo(member, bookRecord));
+        }
+
+        // 숨긴 책들 정보 넣기
+        for (BookRecord bookRecord : hiddenBooks) {
+            readingBooks.add(getReadingBookInfo(member, bookRecord));
+        }
+
+        // 응답 보내기
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", readingBooks),
                 HttpStatus.OK);
     }
 
