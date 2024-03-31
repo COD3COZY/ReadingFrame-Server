@@ -318,20 +318,29 @@ public class BookService {
 
         // 한줄평에 반응을 등록한 유저인지 검색
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
-        // 한줄평 반응을 처음 남기는 유저라면
-        if (bookReviewReviewer == null) {
-            // 반응(신고) 여부, 인 인스턴스 생성 및 저장
-            bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
-            bookReviewReviewerRepository.save(bookReviewReviewer);
-            // 검색해서 저장 후 카운트 수정에 사용
-            bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-        }
 
-        // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, 신고 여부와 종류 수정
+        // 신고하지 않았던 경우
         if (!bookReviewReviewer.isReport()) {
-            bookReviewReaction.setReportCountUp(request.reportType());
-            bookReviewReviewer.setIsReportReverse();
-            bookReviewReviewer.setReportType(request.reportType());
+            // 한줄평 반응을 처음 남기는 유저라면
+            if (bookReviewReviewer == null) {
+                // 반응(신고) 여부가 null인 인스턴스 생성 및 저장
+                bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
+                bookReviewReviewerRepository.save(bookReviewReviewer);
+                // 검색해서 저장 후 카운트 수정에 사용
+                bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+            }
+
+            // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, 신고 여부와 종류 수정
+            if (!bookReviewReviewer.isReport()) {
+                bookReviewReaction.setReportCountUp(request.reportType());
+                bookReviewReviewer.setIsReportReverse();
+                bookReviewReviewer.setReportType(request.reportType());
+            }
+        }
+        // 이미 신고했던 경우
+        else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 신고한 리뷰입니다."),
+                    HttpStatus.CONFLICT);
         }
 
         return new ResponseEntity<>(
@@ -503,8 +512,8 @@ public class BookService {
                             + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount();
                     if (cnt <= 0) bookReviewReactionRepository.delete(bookReviewReaction);
 
-                    // 신고 여부도 없다면 반응 여부, 종류 레코드 삭제
-                    if (!bookReviewReviewer.isReport()) bookReviewReviewerRepository.delete(bookReviewReviewer);
+                    // 신고/반응 여부도 없다면 신고/반응 여부, 종류 레코드 삭제
+                    if (!bookReviewReviewer.isReport() && !bookReviewReviewer.isReaction()) bookReviewReviewerRepository.delete(bookReviewReviewer);
                 }
                 else {
                     return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
