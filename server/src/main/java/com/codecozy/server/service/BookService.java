@@ -297,9 +297,7 @@ public class BookService {
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
-            bookReviewReaction = BookReviewReaction.create(bookReview);
-            bookReviewReactionRepository.save(bookReviewReaction);
-            bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            bookReviewReaction = registerBookReviewReaction(bookReview);
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
@@ -309,11 +307,7 @@ public class BookService {
         if (!bookReviewReviewer.isReport()) {
             // 한줄평 반응을 처음 남기는 유저라면
             if (bookReviewReviewer == null) {
-                // 반응(신고) 여부가 null인 인스턴스 생성 및 저장
-                bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
-                bookReviewReviewerRepository.save(bookReviewReviewer);
-                // 검색해서 저장 후 카운트 수정에 사용
-                bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+                bookReviewReviewer = registerBookReviewReviewer(bookReview, member);
             }
 
             // 0이면 부적절한 리뷰, 1이면 스팸성 리뷰 카운트 올리고, 신고 여부와 종류 수정
@@ -383,20 +377,14 @@ public class BookService {
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
-            bookReviewReaction = BookReviewReaction.create(bookReview);
-            bookReviewReactionRepository.save(bookReviewReaction);
-            bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            bookReviewReaction = registerBookReviewReaction(bookReview);
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
         // 현재 한줄평에 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
-            // 반응 여부 false, 종류 0인 인스턴스 생성 및 저장
-            bookReviewReviewer = BookReviewReviewer.create(bookReview, member);
-            bookReviewReviewerRepository.save(bookReviewReviewer);
-            // 검색해서 저장 후 카운트 수정에 사용
-            bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+            bookReviewReviewer = registerBookReviewReviewer(bookReview, member);
         }
 
         // 코드에 맞는 반응 카운트 올리고, 반응 여부와 종류 설정
@@ -1389,15 +1377,13 @@ public class BookService {
 
     // 중복 책 검색 및 등록
     public Book registerBook(String isbn, String cover, String title, String author, String category, int totalPage) {
-        Book book = Book.create(isbn, cover, title, author, category, totalPage);
-        bookRepository.save(book);
+        bookRepository.save(Book.create(isbn, cover, title, author, category, totalPage));
         return bookRepository.findByIsbn(isbn);
     }
 
     // 위치 등록 및 반환
     public LocationList registerLocation(String placeName, String address, double latitude, double longitude ) {
-        LocationList locationList = LocationList.create(placeName, address, latitude, longitude);
-        locationRepository.save(locationList);
+        locationRepository.save(LocationList.create(placeName, address, latitude, longitude));
         return locationRepository.findByPlaceName(placeName);
     }
 
@@ -1412,4 +1398,17 @@ public class BookService {
         memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDate.now().toString()));
     }
 
+    // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
+    public BookReviewReaction registerBookReviewReaction(BookReview bookReview) {
+        bookReviewReactionRepository.save(BookReviewReaction.create(bookReview));
+        return bookReviewReactionRepository.findByBookReview(bookReview);
+    }
+
+    // 한줄평에 대한 반응 레코드 등록(BookReviewReviewer)
+    public BookReviewReviewer registerBookReviewReviewer(BookReview bookReview, Member member) {
+        // 반응 여부 false, 종류 0인 레코드 생성
+        bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
+        // 카운트 수정에 사용할 용도로 반환
+        return bookReviewReviewerRepository.findByBookReview(bookReview);
+    }
 }
