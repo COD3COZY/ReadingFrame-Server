@@ -65,24 +65,13 @@ public class BookService {
             // 이미 있는 위치인지 검색
             locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
-                // 등록하지 않은 위치면 새로 등록
-                locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
-                locationRepository.save(locationList);
-                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
             }
 
             memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
             // 최근 위치 검색 기록에 없으면 추가
             if (memberLocation == null) {
-                // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-                if (memberLocationRepository.countAllByMember(member) >= 5) {
-                    List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
-                    memberLocationRepository.delete(memberLocationList.get(0));
-                }
-
-                // 검색 기록에 추가
-                memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
-                memberLocationRepository.save(memberLocation);
+                registerRecentLocation(member, locationList);
             }
         }
 
@@ -790,9 +779,7 @@ public class BookService {
         LocationList locationList = locationRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
         if(locationList == null) {
-            locationList = LocationList.create(request.placeName(), request.address(), latitude, longitude);
-            locationRepository.save(locationList);
-            locationList = locationRepository.findByPlaceName(request.placeName());
+            locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
         // 사용자 독서노트 검색
@@ -812,15 +799,7 @@ public class BookService {
         MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
         // 최근 위치 검색 기록에 없으면 추가
         if (memberLocation == null) {
-            // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-            if (memberLocationRepository.countAllByMember(member) >= 5) {
-                List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
-                memberLocationRepository.delete(memberLocationList.get(0));
-            }
-
-            // 검색 기록에 추가
-            memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
-            memberLocationRepository.save(memberLocation);
+            registerRecentLocation(member, locationList);
         }
 
         return new ResponseEntity<>(
@@ -844,9 +823,7 @@ public class BookService {
         LocationList locationList = locationRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
         if(locationList == null) {
-            locationList = LocationList.create(request.placeName(), request.address(), latitude, longitude);
-            locationRepository.save(locationList);
-            locationList = locationRepository.findByPlaceName(request.placeName());
+            locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
         // 사용자 독서노트 검색
@@ -872,15 +849,7 @@ public class BookService {
         MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
         // 최근 위치 검색 기록에 없으면 추가
         if (memberLocation == null) {
-            // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-            if (memberLocationRepository.countAllByMember(member) >= 5) {
-                List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
-                memberLocationRepository.delete(memberLocationList.get(0));
-            }
-
-            // 검색 기록에 추가
-            memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
-            memberLocationRepository.save(memberLocation);
+            registerRecentLocation(member, locationList);
         }
 
         return new ResponseEntity<>(
@@ -1150,24 +1119,14 @@ public class BookService {
             // 주소 없으면 등록
             locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
-                locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
-                locationRepository.save(locationList);
-                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
             }
 
             // 사용자 최근 검색 위치에 등록
             MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
             // 최근 위치 검색 기록에 없으면 추가
             if (memberLocation == null) {
-                // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-                if (memberLocationRepository.countAllByMember(member) >= 5) {
-                    List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
-                    memberLocationRepository.delete(memberLocationList.get(0));
-                }
-
-                // 검색 기록에 추가
-                memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
-                memberLocationRepository.save(memberLocation);
+                registerRecentLocation(member, locationList);
             }
         }
 
@@ -1204,24 +1163,14 @@ public class BookService {
                 // 새로 받은 위치가 주소 테이블에 없으면 등록
                 locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
                 if (locationList == null) {
-                    locationList = LocationList.create(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
-                    locationRepository.save(locationList);
-                    locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
+                    locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
                 }
 
                 // 사용자 최근 검색 위치에 등록
                 MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
                 // 최근 위치 검색 기록에 없으면 추가
                 if (memberLocation == null) {
-                    // 현재 사용자의 레코드가 5개 이상인지 확인, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드 삭제
-                    if (memberLocationRepository.countAllByMember(member) >= 5) {
-                        List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
-                        memberLocationRepository.delete(memberLocationList.get(0));
-                    }
-
-                    // 검색 기록에 추가
-                    memberLocation = MemberLocation.create(member, locationList, LocalDate.now().toString());
-                    memberLocationRepository.save(memberLocation);
+                    registerRecentLocation(member, locationList);
                 }
 
                 if (preLocation != null) {
@@ -1443,4 +1392,28 @@ public class BookService {
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
     }
+
+    // 중복 책 검색 및 등록
+    public void overlapBook() {
+
+    }
+
+    // 위치 등록 및 반환
+    public LocationList registerLocation(String placeName, String address, double latitude, double longitude ) {
+        LocationList locationList = LocationList.create(placeName, address, latitude, longitude);
+        locationRepository.save(locationList);
+        return locationRepository.findByPlaceName(placeName);
+    }
+
+    // 최근 위치 검색 기록 추가(레코드가 5개 초과되면 삭제하는 코드까지)
+    public void registerRecentLocation(Member member, LocationList locationList) {
+        // 현재 사용자의 최근 위치 검색 레코드가 5개 이상인지 확인하고, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드를 삭제
+        if(memberLocationRepository.countAllByMember(member) >= 5) {
+            List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
+            memberLocationRepository.delete(memberLocationList.get(0));
+        }
+
+        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDate.now().toString()));
+    }
+
 }
