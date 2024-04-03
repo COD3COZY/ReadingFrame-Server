@@ -52,10 +52,7 @@ public class BookService {
 
         // isbn을 이용해 책 등록이 중복되었는지 검색
         if (book == null) {
-            // 등록되지 않은 책이면 새로 등록
-            book = Book.create(isbn, request.bookInformation().cover(), request.bookInformation().title(), request.bookInformation().author(), request.bookInformation().category(), Integer.parseInt(request.bookInformation().totalPage()));
-            bookRepository.save(book);
-            book = bookRepository.findByIsbn(isbn);
+            book = registerBook(isbn, request.bookInformation().cover(), request.bookInformation().title(), request.bookInformation().author(), request.bookInformation().category(), Integer.parseInt(request.bookInformation().totalPage()));
         }
 
         if (request.mainLocation() != null) {
@@ -346,10 +343,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
         // isbn을 이용해 책 등록이 중복되었는지 검색
         if (book == null) {
-            // 등록되지 않은 책이면 새로 등록
-            book = Book.create(isbn, request.cover(), request.title(), request.author(), request.category(), Integer.parseInt(request.totalPage()));
-            bookRepository.save(book);
-            book = bookRepository.findByIsbn(isbn);
+            book = registerBook(isbn, request.cover(), request.title(), request.author(), request.category(), Integer.parseInt(request.totalPage()));
         }
 
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
@@ -1394,8 +1388,10 @@ public class BookService {
     }
 
     // 중복 책 검색 및 등록
-    public void overlapBook() {
-
+    public Book registerBook(String isbn, String cover, String title, String author, String category, int totalPage) {
+        Book book = Book.create(isbn, cover, title, author, category, totalPage);
+        bookRepository.save(book);
+        return bookRepository.findByIsbn(isbn);
     }
 
     // 위치 등록 및 반환
