@@ -2,6 +2,7 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetFinishReadResponse;
 import com.codecozy.server.dto.response.GetReadingResponse;
 import com.codecozy.server.dto.response.GetWantToReadResponse;
 import com.codecozy.server.entity.Book;
@@ -119,6 +120,42 @@ public class HomeService {
         // 응답 보내기
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", readingBooks),
+                HttpStatus.OK);
+    }
+
+    // 다 읽은 책 조회
+    public ResponseEntity<DefaultResponse> getFinishReadBooks(Long memberId) {
+        // 해당 유저 가져오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 책 정보 가져오기
+        List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndReadingStatus(member, FINISH_READ);
+
+        // dto 정보 넣기
+        List<GetFinishReadResponse> finishReadBooks = new ArrayList<>();
+        for (BookRecord bookRecord : bookRecordList) {
+            // 책 정보 가져오기
+            Book book = bookRecord.getBook();
+
+            // 리뷰의 유무 가져오기
+            Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
+
+            // dto 정보 추가
+            finishReadBooks.add(new GetFinishReadResponse(
+                    book.getIsbn(),
+                    book.getCover(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    converterService.categoryNameToCode(book.getCategory()),
+                    bookRecord.getBookType(),
+                    bookRecord.isMine(),
+                    isWriteReview
+            ));
+        }
+
+        // 응답 보내기
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", finishReadBooks),
                 HttpStatus.OK);
     }
 

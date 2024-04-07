@@ -36,6 +36,14 @@ public class HomeController {
         return homeService.getReadingBooks(memberId);
     }
 
+    // 다 읽은 책 조회
+    @GetMapping("/finishRead")
+    public ResponseEntity getFinishReadBooks(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getFinishReadBooks(memberId);
+    }
+
     // 읽고 있는 책 숨기기 & 꺼내기
     @PatchMapping("/hidden/{ISBN}")
     public ResponseEntity modifyHidden(@RequestHeader("xAuthToken") String token,
