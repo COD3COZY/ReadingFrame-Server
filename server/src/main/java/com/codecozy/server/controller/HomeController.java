@@ -20,6 +20,14 @@ public class HomeController {
     private final TokenProvider tokenProvider;
     private final HomeService homeService;
 
+    // 메인 화면 조회
+    @GetMapping("")
+    public ResponseEntity getMainPage(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getMainPage(memberId);
+    }
+
     // 읽고 싶은 책 조회
     @GetMapping("/wantToRead")
     public ResponseEntity getWantToReadBooks(@RequestHeader("xAuthToken") String token) {

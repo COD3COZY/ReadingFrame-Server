@@ -3,6 +3,8 @@ package com.codecozy.server.service;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.GetFinishReadResponse;
+import com.codecozy.server.dto.response.GetMainBooksResponse;
+import com.codecozy.server.dto.response.GetMainResponse;
 import com.codecozy.server.dto.response.GetReadingResponse;
 import com.codecozy.server.dto.response.GetWantToReadResponse;
 import com.codecozy.server.entity.Book;
@@ -33,6 +35,94 @@ public class HomeService {
     private final int WANT_TO_READ = 0;     // 읽고 싶은
     private final int READING = 1;          // 읽는 중
     private final int FINISH_READ = 2;      // 다 읽음
+
+    // 메인 화면 조회
+    public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
+        // 해당 유저 가져오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        /** 전체 책 리스트 가져오기 **/
+        List<GetMainBooksResponse> booksList = new ArrayList<>();
+
+        // 읽고 있는 책 리스트 가져오기 (최대 10개)
+        List<BookRecord> readingBooks = bookRecordRepository.findTop10ByMemberAndReadingStatusAndIsHidden(member,
+                READING, false);
+        // dto 값 넣기
+        for (BookRecord bookRecord : readingBooks) {
+            Book book = bookRecord.getBook();
+
+            int totalPage = book.getTotalPage();
+            int readPage = bookRecord.getMarkPage();
+            int readingPercent = (int) ((double) readPage / totalPage * 100);
+
+            booksList.add(new GetMainBooksResponse(
+                    READING,
+                    book.getIsbn(),
+                    book.getCover(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    readingPercent,
+                    totalPage,
+                    readPage,
+                    bookRecord.isMine()
+            ));
+        }
+
+        // 읽고 싶은 책 리스트 가져오기 (최대 10개)
+        List<BookRecord> wantToReadBooks = bookRecordRepository.findTop10ByMemberAndReadingStatus(member, WANT_TO_READ);
+
+        // dto 값 넣기
+        for (BookRecord bookRecord : wantToReadBooks) {
+            Book book = bookRecord.getBook();
+
+            booksList.add(new GetMainBooksResponse(
+                    WANT_TO_READ,
+                    book.getIsbn(),
+                    book.getCover(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    -1,
+                    -1,
+                    -1,
+                    null
+            ));
+        }
+
+        // 다 읽은 책 리스트 가져오기 (전체)
+        List<BookRecord> finishReadBooks = bookRecordRepository.findAllByMemberAndReadingStatus(member, FINISH_READ);
+
+        // dto 값 넣기
+        for (BookRecord bookRecord : finishReadBooks) {
+            Book book = bookRecord.getBook();
+
+            booksList.add(new GetMainBooksResponse(
+                    FINISH_READ,
+                    book.getIsbn(),
+                    book.getCover(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    -1,
+                    -1,
+                    -1,
+                    bookRecord.isMine()
+            ));
+        }
+
+        // 읽고 싶은 책 개수 계산
+        List<BookRecord> tempWantToReadList = bookRecordRepository.findAllByMemberAndReadingStatus(member,
+                WANT_TO_READ);
+        int wantToReadCount = tempWantToReadList.size();
+
+        // 읽고 있는 책 개수 계산
+        List<BookRecord> tempReadingList = bookRecordRepository.findAllByMemberAndReadingStatus(member, READING);
+        int readingCount = tempReadingList.size();
+
+        // 응답 보내기
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", new GetMainResponse(booksList, wantToReadCount,
+                        readingCount)),
+                HttpStatus.OK);
+    }
 
     // 읽고 싶은 책 조회
     public ResponseEntity<DefaultResponse> getWantToReadBooks(Long memberId) {
