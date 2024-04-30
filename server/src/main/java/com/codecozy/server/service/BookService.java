@@ -10,6 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -271,6 +277,32 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
+        StringBuilder result = new StringBuilder();
+
+        String urlStr = "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=ttbtmzl2350811001&itemIdType=ISBN&ItemId=" + isbn + "&output=js&Version=20131101";
+
+        URL url = new URL(urlStr);
+
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setRequestMethod("GET");
+
+        BufferedReader br;
+        br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+
+        String returnLine;
+
+        while ((returnLine = br.readLine()) != null) {
+            result.append(returnLine + "\n\r");
+        }
+
+        urlConnection.disconnect();
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", result.toString()),
                 HttpStatus.OK);
     }
 
