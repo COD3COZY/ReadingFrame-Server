@@ -6,7 +6,7 @@ public record GetReadingResponse(
         String cover,
         String title,
         String author,
-        Double readingPercent,
+        int readingPercent,
         int totalPage,
         int readPage,
         Boolean isHidden,
