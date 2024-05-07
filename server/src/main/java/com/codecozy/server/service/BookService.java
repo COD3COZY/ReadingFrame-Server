@@ -6,6 +6,9 @@ import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -280,6 +283,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
+    // 도서 정보 초기 조회 API
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
 
@@ -302,7 +306,7 @@ public class BookService {
         urlConnection.disconnect();
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", result.toString()),
+                DefaultResponse.from(StatusCode.OK, "성공", dataParsing(result.toString())),
                 HttpStatus.OK);
     }
 
@@ -1442,5 +1446,37 @@ public class BookService {
         bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
         // 카운트 수정에 사용할 용도로 반환
         return bookReviewReviewerRepository.findByBookReview(bookReview);
+    }
+
+    // 알라딘 API 데이터 파싱
+    public GetSearchBookResponse dataParsing(String jsonData) {
+        try {
+            JSONObject jsonResult, jsonResultSub;
+            JSONParser jsonParser = new JSONParser();
+
+            // 파싱할 json 문자열
+            JSONObject jsonString = (JSONObject) jsonParser.parse(jsonData);
+
+            // item 데이터 받기
+            JSONArray jsonArray = (JSONArray) jsonString.get("item");
+            jsonResult = (JSONObject) jsonArray.get(0);
+
+            // subInfo 데이터 받기
+            jsonResultSub = (JSONObject) jsonResult.get("subInfo");
+
+            return new GetSearchBookResponse(jsonResult.get("cover").toString(),
+                    jsonResult.get("title").toString(),
+                    jsonResult.get("author").toString(),
+                    jsonResult.get("categoryName").toString(), -1,
+                    jsonResult.get("publisher").toString(),
+                    jsonResult.get("pubDate").toString(),
+                    Integer.parseInt(jsonResultSub.get("itemPage").toString()),
+                    jsonResult.get("description").toString(), 0, null, null);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }
