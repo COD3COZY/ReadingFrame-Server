@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -77,6 +78,14 @@ public class BookController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookService.modifyReadingPage(memberId, isbn, request);
+    }
+
+    // 도서정보 초기 조회 API
+    @GetMapping("/bookDetail/{isbn}")
+    public ResponseEntity searchBookDetail(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) throws IOException {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.searchBookDetail(memberId, isbn);
     }
 
     // 리뷰 작성 API
