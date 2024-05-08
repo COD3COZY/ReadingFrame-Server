@@ -150,8 +150,10 @@ public class BookService {
         for (Bookmark bookmark : bookmarkList) {
             int markPage = bookmark.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
+            String dateStr = converterService.dateToString(bookmark.getDate());
+
             bookmarks.add(new GetBookmarkPreviewResponse(
-                    bookmark.getDate(),
+                    dateStr,
                     markPage,
                     markPercent,
                     bookmark.getLocationList().getPlaceName(),
@@ -1154,7 +1156,8 @@ public class BookService {
             }
         }
 
-        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+        LocalDate date = converterService.stringToDate(request.date());
+        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
         bookmarkRepository.save(bookmark);
 
         return new ResponseEntity<>(
@@ -1210,7 +1213,8 @@ public class BookService {
             }
 
             // 페이지 그대로 책갈피 등록
-            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+            LocalDate date = converterService.stringToDate(request.date());
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
             bookmarkRepository.save(bookmark);
         }
         else {
@@ -1286,14 +1290,16 @@ public class BookService {
                 int percent = (int) Math.round(100.0 * bookmark.getMarkPage() / book.getTotalPage());
 
                 // 응답으로 보낼 내용에 더하기
-                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
+                String dateStr = converterService.dateToString(bookmark.getDate());
+                bookmarkList.add(new GetBookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
             }
             else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / bookmark.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
-                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+                String dateStr = converterService.dateToString(bookmark.getDate());
+                bookmarkList.add(new GetBookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
             }
         }
 
@@ -1350,7 +1356,7 @@ public class BookService {
             bookmark = bookmarks.get(i);
             if (bookmark.getLocationList() == null) break;
 
-            date = bookmark.getDate();
+            date = converterService.dateToString(bookmark.getDate());
             title = bookmark.getBook().getTitle();
             readPage = bookmark.getMarkPage();
 
