@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.BookRecordKey;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,11 +43,14 @@ public class BookRecord {
     @Column(name = "is_hidden", nullable = false)
     private boolean isHidden;
 
-    @Column(name = "start_date", length = 10, nullable = false)
-    private String startDate;
+    @Column(name = "create_date", nullable = false)
+    private LocalDate createDate;
 
-    @Column(name = "recent_date", length = 10)
-    private String recentDate;
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "recent_date")
+    private LocalDate recentDate;
 
     @ColumnDefault("0")
     @Column(name = "mark_page", nullable = false)
@@ -69,12 +73,13 @@ public class BookRecord {
 
     public void setLocationList(LocationList locationList) { this.locationList = locationList; }
 
-    public void setStartDate(String startDate) { this.startDate = startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public void setRecentDate(String recentDate) { this.recentDate = recentDate; }
+    public void setRecentDate(LocalDate recentDate) { this.recentDate = recentDate; }
 
     public void deleteLocationList() { this.locationList = null; }
 
+    // 읽고 싶은 책 등록 시 사용하는 create 메소드
     public static BookRecord create(Member member, Book book) {
         return BookRecord.builder()
                 .member(member)
@@ -84,13 +89,14 @@ public class BookRecord {
                 .locationList(null)
                 .isMine(false)
                 .isHidden(false)
-                .startDate("1970/01/01")
+                .createDate(LocalDate.now())
+                .startDate(null)
                 .recentDate(null)
                 .keyWord(null)
                 .build();
     }
 
-    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, String startDate, String recentDate) {
+    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, LocalDate startDate, LocalDate recentDate) {
         return BookRecord.builder()
                 .member(member)
                 .book(book)
@@ -99,6 +105,7 @@ public class BookRecord {
                 .locationList(locationList)
                 .isMine(isMine)
                 .isHidden(false)
+                .createDate(LocalDate.now())
                 .startDate(startDate)
                 .recentDate(recentDate)
                 .keyWord(null)

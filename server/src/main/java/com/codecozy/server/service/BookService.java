@@ -5,6 +5,7 @@ import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -83,7 +84,12 @@ public class BookService {
         }
 
         // 독서노트에 등록
-        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
+        LocalDate startDate = converterService.stringToDate(request.startDate());
+        LocalDate recentDate = null;
+        if (request.recentDate() != null) {
+            recentDate = converterService.stringToDate(request.recentDate());
+        }
+        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), startDate, recentDate);
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -139,16 +145,18 @@ public class BookService {
         int bookType = bookRecord.getBookType();
         int readingStatus = bookRecord.getReadingStatus();
         String mainLocation = bookRecord.getLocationList().getPlaceName();
-        String startDate = bookRecord.getStartDate();
-        String recentDate = bookRecord.getRecentDate();
+        String startDate = converterService.dateToString(bookRecord.getStartDate());
+        String recentDate = converterService.dateToString(bookRecord.getRecentDate());
 
         List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
         List<GetBookmarkPreviewResponse> bookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarkList) {
             int markPage = bookmark.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
+            String dateStr = converterService.dateToString(bookmark.getDate());
+
             bookmarks.add(new GetBookmarkPreviewResponse(
-                    bookmark.getDate(),
+                    dateStr,
                     markPage,
                     markPercent,
                     bookmark.getLocationList().getPlaceName(),
@@ -161,8 +169,10 @@ public class BookService {
         for (Memo memo : memoList) {
             int markPage = memo.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
+            String dateStr = converterService.dateToString(memo.getDate());
+
             memos.add(new GetMemoResponse(
-               memo.getDate(),
+               dateStr,
                markPage,
                markPercent,
                memo.getMemoText(),
@@ -750,7 +760,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 읽기 시작한 날짜 변경
-        if (bookRecord != null) bookRecord.setStartDate(startDate);
+        if (bookRecord != null) bookRecord.setStartDate(converterService.stringToDate(startDate));
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
@@ -773,7 +783,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 마지막 읽은 날짜 변경
-        if (bookRecord != null) bookRecord.setRecentDate(recentDate);
+        if (bookRecord != null) bookRecord.setRecentDate(converterService.stringToDate(recentDate));
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
@@ -1026,7 +1036,8 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+        LocalDate date = converterService.stringToDate(request.date());
+        memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
         return new ResponseEntity<>(
@@ -1045,7 +1056,8 @@ public class BookService {
         // 메모가 있으면
         Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (memo != null) {
-            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+            LocalDate date = converterService.stringToDate(request.date());
+            memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         }
         else {
@@ -1100,15 +1112,16 @@ public class BookService {
                 int percent = (int) Math.round(100.0 * memo.getMarkPage() / book.getTotalPage());
 
                 // 응답으로 보낼 내용에 더하기
-                memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+                String dateStr = converterService.dateToString(memo.getDate());
+                memoList.add(new GetMemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             }
             else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
-                memoList.add(new GetMemoResponse(memo.getDate(), page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
-
+                String dateStr = converterService.dateToString(memo.getDate());
+                memoList.add(new GetMemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
         }
 
@@ -1151,7 +1164,8 @@ public class BookService {
             }
         }
 
-        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+        LocalDate date = converterService.stringToDate(request.date());
+        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
         bookmarkRepository.save(bookmark);
 
         return new ResponseEntity<>(
@@ -1207,7 +1221,8 @@ public class BookService {
             }
 
             // 페이지 그대로 책갈피 등록
-            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, request.date());
+            LocalDate date = converterService.stringToDate(request.date());
+            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
             bookmarkRepository.save(bookmark);
         }
         else {
@@ -1283,14 +1298,16 @@ public class BookService {
                 int percent = (int) Math.round(100.0 * bookmark.getMarkPage() / book.getTotalPage());
 
                 // 응답으로 보낼 내용에 더하기
-                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
+                String dateStr = converterService.dateToString(bookmark.getDate());
+                bookmarkList.add(new GetBookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
             }
             else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / bookmark.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
-                bookmarkList.add(new GetBookmarkResponse(bookmark.getDate(), page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+                String dateStr = converterService.dateToString(bookmark.getDate());
+                bookmarkList.add(new GetBookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
             }
         }
 
@@ -1325,7 +1342,7 @@ public class BookService {
             bookRecord = bookRecords.get(i);
             if (bookRecord.getLocationList() == null) break;
 
-            date = bookRecord.getStartDate();
+            date = converterService.dateToString(bookRecord.getStartDate());
             title = bookRecord.getBook().getTitle();
 
             List<String> location = new ArrayList<>();
@@ -1347,7 +1364,7 @@ public class BookService {
             bookmark = bookmarks.get(i);
             if (bookmark.getLocationList() == null) break;
 
-            date = bookmark.getDate();
+            date = converterService.dateToString(bookmark.getDate());
             title = bookmark.getBook().getTitle();
             readPage = bookmark.getMarkPage();
 
@@ -1434,7 +1451,7 @@ public class BookService {
             memberLocationRepository.delete(memberLocationList.get(0));
         }
 
-        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDate.now().toString()));
+        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDateTime.now()));
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
