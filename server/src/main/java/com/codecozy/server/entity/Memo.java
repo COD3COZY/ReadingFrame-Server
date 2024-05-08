@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.MemoKey;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.*;
 
 @Entity
@@ -29,13 +30,13 @@ public class Memo {
     @Column(name = "mark_page")
     private int markPage;
 
-    @Column(length = 10, nullable = false)
-    private String date;
+    @Column(nullable = false)
+    private LocalDate date;
 
     @Column(name = "memo_text", length = 1000, nullable = false)
     private String memoText;
 
-    public static Memo create(Member member, Book book, String uuid, int markPage, String date, String memoText) {
+    public static Memo create(Member member, Book book, String uuid, int markPage, LocalDate date, String memoText) {
         return Memo.builder()
                 .member(member)
                 .book(book)

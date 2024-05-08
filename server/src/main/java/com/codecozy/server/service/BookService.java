@@ -166,8 +166,10 @@ public class BookService {
         for (Memo memo : memoList) {
             int markPage = memo.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
+            String dateStr = converterService.dateToString(memo.getDate());
+
             memos.add(new GetMemoResponse(
-               memo.getDate(),
+               dateStr,
                markPage,
                markPercent,
                memo.getMemoText(),
@@ -1031,7 +1033,8 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+        LocalDate date = converterService.stringToDate(request.date());
+        memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
         return new ResponseEntity<>(
@@ -1050,7 +1053,8 @@ public class BookService {
         // 메모가 있으면
         Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (memo != null) {
-            memo = Memo.create(member, book, request.uuid(), request.markPage(), request.date(), request.memoText());
+            LocalDate date = converterService.stringToDate(request.date());
+            memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         }
         else {
@@ -1105,15 +1109,16 @@ public class BookService {
                 int percent = (int) Math.round(100.0 * memo.getMarkPage() / book.getTotalPage());
 
                 // 응답으로 보낼 내용에 더하기
-                memoList.add(new GetMemoResponse(memo.getDate(), memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+                String dateStr = converterService.dateToString(memo.getDate());
+                memoList.add(new GetMemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             }
             else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
-                memoList.add(new GetMemoResponse(memo.getDate(), page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
-
+                String dateStr = converterService.dateToString(memo.getDate());
+                memoList.add(new GetMemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
         }
 
