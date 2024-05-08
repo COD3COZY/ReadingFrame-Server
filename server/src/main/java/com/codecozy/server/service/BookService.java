@@ -85,7 +85,10 @@ public class BookService {
 
         // 독서노트에 등록
         LocalDate startDate = converterService.stringToDate(request.startDate());
-        LocalDate recentDate = converterService.stringToDate(request.recentDate());
+        LocalDate recentDate = null;
+        if (request.recentDate() != null) {
+            recentDate = converterService.stringToDate(request.recentDate());
+        }
         bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), startDate, recentDate);
         bookRecordRepository.save(bookRecord);
 
