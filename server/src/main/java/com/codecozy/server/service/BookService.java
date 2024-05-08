@@ -83,7 +83,9 @@ public class BookService {
         }
 
         // 독서노트에 등록
-        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), request.startDate(), request.recentDate());
+        LocalDate startDate = converterService.stringToDate(request.startDate());
+        LocalDate recentDate = converterService.stringToDate(request.recentDate());
+        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), startDate, recentDate);
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -139,8 +141,8 @@ public class BookService {
         int bookType = bookRecord.getBookType();
         int readingStatus = bookRecord.getReadingStatus();
         String mainLocation = bookRecord.getLocationList().getPlaceName();
-        String startDate = bookRecord.getStartDate();
-        String recentDate = bookRecord.getRecentDate();
+        String startDate = converterService.dateToString(bookRecord.getStartDate());
+        String recentDate = converterService.dateToString(bookRecord.getRecentDate());
 
         List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
         List<GetBookmarkPreviewResponse> bookmarks = new ArrayList<>();
@@ -750,7 +752,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 읽기 시작한 날짜 변경
-        if (bookRecord != null) bookRecord.setStartDate(startDate);
+        if (bookRecord != null) bookRecord.setStartDate(converterService.stringToDate(startDate));
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
@@ -773,7 +775,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 마지막 읽은 날짜 변경
-        if (bookRecord != null) bookRecord.setRecentDate(recentDate);
+        if (bookRecord != null) bookRecord.setRecentDate(converterService.stringToDate(recentDate));
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
@@ -1325,7 +1327,7 @@ public class BookService {
             bookRecord = bookRecords.get(i);
             if (bookRecord.getLocationList() == null) break;
 
-            date = bookRecord.getStartDate();
+            date = converterService.dateToString(bookRecord.getStartDate());
             title = bookRecord.getBook().getTitle();
 
             List<String> location = new ArrayList<>();
