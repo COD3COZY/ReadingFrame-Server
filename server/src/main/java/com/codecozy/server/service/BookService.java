@@ -5,6 +5,7 @@ import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -1436,7 +1437,7 @@ public class BookService {
             memberLocationRepository.delete(memberLocationList.get(0));
         }
 
-        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDate.now().toString()));
+        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDateTime.now()));
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
