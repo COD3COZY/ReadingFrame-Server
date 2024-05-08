@@ -39,6 +39,7 @@ public class BookService {
     private final PersonalDictionaryRepository personalDictionaryRepository;
     private final MemoRepository memoRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final ConverterService converterService;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
@@ -123,7 +124,7 @@ public class BookService {
         String categoryName = book.getCategory();
         int totalPage = book.getTotalPage();
         int readPage = bookRecord.getMarkPage();
-        int readingPercent = (int) ((double) readPage / totalPage * 100);
+        int readingPercent = converterService.pageToPercent(readPage, totalPage);
         String keywordReview = bookRecord.getKeyWord();
         String commentReview = bookReviewRepository.findByMemberAndBook(member, book).getReviewText();
 
@@ -144,10 +145,11 @@ public class BookService {
         List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
         List<GetBookmarkPreviewResponse> bookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarkList) {
-            int markPercent = (int) ((double) bookmark.getMarkPage() / totalPage * 100);
+            int markPage = bookmark.getMarkPage();
+            int markPercent = converterService.pageToPercent(markPage, totalPage);
             bookmarks.add(new GetBookmarkPreviewResponse(
                     bookmark.getDate(),
-                    bookmark.getMarkPage(),
+                    markPage,
                     markPercent,
                     bookmark.getLocationList().getPlaceName(),
                     bookmark.getUuid()
@@ -157,10 +159,11 @@ public class BookService {
         List<Memo> memoList = memoRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
         List<GetMemoResponse> memos = new ArrayList<>();
         for (Memo memo : memoList) {
-            int markPercent = (int) ((double) memo.getMarkPage() / totalPage * 100);
+            int markPage = memo.getMarkPage();
+            int markPercent = converterService.pageToPercent(markPage, totalPage);
             memos.add(new GetMemoResponse(
                memo.getDate(),
-               memo.getMarkPage(),
+               markPage,
                markPercent,
                memo.getMemoText(),
                memo.getUuid()
@@ -271,7 +274,7 @@ public class BookService {
         // 퍼센트 단위일 경우
         else {
             int totalPage = book.getTotalPage();
-            int markPage = (int) (request.page() / 100.0 * totalPage);
+            int markPage = converterService.percentToPage(request.page(), totalPage);
             bookRecord.setMarkPage(markPage);
         }
 

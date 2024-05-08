@@ -53,7 +53,7 @@ public class HomeService {
 
             int totalPage = book.getTotalPage();
             int readPage = bookRecord.getMarkPage();
-            int readingPercent = (int) ((double) readPage / totalPage * 100);
+            int readingPercent = converterService.pageToPercent(readPage, totalPage);
 
             booksList.add(new GetMainBooksResponse(
                     READING,
@@ -161,7 +161,7 @@ public class HomeService {
         // readingPercent 계산
         int totalPage = book.getTotalPage();
         int readPage = bookRecord.getMarkPage();
-        int readingPercent = (int) ((double) readPage / totalPage * 100);
+        int readingPercent = converterService.pageToPercent(readPage, totalPage);
 
         // 리뷰의 유무 가져오기
         Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
