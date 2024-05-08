@@ -45,4 +45,14 @@ public class ConverterService {
             return "기타";
         }
     }
+
+    // page -> percent 값으로 변경하는 메소드
+    public int pageToPercent(int readPage, int totalPage) {
+        return (int) ((double) readPage / totalPage * 100);
+    }
+
+    // percent -> page 값으로 변경하는 메소드
+    public int percentToPage(int percent, int totalPage) {
+        return (int) (percent / 100.0 * totalPage);
+    }
 }
