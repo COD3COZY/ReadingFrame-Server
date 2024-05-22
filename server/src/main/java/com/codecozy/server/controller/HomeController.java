@@ -2,6 +2,7 @@ package com.codecozy.server.controller;
 
 import com.codecozy.server.security.TokenProvider;
 import com.codecozy.server.service.HomeService;
+import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,15 @@ public class HomeController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return homeService.getMainPage(memberId);
+    }
+
+    // 검색
+    @GetMapping("/search")
+    public ResponseEntity getSearchList(@RequestHeader("xAuthToken") String token,
+            @RequestBody Map<String, String> searchTextMap) throws IOException {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getSearchList(memberId, searchTextMap.get("searchText"));
     }
 
     // 읽고 싶은 책 조회
