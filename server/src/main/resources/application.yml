@@ -24,3 +24,8 @@ spring:
   output:
     ansi:
       enabled: always
+
+# 로그 레벨 설정
+logging:
+  level:
+    com.codecozy.server: debug

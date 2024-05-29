@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,6 +35,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HomeService {
@@ -60,6 +62,9 @@ public class HomeService {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+
+        log.info("JSON 데이터 받아오기 성공");
+        log.debug(jsonObj.toJSONString());
 
         // 총 검색 결과 수 가져오기
         int itemCount = Integer.parseInt(jsonObj.get("totalResults").toString());
@@ -196,10 +201,14 @@ public class HomeService {
     // 검색
     public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText)
             throws IOException {
-        // TODO: 사용자가 독서노트에 등록한 책도 넣을 것
+        // TODO: 사용자가 독서노트에 등록한 책 넣기
 
         // FIXME: start 페이지 1~4까지만 됨 (반복문 돌릴 것)
         // FIXME: 검색문에 공백 들어가면 오류뜸
+        // 검색문 공백 제거 (오류 방지를 위함)
+        searchText.replaceAll(" ", "");
+        System.out.println(searchText);
+
         String urlStr =
                 "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbtmzl2350811001&Query="
                         + searchText
@@ -227,8 +236,6 @@ public class HomeService {
         if (charIndex != -1) {
             result.deleteCharAt(charIndex);
         }
-
-        System.out.println(result);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", parsingData(result.toString())),
