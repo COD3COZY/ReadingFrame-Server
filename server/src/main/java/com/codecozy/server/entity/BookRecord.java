@@ -60,6 +60,9 @@ public class BookRecord {
     @Column(name = "key_word", length = 15)
     private String keyWord;
 
+    @OneToOne(mappedBy = "bookRecord")
+    private BookRecordDate bookRecordDate;
+
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 
     public void setBookType(int bookType) { this.bookType = bookType; }

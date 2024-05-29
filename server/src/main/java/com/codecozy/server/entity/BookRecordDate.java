@@ -6,7 +6,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumns;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -24,14 +25,12 @@ import lombok.NoArgsConstructor;
 @Table(name = "BOOK_RECORD_DATE")
 public class BookRecordDate {
     @Id
-    @ManyToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
-    private Member member;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "isbn", referencedColumnName = "isbn")
-    private Book book;
+    @OneToOne
+    @JoinColumns({
+            @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
+            @JoinColumn(name = "isbn", referencedColumnName = "isbn")
+    })
+    private BookRecord bookRecord;
 
     @Column(name = "last_date")
     private LocalDateTime lastDate;
