@@ -11,6 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface BookRecordDateRepository extends JpaRepository<BookRecordDate, BookRecordDateKey> {
 
+    // 해당 독서노트의 기록 불러오기
+    BookRecordDate findByBookRecord(BookRecord bookRecord);
+
     // 사용자가 숨기지 않고, 최근에 기록을 작성한 특정 독서상태의 책 리스트 최대 10개 불러오기
     @Query("SELECT br FROM BookRecordDate d LEFT JOIN BookRecord br ON d.bookRecord = br"
             + " WHERE br.member = :member AND br.readingStatus = :readingStatus AND br.isHidden = false"

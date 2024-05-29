@@ -34,4 +34,13 @@ public class BookRecordDate {
 
     @Column(name = "last_date")
     private LocalDateTime lastDate;
+
+    public void setLastDate(LocalDateTime lastDate) { this.lastDate = lastDate; }
+
+    public static BookRecordDate create(BookRecord bookRecord) {
+        return BookRecordDate.builder()
+                .bookRecord(bookRecord)
+                .lastDate(LocalDateTime.now())
+                .build();
+    }
 }
