@@ -30,6 +30,7 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
+    private final BookRecordDateRepository bookRecordDateRepository;
     private final MemberRepository memberRepository;
     private final LocationRepository locationRepository;
     private final MemberLocationRepository memberLocationRepository;
@@ -90,7 +91,10 @@ public class BookService {
             recentDate = converterService.stringToDate(request.recentDate());
         }
         bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), startDate, recentDate);
-        bookRecordRepository.save(bookRecord);
+        bookRecord = bookRecordRepository.save(bookRecord);
+
+        // 독서노트 날짜 레코드 생성
+        bookRecordDateRepository.save(BookRecordDate.create(bookRecord));
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -601,6 +605,12 @@ public class BookService {
             bookReviewRepository.save(bookReview);
         }
 
+        // 독서노트의 마지막 기록 날짜 업데이트
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        bookRecordDate.setLastDate(LocalDateTime.now());
+        bookRecordDateRepository.save(bookRecordDate);
+
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
@@ -665,6 +675,12 @@ public class BookService {
                 bookReviewRepository.save(bookReview);
             }
         }
+
+        // 독서노트의 마지막 기록 날짜 업데이트
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        bookRecordDate.setLastDate(LocalDateTime.now());
+        bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -1040,6 +1056,12 @@ public class BookService {
         memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
+        // 독서노트의 마지막 기록 날짜 업데이트
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        bookRecordDate.setLastDate(LocalDateTime.now());
+        bookRecordDateRepository.save(bookRecordDate);
+
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
@@ -1064,6 +1086,12 @@ public class BookService {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
                     HttpStatus.CONFLICT);
         }
+
+        // 독서노트의 마지막 기록 날짜 업데이트
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        bookRecordDate.setLastDate(LocalDateTime.now());
+        bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -1168,6 +1196,12 @@ public class BookService {
         bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
         bookmarkRepository.save(bookmark);
 
+        // 독서노트의 마지막 기록 날짜 업데이트
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        bookRecordDate.setLastDate(LocalDateTime.now());
+        bookRecordDateRepository.save(bookRecordDate);
+
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
@@ -1224,6 +1258,12 @@ public class BookService {
             LocalDate date = converterService.stringToDate(request.date());
             bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
             bookmarkRepository.save(bookmark);
+
+            // 독서노트의 마지막 기록 날짜 업데이트
+            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+            BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+            bookRecordDate.setLastDate(LocalDateTime.now());
+            bookRecordDateRepository.save(bookRecordDate);
         }
         else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
