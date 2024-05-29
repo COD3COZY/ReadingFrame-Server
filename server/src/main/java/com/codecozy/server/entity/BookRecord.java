@@ -3,6 +3,7 @@ package com.codecozy.server.entity;
 import com.codecozy.server.composite_key.BookRecordKey;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,7 +45,7 @@ public class BookRecord {
     private boolean isHidden;
 
     @Column(name = "create_date", nullable = false)
-    private LocalDate createDate;
+    private LocalDateTime createDate;
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -89,7 +90,7 @@ public class BookRecord {
                 .locationList(null)
                 .isMine(false)
                 .isHidden(false)
-                .createDate(LocalDate.now())
+                .createDate(LocalDateTime.now())
                 .startDate(null)
                 .recentDate(null)
                 .keyWord(null)
@@ -105,7 +106,7 @@ public class BookRecord {
                 .locationList(locationList)
                 .isMine(isMine)
                 .isHidden(false)
-                .createDate(LocalDate.now())
+                .createDate(LocalDateTime.now())
                 .startDate(startDate)
                 .recentDate(recentDate)
                 .keyWord(null)
