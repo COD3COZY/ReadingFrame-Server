@@ -12,6 +12,7 @@ import com.codecozy.server.dto.response.SearchDto;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
+import com.codecozy.server.repository.BookRecordDateRepository;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
 import com.codecozy.server.repository.BookReviewRepository;
@@ -44,6 +45,7 @@ public class HomeService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
+    private final BookRecordDateRepository bookRecordDateRepository;
     private final BookReviewRepository bookReviewRepository;
 
     // 독서 상태 상수 값
@@ -113,9 +115,8 @@ public class HomeService {
         List<GetMainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordRepository.findTop10ByMemberAndReadingStatusAndIsHidden(
-                member,
-                READING, false);
+        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member, READING);
+
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {
             Book book = bookRecord.getBook();
@@ -138,7 +139,7 @@ public class HomeService {
         }
 
         // 읽고 싶은 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> wantToReadBooks = bookRecordRepository.findTop10ByMemberAndReadingStatus(
+        List<BookRecord> wantToReadBooks = bookRecordRepository.findTop10ByMemberAndReadingStatusOrderByCreateDateDesc(
                 member, WANT_TO_READ);
 
         // dto 값 넣기
