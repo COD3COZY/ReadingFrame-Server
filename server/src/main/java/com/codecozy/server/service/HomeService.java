@@ -115,7 +115,8 @@ public class HomeService {
         List<GetMainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member, READING);
+        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member,
+                READING);
 
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {
@@ -202,44 +203,82 @@ public class HomeService {
     // 검색
     public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText)
             throws IOException {
+        // 응답 DTO
+        GetSearchResponse response = new GetSearchResponse();
+
+        // 독서노트 내 검색된 책들의 isbn 값을 저장하는 리스트 (중복 제거 위함)
+        List<String> isbnList = new ArrayList<>();
+
         // TODO: 사용자가 독서노트에 등록한 책 넣기
+        Member member = memberRepository.findByMemberId(memberId);
+        List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndBookTitleContains(
+                member, searchText);
+        response.setTotalCount(bookRecordList.size());
+        for (BookRecord bookRecord : bookRecordList) {
+            Book book = bookRecord.getBook();
+            response.getSearchList().add(new SearchDto(
+                    book.getIsbn(),
+                    book.getCover(),
+                    book.getTitle(),
+                    book.getAuthor(),
+                    // TODO: publisher
+                    // TODO: publicationDate
+            ));
 
-        // FIXME: start 페이지 1~4까지만 됨 (반복문 돌릴 것)
-        // FIXME: 검색문에 공백 들어가면 오류뜸
-        // 검색문 공백 제거 (오류 방지를 위함)
-        searchText.replaceAll(" ", "");
-        System.out.println(searchText);
-
-        String urlStr =
-                "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbtmzl2350811001&Query="
-                        + searchText
-                        + "&QueryType=Keyword&Start=4&MaxResults=50&Cover=Big&Output=JS&Version=20131101";
-
-        URL url = new URL(urlStr);
-
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        urlConnection.setRequestMethod("GET");
-
-        BufferedReader br;
-        br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-
-        String returnLine;
-
-        StringBuilder result = new StringBuilder();
-        while ((returnLine = br.readLine()) != null) {
-            result.append(returnLine + "\n\r");
+            // isbn값 넣기
+            isbnList.add(book.getIsbn());
         }
 
-        urlConnection.disconnect();
+        // 검색문 공백 제거 (오류 방지를 위함)
+        searchText.replaceAll(" ", "");
 
-        // 파싱이 제대로 이루어지도록 맨 끝 세미콜론 제거
-        int charIndex = result.lastIndexOf(";");
-        if (charIndex != -1) {
-            result.deleteCharAt(charIndex);
+        // 알라딘 내 책 검색 (1~4 페이지의 정보 모두 담기)
+        for (int i = 1; i < 5; i++) {
+            String urlStr =
+                    "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbtmzl2350811001&Query="
+                            + searchText
+                            + "&QueryType=Keyword&Start="
+                            + i
+                            + "&MaxResults=50&Cover=Big&Output=JS&Version=20131101";
+
+            URL url = new URL(urlStr);
+
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+
+            BufferedReader br;
+            br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+
+            String returnLine;
+
+            StringBuilder result = new StringBuilder();
+            while ((returnLine = br.readLine()) != null) {
+                result.append(returnLine + "\n\r");
+            }
+
+            urlConnection.disconnect();
+
+            // 파싱이 제대로 이루어지도록 맨 끝 세미콜론 제거
+            int charIndex = result.lastIndexOf(";");
+            if (charIndex != -1) {
+                result.deleteCharAt(charIndex);
+            }
+
+            // 파싱
+            GetSearchResponse parsingData = parsingData(result.toString());
+
+            // 파싱 데이터 DTO 집어넣기
+            response.setTotalCount(response.getTotalCount() + parsingData.getTotalCount());
+            for (SearchDto searchInfo : parsingData.getSearchList()) {
+                // 이미 독서노트 내에서 검색된 책이 아닐 경우에만 정보 담기
+                if (!isbnList.contains(searchInfo.isbn())) {
+                    response.getSearchList().add(searchInfo);
+                }
+            }
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", parsingData(result.toString())),
+                DefaultResponse.from(StatusCode.OK, "성공", response),
                 HttpStatus.OK);
     }
 
