@@ -13,4 +13,5 @@ public interface BookReviewRepository extends JpaRepository<BookReview, Long> {
     int countByBook(Book book);
     List<BookReview> findAllByBook(Book book);
     List<BookReview> findAllByBookOrderByReviewDateDesc(Book book);
+    BookReview findByCommentId(Long commentId);
 }

@@ -20,9 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -386,6 +384,115 @@ public class BookService {
 
         response = new GetSearchBookResponse(response.cover(), response.title(), response.author(), categoryName, response.readingStatus(), response.publisher(), response.publicationDate(),
                 response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", response),
+                HttpStatus.OK);
+    }
+
+    // 한줄평 추가조회
+    public ResponseEntity<DefaultResponse> commentDetail(Long memberId, String isbn, CommentDetailRequest request) {
+        // 사용자 받아오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+
+        // 응답 객체 생성
+        List<CommentDetailResponse> response = new ArrayList<>();
+        
+        if (request.orderType()) { // orderType이 반응순이라면
+            // 해당 책의 모든 한줄평 찾기
+            List<BookReview> bookReviews = bookReviewRepository.findAllByBook(book);
+
+            if (bookReviews == null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록된 한줄평이 없습니다."),
+                        HttpStatus.CONFLICT);
+            }
+
+            // 한줄평 ID와 반응 합산 수를 저장할 맵
+            Map<Long, Integer> reactionMap = new HashMap<>();
+            // 한줄평에 대한 반응 검색 후 모든 반응 합산
+            for (BookReview bookReview : bookReviews) {
+                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+                reactionMap.put(bookReviewReaction.getBookReviewReactionId(),
+                        bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
+                        + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount());
+            }
+
+            // 내림차순으로 반응 수 정렬
+            List<Map.Entry<Long, Integer>> entryList = new LinkedList<>(reactionMap.entrySet());
+            entryList.sort(new Comparator<Map.Entry<Long, Integer>>() {
+                @Override
+                public int compare(Map.Entry<Long, Integer> o1, Map.Entry<Long, Integer> o2) {
+                    return o2.getValue() - o1.getValue();
+                }
+            });
+
+            // 원하는 위치의 한줄평만 반환
+            for (int i = request.orderNumber() * 20; i < (request.orderNumber() * 20) + 20; i++) {
+                if (i >= bookReviews.size()) break;
+
+                BookReview bookReview = bookReviewRepository.findByCommentId(entryList.get(i).getKey());
+                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+
+                // 한줄평 리액션 수 리스트
+                List<Integer> reactions = new ArrayList<>();
+                reactions.add(bookReviewReaction.getHeartCount());
+                reactions.add(bookReviewReaction.getGoodCount());
+                reactions.add(bookReviewReaction.getWowCount());
+                reactions.add(bookReviewReaction.getSadCount());
+                reactions.add(bookReviewReaction.getAngryCount());
+
+                // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
+                boolean isMyReaction = false;
+                int myReactionCode = -1;
+                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+                if (bookReviewReviewer != null) {
+                    isMyReaction = bookReviewReviewer.isReaction();
+                    myReactionCode = bookReviewReviewer.getReactionCode();
+                }
+
+                response.add(new CommentDetailResponse(bookReview.getCommentId(), bookReview.getMember().getNickname(), bookReview.getReviewText(), bookReview.getReviewDate(),
+                        reactions, isMyReaction, myReactionCode));
+            }
+        } else { // orderType이 최신순이라면
+            // 날짜 내림차순으로 해당 책의 모든 한줄평 찾기
+            List<BookReview> bookReviews = bookReviewRepository.findAllByBookOrderByReviewDateDesc(book);
+
+            if (bookReviews == null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록된 한줄평이 없습니다."),
+                        HttpStatus.CONFLICT);
+            }
+
+            // 원하는 위치의 한줄평만 반환
+            for (int i = request.orderNumber() * 20; i < (request.orderNumber() * 20) + 20; i++) {
+                if (i >= bookReviews.size()) break;
+
+                BookReview bookReview = bookReviews.get(i);
+                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+
+                // 한줄평 리액션 수 리스트
+                List<Integer> reactions = new ArrayList<>();
+                reactions.add(bookReviewReaction.getHeartCount());
+                reactions.add(bookReviewReaction.getGoodCount());
+                reactions.add(bookReviewReaction.getWowCount());
+                reactions.add(bookReviewReaction.getSadCount());
+                reactions.add(bookReviewReaction.getAngryCount());
+
+                // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
+                boolean isMyReaction = false;
+                int myReactionCode = -1;
+                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+                if (bookReviewReviewer != null) {
+                    isMyReaction = bookReviewReviewer.isReaction();
+                    myReactionCode = bookReviewReviewer.getReactionCode();
+                }
+
+                response.add(new CommentDetailResponse(bookReview.getCommentId(), bookReview.getMember().getNickname(), bookReview.getReviewText(), bookReview.getReviewDate(),
+                        reactions, isMyReaction, myReactionCode));
+            }
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", response),
@@ -1487,6 +1594,16 @@ public class BookService {
                 locationRepository.delete(locationList);
             }
         }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공"),
+                HttpStatus.OK);
+    }
+
+    // 지도 마크 조회
+    public ResponseEntity<DefaultResponse> getAllMarker(Long memberId) {
+        // 사용자 받아오기
+        Member member = memberRepository.findByMemberId(memberId);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),

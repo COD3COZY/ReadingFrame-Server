@@ -88,6 +88,15 @@ public class BookController {
         return bookService.searchBookDetail(memberId, isbn);
     }
 
+    // 한줄평 추가 조회 API
+    @GetMapping("/commentDetail/{isbn}")
+    public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
+                                        @PathVariable("isbn") String isbn, @RequestBody CommentDetailRequest request) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.commentDetail(memberId, isbn, request);
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
@@ -346,4 +355,13 @@ public class BookController {
 
         return bookService.deleteRecentLocation(memberId, request);
     }
+
+    // 지도 마크 조회 API
+    @GetMapping("/getAllMarker")
+    public ResponseEntity getAllMarker(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.getAllMarker(memberId);
+    }
+
 }
