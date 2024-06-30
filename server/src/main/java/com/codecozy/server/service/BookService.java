@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -327,8 +328,89 @@ public class BookService {
 
         urlConnection.disconnect();
 
+        GetSearchBookResponse response = dataParsing(result.toString());
+
+        // 사용자 받아오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        // 해당 책 찾기
+        Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        // categoryName 수정
+        String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
+
+        // readingStatus 검색
+        int readingStatus = -1;
+        if (bookRecord != null) readingStatus = bookRecord.getReadingStatus();
+
+        // commentCount 검색
+        int commentCount = bookReviewRepository.countByBook(book);
+
+        // selectedReview 검색
+        List<KeywordReview> selectedReview = keywordReviewRepository.findAllByBook(book);
+        // 실제로 반환하는 한줄평 반응
+        List<Integer> selectedReviewList = new ArrayList<>();
+        // max 값 위치를 체크하기 위한 리스트
+        int[] integerArray = new int[31];
+
+        if (selectedReview.isEmpty()) selectedReviewList = null;
+        else {
+            for (int i = 0; i < selectedReview.size(); i++) {
+                // selectedReview 문자열 받아오기
+                String selectedReviews = selectedReview.get(i).getSelectReviewCode();
+
+                // , 기준으로 split하고 해당하는 인덱스 위치 1 더하기(max 값으로 정렬 위함)
+                List<String> selected = List.of(selectedReviews.split(","));
+                for (int j = 0; j < selected.size(); j++) integerArray[Integer.parseInt(selected.get(j))] += 1;
+            }
+
+            int listCnt = 0;
+            while (listCnt < 10) {
+                int max = 0;
+
+                // max 찾기
+                for (int i = 0; i < integerArray.length; i++) {
+                    if (integerArray[i] > max) {
+                        max = integerArray[i];
+                    }
+                }
+
+                // max가 0이면 반응이 등록된 내용이 없음
+                if (max == 0) break;
+
+                // max에 해당하는 값을 모두 0으로 만들고, 해당 인덱스는 배열에 넣기
+                for (int i = 0; i < integerArray.length; i++) {
+                    if (integerArray[i] == max) {
+                        integerArray[i] = 0;
+                        selectedReviewList.add(i);
+                        listCnt++;
+                    }
+                }
+            }
+        }
+
+        // 해당 책에 대한 한줄평 정보(commentList)를 날짜를 내림차순으로 검색
+        List<BookReview> bookReviews = bookReviewRepository.findAllByBookOrderByReviewDateDesc(book);
+        // 실제로 반환하는 commentList
+        List<String> commentList = new ArrayList<>();
+
+        // comment가 없으면 null 반환, 있으면 최신순으로 5개만 받아오기
+        if (bookReviews.isEmpty()) commentList = null;
+        else {
+            int length = bookReviews.size();
+            if (length > 5) length = 5;
+
+            for (int i = 0; i < length; i++) {
+                commentList.add(bookReviews.get(i).getReviewText());
+            }
+        }
+
+        response = new GetSearchBookResponse(response.cover(), response.title(), response.author(), categoryName, response.readingStatus(), response.publisher(), response.publicationDate(),
+                response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
+
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", dataParsing(result.toString())),
+                DefaultResponse.from(StatusCode.OK, "성공", response),
                 HttpStatus.OK);
     }
 
