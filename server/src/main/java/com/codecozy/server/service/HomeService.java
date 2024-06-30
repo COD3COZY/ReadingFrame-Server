@@ -68,11 +68,11 @@ public class HomeService {
         log.info("JSON 데이터 받아오기 성공");
         log.debug(jsonObj.toJSONString());
 
-        // 총 검색 결과 수 가져오기
-        int itemCount = Integer.parseInt(jsonObj.get("totalResults").toString());
-
         // 검색 결과 리스트 가져오기
         JSONArray itemList = (JSONArray) jsonObj.get("item");
+
+        // 총 검색 결과 수 가져오기
+        int itemCount = itemList.size();
 
         // 프론트측에 보낼 응답 DTO 구성
         List<SearchDto> searchDto = new ArrayList<>();
@@ -204,33 +204,35 @@ public class HomeService {
     public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText)
             throws IOException {
         // 응답 DTO
-        GetSearchResponse response = new GetSearchResponse();
+        GetSearchResponse response = new GetSearchResponse(0, new ArrayList<>());
 
         // 독서노트 내 검색된 책들의 isbn 값을 저장하는 리스트 (중복 제거 위함)
         List<String> isbnList = new ArrayList<>();
 
-        // TODO: 사용자가 독서노트에 등록한 책 넣기
+        // 1. 사용자가 독서노트에 등록한 책 넣기
         Member member = memberRepository.findByMemberId(memberId);
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndBookTitleContains(
                 member, searchText);
         response.setTotalCount(bookRecordList.size());
         for (BookRecord bookRecord : bookRecordList) {
             Book book = bookRecord.getBook();
+            String publicationDateStr = converterService.dateToString(book.getPublicationDate());
             response.getSearchList().add(new SearchDto(
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
                     book.getAuthor(),
-                    // TODO: publisher
-                    // TODO: publicationDate
+                    book.getPublisher(),
+                    publicationDateStr
             ));
 
             // isbn값 넣기
             isbnList.add(book.getIsbn());
         }
 
+        // 2. 알라딘 내 검색한 책의 정보 넣기
         // 검색문 공백 제거 (오류 방지를 위함)
-        searchText.replaceAll(" ", "");
+        searchText = searchText.replaceAll(" ", "");
 
         // 알라딘 내 책 검색 (1~4 페이지의 정보 모두 담기)
         for (int i = 1; i < 5; i++) {
@@ -267,14 +269,25 @@ public class HomeService {
             // 파싱
             GetSearchResponse parsingData = parsingData(result.toString());
 
-            // 파싱 데이터 DTO 집어넣기
-            response.setTotalCount(response.getTotalCount() + parsingData.getTotalCount());
-            for (SearchDto searchInfo : parsingData.getSearchList()) {
-                // 이미 독서노트 내에서 검색된 책이 아닐 경우에만 정보 담기
-                if (!isbnList.contains(searchInfo.isbn())) {
-                    response.getSearchList().add(searchInfo);
-                }
+            // 파싱 데이터에서 불러온 책 count 수 저장
+            int totalCount = parsingData.getTotalCount();
+
+            // 만일 파싱에서 뽑아온 책의 count 수가 200이 넘는다면
+            // 실제 불러온 정보는 200권까지이므로.... 200으로 조정
+            if (totalCount > 200) {
+                totalCount = 200;
             }
+            // 파싱 데이터 DTO 집어넣기 수행
+            for (SearchDto searchInfo : parsingData.getSearchList()) {
+                // 중복된 책이면 책 카운트 줄이고 정보 안 담기
+                if (isbnList.contains(searchInfo.isbn())) {
+                    totalCount--;
+                    continue;
+                }
+                // 이미 독서노트 내에서 검색된 책이 아닐 경우에만 정보 담기
+                response.getSearchList().add(searchInfo);
+            }
+            response.setTotalCount(response.getTotalCount() + totalCount);
         }
 
         return new ResponseEntity<>(
