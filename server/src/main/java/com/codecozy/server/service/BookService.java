@@ -64,7 +64,7 @@ public class BookService {
 
         // isbn을 이용해 책 등록이 중복되었는지 검색
         if (book == null) {
-            book = registerBook(isbn, request.bookInformation().cover(), request.bookInformation().title(), request.bookInformation().author(), request.bookInformation().category(), Integer.parseInt(request.bookInformation().totalPage()));
+            book = registerBook(isbn, request.bookInformation());
         }
 
         if (request.mainLocation() != null) {
@@ -74,7 +74,8 @@ public class BookService {
             // 이미 있는 위치인지 검색
             locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
-                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
+                        latitude, longitude);
             }
 
             memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
@@ -90,7 +91,8 @@ public class BookService {
         if (request.recentDate() != null) {
             recentDate = converterService.stringToDate(request.recentDate());
         }
-        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList, request.isMine(), startDate, recentDate);
+        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList,
+                request.isMine(), startDate, recentDate);
         bookRecord = bookRecordRepository.save(bookRecord);
 
         // 독서노트 날짜 레코드 생성
@@ -176,15 +178,16 @@ public class BookService {
             String dateStr = converterService.dateToString(memo.getDate());
 
             memos.add(new GetMemoResponse(
-               dateStr,
-               markPage,
-               markPercent,
-               memo.getMemoText(),
-               memo.getUuid()
+                    dateStr,
+                    markPage,
+                    markPercent,
+                    memo.getMemoText(),
+                    memo.getUuid()
             ));
         }
 
-        List<PersonalDictionary> personalDictionaryList = personalDictionaryRepository.findTop3ByMemberAndBookOrderByNameAsc(member, book);
+        List<PersonalDictionary> personalDictionaryList = personalDictionaryRepository.findTop3ByMemberAndBookOrderByNameAsc(
+                member, book);
         List<GetPersonalDictionaryPreviewResponse> characters = new ArrayList<>();
         for (PersonalDictionary personalDictionary : personalDictionaryList) {
             characters.add(new GetPersonalDictionaryPreviewResponse(
@@ -196,25 +199,25 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", new GetReadingNoteResponse(
-                                cover,
-                                title,
-                                author,
-                                categoryName,
-                                totalPage,
-                                readPage,
-                                readingPercent,
-                                keywordReview,
-                                commentReview,
-                                selectReview,
-                                isMine,
-                                bookType,
-                                readingStatus,
-                                mainLocation,
-                                startDate,
-                                recentDate,
-                                bookmarks,
-                                memos,
-                                characters)),
+                        cover,
+                        title,
+                        author,
+                        categoryName,
+                        totalPage,
+                        readPage,
+                        readingPercent,
+                        keywordReview,
+                        commentReview,
+                        selectReview,
+                        isMine,
+                        bookType,
+                        readingStatus,
+                        mainLocation,
+                        startDate,
+                        recentDate,
+                        bookmarks,
+                        memos,
+                        characters)),
                 HttpStatus.OK);
     }
 
@@ -304,7 +307,9 @@ public class BookService {
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
 
-        String urlStr = "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=ttbtmzl2350811001&itemIdType=ISBN&ItemId=" + isbn + "&output=js&Version=20131101";
+        String urlStr =
+                "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=ttbtmzl2350811001&itemIdType=ISBN&ItemId="
+                        + isbn + "&output=js&Version=20131101";
 
         URL url = new URL(urlStr);
 
@@ -354,7 +359,8 @@ public class BookService {
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
-        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
+                member);
 
         // 신고하지 않았던 경우
         if (!bookReviewReviewer.isReport()) {
@@ -390,12 +396,13 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
         // isbn을 이용해 책 등록이 중복되었는지 검색
         if (book == null) {
-            book = registerBook(isbn, request.cover(), request.title(), request.author(), request.category(), Integer.parseInt(request.totalPage()));
+            book = registerBook(isbn, request);
         }
 
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "독서 노트에 등록한 도서는 읽고 싶은 도서로 등록할 수 없습니다."),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.CONFLICT, "독서 노트에 등록한 도서는 읽고 싶은 도서로 등록할 수 없습니다."),
                     HttpStatus.CONFLICT);
         }
         // 읽고싶은 책 등록 시에는 독서노트 생성 전이므로 member, book, reading_status 외에는 임시 데이터로 book_record 레코드 생성 후 저장
@@ -434,7 +441,8 @@ public class BookService {
         }
 
         // 한줄평에 반응을 등록한 유저인지 검색
-        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
+                member);
         // 현재 한줄평에 반응을 처음 남기는 유저라면
         if (bookReviewReviewer == null) {
             bookReviewReviewer = registerBookReviewReviewer(bookReview, member);
@@ -474,7 +482,8 @@ public class BookService {
             // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
             BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
             // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
-            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
+                    member);
 
             if ((bookReviewReaction != null) && (bookReviewReviewer != null)) {
                 if (bookReviewReviewer.isReaction()) { // 현재 한줄평에 반응을 남긴적이 있으면
@@ -485,18 +494,15 @@ public class BookService {
                     bookReviewReviewer.setReactionCode(request.commentReaction());
                     // 새 반응 카운트 하나 올리기
                     bookReviewReaction.setReactionCountUp(request.commentReaction());
-                }
-                else {
+                } else {
                     return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
                             HttpStatus.CONFLICT);
                 }
-            }
-            else {
+            } else {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
                         HttpStatus.CONFLICT);
             }
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
                     HttpStatus.CONFLICT);
         }
@@ -524,7 +530,8 @@ public class BookService {
             // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
             BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
             // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
-            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
+                    member);
 
             if ((bookReviewReaction != null) && (bookReviewReviewer != null)) {
                 if (bookReviewReviewer.isReaction()) { // 현재 한줄평에 반응을 남긴적이 있으면
@@ -532,24 +539,26 @@ public class BookService {
                     bookReviewReaction.setReactionCountDown(bookReviewReviewer.getReactionCode());
 
                     // 반응이 하나도 없으면 반응 카운트 레코드 삭제
-                    int cnt = bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
+                    int cnt = bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount()
+                            + bookReviewReaction.getWowCount()
                             + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount();
-                    if (cnt <= 0) bookReviewReactionRepository.delete(bookReviewReaction);
+                    if (cnt <= 0) {
+                        bookReviewReactionRepository.delete(bookReviewReaction);
+                    }
 
                     // 신고/반응 여부도 없다면 신고/반응 여부, 종류 레코드 삭제
-                    if (!bookReviewReviewer.isReport() && !bookReviewReviewer.isReaction()) bookReviewReviewerRepository.delete(bookReviewReviewer);
-                }
-                else {
+                    if (!bookReviewReviewer.isReport() && !bookReviewReviewer.isReaction()) {
+                        bookReviewReviewerRepository.delete(bookReviewReviewer);
+                    }
+                } else {
                     return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
                             HttpStatus.CONFLICT);
                 }
-            }
-            else {
+            } else {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
                         HttpStatus.CONFLICT);
             }
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
                     HttpStatus.CONFLICT);
         }
@@ -652,8 +661,7 @@ public class BookService {
                 // 선택 리뷰 수정
                 keywordReview.setSelectReviewCode(selected);
                 keywordReviewRepository.save(keywordReview);
-            }
-            else {
+            } else {
                 // 이전에 선택 리뷰를 등록하지 않은 경우 새로 생성
                 keywordReview = KeywordReview.create(member, book, selected);
                 keywordReviewRepository.save(keywordReview);
@@ -668,8 +676,7 @@ public class BookService {
                 // 한줄평 수정
                 bookReview.setReviewText(request.comment());
                 bookReviewRepository.save(bookReview);
-            }
-            else {
+            } else {
                 // 이전에 한줄평을 등록하지 않았거나 삭제한 경우 새로 생성
                 bookReview = BookReview.create(member, book, request.comment());
                 bookReviewRepository.save(bookReview);
@@ -702,28 +709,35 @@ public class BookService {
         if (bookRecord != null) {
             bookRecord.setKeyWord(null);
             bookRecordRepository.save(bookRecord);
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
         }
 
         // 선택리뷰 찾고 삭제
         KeywordReview keywordReview = keywordReviewRepository.findByMemberAndBook(member, book);
-        if (keywordReview != null) keywordReviewRepository.delete(keywordReview);
+        if (keywordReview != null) {
+            keywordReviewRepository.delete(keywordReview);
+        }
 
         // 한줄평 찾기
         BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
 
         // 한줄평 반응 종류 찾고 삭제
         BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
-        if (bookReviewReaction != null) bookReviewReactionRepository.delete(bookReviewReaction);
+        if (bookReviewReaction != null) {
+            bookReviewReactionRepository.delete(bookReviewReaction);
+        }
         // 한줄평 반응 여부 찾고 삭제
         BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-        if (bookReviewReviewer != null) bookReviewReviewerRepository.delete(bookReviewReviewer);
+        if (bookReviewReviewer != null) {
+            bookReviewReviewerRepository.delete(bookReviewReviewer);
+        }
 
         // 한줄평 삭제
-        if (bookReview != null) bookReviewRepository.delete(bookReview);
+        if (bookReview != null) {
+            bookReviewRepository.delete(bookReview);
+        }
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
@@ -747,14 +761,17 @@ public class BookService {
             BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
 
             // 해당 한줄평에 대한 반응 종류 레코드 지우기
-            if (bookReviewReaction != null) bookReviewReactionRepository.deleteById(bookReview);
+            if (bookReviewReaction != null) {
+                bookReviewReactionRepository.deleteById(bookReview);
+            }
             // 해당 한줄평에 대한 반응 여부 레코드 지우기
-            if (bookReviewReviewer != null) bookReviewReviewerRepository.deleteById(bookReview);
+            if (bookReviewReviewer != null) {
+                bookReviewReviewerRepository.deleteById(bookReview);
+            }
 
             // 한줄평 지우기
             bookReviewRepository.delete(bookReview);
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
                     HttpStatus.CONFLICT);
         }
@@ -776,8 +793,9 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 읽기 시작한 날짜 변경
-        if (bookRecord != null) bookRecord.setStartDate(converterService.stringToDate(startDate));
-        else {
+        if (bookRecord != null) {
+            bookRecord.setStartDate(converterService.stringToDate(startDate));
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
         }
@@ -799,8 +817,9 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 마지막 읽은 날짜 변경
-        if (bookRecord != null) bookRecord.setRecentDate(converterService.stringToDate(recentDate));
-        else {
+        if (bookRecord != null) {
+            bookRecord.setRecentDate(converterService.stringToDate(recentDate));
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
                     HttpStatus.CONFLICT);
         }
@@ -825,7 +844,7 @@ public class BookService {
         // 장소명으로 해당 주소 찾기
         LocationList locationList = locationRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
-        if(locationList == null) {
+        if (locationList == null) {
             locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
@@ -836,8 +855,7 @@ public class BookService {
             if (bookRecord.getLocationList() != null) {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "대표 위치가 이미 있습니다."),
                         HttpStatus.CONFLICT);
-            }
-            else { // 대표 위치가 없으면 대표위치 등록
+            } else { // 대표 위치가 없으면 대표위치 등록
                 bookRecord.setLocationList(locationList);
             }
         }
@@ -869,7 +887,7 @@ public class BookService {
         // 장소명으로 해당 주소 찾기
         LocationList locationList = locationRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
-        if(locationList == null) {
+        if (locationList == null) {
             locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
@@ -939,7 +957,8 @@ public class BookService {
     }
 
     // 인물사전 등록
-    public ResponseEntity<DefaultResponse> addpersonalDictionary(Long memberId, String isbn, PersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> addpersonalDictionary(Long memberId, String isbn,
+                                                                 PersonalDictionaryRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -947,16 +966,17 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 중복됐는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
+                request.name());
 
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 인물입니다."),
                     HttpStatus.CONFLICT);
-        }
-        else {
+        } else {
             // 인물사전에 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
+            personalDictionary = PersonalDictionary.create(member, book, request.name(),
+                    Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
 
@@ -966,7 +986,8 @@ public class BookService {
     }
 
     // 인물사전 수정
-    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(Long memberId, String isbn, PersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> modifyPersonalDictionary(Long memberId, String isbn,
+                                                                    PersonalDictionaryRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -974,15 +995,16 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
+                request.name());
 
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
             // 인물사전에서 수정 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(), Integer.parseInt(request.emoji()), request.preview(), request.description());
+            personalDictionary = PersonalDictionary.create(member, book, request.name(),
+                    Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 인물입니다."),
                     HttpStatus.CONFLICT);
         }
@@ -993,7 +1015,8 @@ public class BookService {
     }
 
     // 인물사전 삭제
-    public ResponseEntity<DefaultResponse> deletePersonalDictionary(Long memberId, String isbn, DeletePersonalDictionaryRequest request) {
+    public ResponseEntity<DefaultResponse> deletePersonalDictionary(Long memberId, String isbn,
+                                                                    DeletePersonalDictionaryRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -1001,7 +1024,8 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.characterName());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
+                request.characterName());
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);
@@ -1025,12 +1049,15 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 한 유저의 한 책에 대한 인물사전 전체 검색
-        List<PersonalDictionary> personalDictionaries = personalDictionaryRepository.findAllByMemberAndBook(member, book);
+        List<PersonalDictionary> personalDictionaries = personalDictionaryRepository.findAllByMemberAndBook(member,
+                book);
         for (int i = 0; i < personalDictionaries.size(); i++) {
             PersonalDictionary personalDictionary = personalDictionaries.get(i);
 
             // 응답으로 보낼 내용에 더하기
-            personalDictionaryList.add(new GetPersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(), personalDictionary.getPreview(), personalDictionary.getDescription()));
+            personalDictionaryList.add(
+                    new GetPersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(),
+                            personalDictionary.getPreview(), personalDictionary.getDescription()));
         }
 
         return new ResponseEntity<>(
@@ -1081,8 +1108,7 @@ public class BookService {
             LocalDate date = converterService.stringToDate(request.date());
             memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
                     HttpStatus.CONFLICT);
         }
@@ -1141,15 +1167,16 @@ public class BookService {
 
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(memo.getDate());
-                memoList.add(new GetMemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
-            }
-            else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
+                memoList.add(
+                        new GetMemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+            } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(memo.getDate());
-                memoList.add(new GetMemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+                memoList.add(
+                        new GetMemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
         }
 
@@ -1181,7 +1208,8 @@ public class BookService {
             // 주소 없으면 등록
             locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
             if (locationList == null) {
-                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
+                        latitude, longitude);
             }
 
             // 사용자 최근 검색 위치에 등록
@@ -1232,11 +1260,13 @@ public class BookService {
                 // 새로 받은 위치가 주소 테이블에 없으면 등록
                 locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
                 if (locationList == null) {
-                    locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(), latitude, longitude);
+                    locationList = registerLocation(request.mainLocation().placeName(),
+                            request.mainLocation().address(), latitude, longitude);
                 }
 
                 // 사용자 최근 검색 위치에 등록
-                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member,
+                        locationList);
                 // 최근 위치 검색 기록에 없으면 추가
                 if (memberLocation == null) {
                     registerRecentLocation(member, locationList);
@@ -1264,8 +1294,7 @@ public class BookService {
             BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);
-        }
-        else {
+        } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
                     HttpStatus.CONFLICT);
         }
@@ -1287,7 +1316,8 @@ public class BookService {
         Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (bookmark != null) {
             // 참조하고 있는 위치 받아오기
-            LocationList deleteLocation = locationRepository.findByLocationId(bookmark.getLocationList().getLocationId());
+            LocationList deleteLocation = locationRepository.findByLocationId(
+                    bookmark.getLocationList().getLocationId());
 
             // 다른 곳에서 사용중이 아닌 위치면 삭제
             if (deleteLocation != null) {
@@ -1339,15 +1369,16 @@ public class BookService {
 
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(bookmark.getDate());
-                bookmarkList.add(new GetBookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location, bookmark.getUuid()));
-            }
-            else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
+                bookmarkList.add(new GetBookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location,
+                        bookmark.getUuid()));
+            } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / bookmark.getMarkPage());
 
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(bookmark.getDate());
-                bookmarkList.add(new GetBookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+                bookmarkList.add(
+                        new GetBookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
             }
         }
 
@@ -1377,10 +1408,14 @@ public class BookService {
         BookRecord bookRecord;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
-            if (i >= size) break;
+            if (i >= size) {
+                break;
+            }
 
             bookRecord = bookRecords.get(i);
-            if (bookRecord.getLocationList() == null) break;
+            if (bookRecord.getLocationList() == null) {
+                break;
+            }
 
             date = converterService.dateToString(bookRecord.getStartDate());
             title = bookRecord.getBook().getTitle();
@@ -1399,10 +1434,14 @@ public class BookService {
         size = bookmarks.size();
         Bookmark bookmark;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
-            if (i >= size) break;
+            if (i >= size) {
+                break;
+            }
 
             bookmark = bookmarks.get(i);
-            if (bookmark.getLocationList() == null) break;
+            if (bookmark.getLocationList() == null) {
+                break;
+            }
 
             date = converterService.dateToString(bookmark.getDate());
             title = bookmark.getBook().getTitle();
@@ -1435,7 +1474,8 @@ public class BookService {
             LocationList memberLocation = value.getLocationList();
 
             // 응답으로 보낼 객체에 추가
-            location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(), memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
+            location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
+                    memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
         }
 
         return new ResponseEntity<>(
@@ -1472,13 +1512,17 @@ public class BookService {
     }
 
     // 중복 책 검색 및 등록
-    public Book registerBook(String isbn, String cover, String title, String author, String category, int totalPage) {
-        bookRepository.save(Book.create(isbn, cover, title, author, category, totalPage));
+    public Book registerBook(String isbn, BookCreateRequest bookInformation) {
+        LocalDate publicationDate = converterService.stringToDate(bookInformation.publicationDate());
+        bookRepository.save(
+                Book.create(isbn, bookInformation.cover(), bookInformation.title(), bookInformation.author(),
+                        bookInformation.category(), bookInformation.totalPage(),
+                        bookInformation.publisher(), publicationDate));
         return bookRepository.findByIsbn(isbn);
     }
 
     // 위치 등록 및 반환
-    public LocationList registerLocation(String placeName, String address, double latitude, double longitude ) {
+    public LocationList registerLocation(String placeName, String address, double latitude, double longitude) {
         locationRepository.save(LocationList.create(placeName, address, latitude, longitude));
         return locationRepository.findByPlaceName(placeName);
     }
@@ -1486,7 +1530,7 @@ public class BookService {
     // 최근 위치 검색 기록 추가(레코드가 5개 초과되면 삭제하는 코드까지)
     public void registerRecentLocation(Member member, LocationList locationList) {
         // 현재 사용자의 최근 위치 검색 레코드가 5개 이상인지 확인하고, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드를 삭제
-        if(memberLocationRepository.countAllByMember(member) >= 5) {
+        if (memberLocationRepository.countAllByMember(member) >= 5) {
             List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
             memberLocationRepository.delete(memberLocationList.get(0));
         }
