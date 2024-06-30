@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.BadgeKey;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.Getter;
 
 @Entity
@@ -18,7 +19,7 @@ public class Badge {
     @Column(name = "badge_code", nullable = false)
     private int badgeCode;
 
-    @Column(length = 10, nullable = false)
-    private String date;
+    @Column(nullable = false)
+    private LocalDate date;
 }
 

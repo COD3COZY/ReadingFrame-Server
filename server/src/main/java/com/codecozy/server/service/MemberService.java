@@ -24,6 +24,7 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
     private final BadgeRepository badgeRepository;
+    private final ConverterService converterService;
 
     // 닉네임 중복 검증
     public ResponseEntity<DefaultResponse> validateNickname(String nickname) {
@@ -147,7 +148,9 @@ public class MemberService {
             if (badgeCodeList.contains(badge.getBadgeCode())) {
                 int index = badgeCodeList.indexOf(badge.getBadgeCode());
                 badgeResponseList.get(index).setIsGotBadge(true);       // 해당 배지 획득 표시
-                badgeResponseList.get(index).setDate(badge.getDate());  // 획득 날짜 담기
+
+                String dateStr = converterService.dateToString(badge.getDate());
+                badgeResponseList.get(index).setDate(dateStr);  // 획득 날짜 담기
             }
         }
 

@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.MemberLocationKey;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +28,9 @@ public class MemberLocation {
 
     @Id
     @Column(nullable = false)
-    private String date;
+    private LocalDateTime date;
 
-    public static MemberLocation create(Member member, LocationList locationList, String date) {
+    public static MemberLocation create(Member member, LocationList locationList, LocalDateTime date) {
         return MemberLocation.builder()
                 .member(member)
                 .locationList(locationList)

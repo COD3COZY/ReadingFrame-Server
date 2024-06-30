@@ -1,5 +1,7 @@
 package com.codecozy.server.service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -44,5 +46,25 @@ public class ConverterService {
         } else {  // 기타
             return "기타";
         }
+    }
+
+    // page -> percent 값으로 변경하는 메소드
+    public int pageToPercent(int readPage, int totalPage) {
+        return (int) ((double) readPage / totalPage * 100);
+    }
+
+    // percent -> page 값으로 변경하는 메소드
+    public int percentToPage(int percent, int totalPage) {
+        return (int) (percent / 100.0 * totalPage);
+    }
+
+    // LocalDate -> String format(프론트측 형식)으로 변경하는 메소드
+    public String dateToString(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+    }
+
+    // String format(프론트측 형식) -> LocalDate로 변경하는 메소드
+    public LocalDate stringToDate(String dateStr) {
+        return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy.MM.dd"));
     }
 }
