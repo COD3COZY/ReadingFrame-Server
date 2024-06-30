@@ -2,6 +2,7 @@ package com.codecozy.server.controller;
 
 import com.codecozy.server.security.TokenProvider;
 import com.codecozy.server.service.HomeService;
+import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,23 @@ public class HomeController {
     private final TokenProvider tokenProvider;
     private final HomeService homeService;
 
+    // 메인 화면 조회
+    @GetMapping("")
+    public ResponseEntity getMainPage(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getMainPage(memberId);
+    }
+
+    // 검색
+    @GetMapping("/search")
+    public ResponseEntity getSearchList(@RequestHeader("xAuthToken") String token,
+            @RequestBody Map<String, String> searchTextMap) throws IOException {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getSearchList(memberId, searchTextMap.get("searchText"));
+    }
+
     // 읽고 싶은 책 조회
     @GetMapping("/wantToRead")
     public ResponseEntity getWantToReadBooks(@RequestHeader("xAuthToken") String token) {
@@ -34,6 +52,14 @@ public class HomeController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return homeService.getReadingBooks(memberId);
+    }
+
+    // 다 읽은 책 조회
+    @GetMapping("/finishRead")
+    public ResponseEntity getFinishReadBooks(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return homeService.getFinishReadBooks(memberId);
     }
 
     // 읽고 있는 책 숨기기 & 꺼내기

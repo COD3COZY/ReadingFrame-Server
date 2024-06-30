@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import com.codecozy.server.composite_key.BookmarkKey;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,10 +37,10 @@ public class Bookmark {
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
     private LocationList locationList;
 
-    @Column(length = 10, nullable = false)
-    private String date;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    public static Bookmark create(Member member, Book book, String uuid, int markPage, LocationList locationList, String date) {
+    public static Bookmark create(Member member, Book book, String uuid, int markPage, LocationList locationList, LocalDate date) {
         return Bookmark.builder()
                 .member(member)
                 .book(book)

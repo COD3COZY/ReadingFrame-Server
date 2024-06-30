@@ -1,7 +1,6 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.List;
 
