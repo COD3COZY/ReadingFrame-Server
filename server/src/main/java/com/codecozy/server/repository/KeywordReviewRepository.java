@@ -5,6 +5,9 @@ import com.codecozy.server.entity.KeywordReview;
 import com.codecozy.server.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface KeywordReviewRepository extends JpaRepository<KeywordReview, Long> {
+import java.util.List;
+
+public interface KeywordReviewRepository extends JpaRepository<KeywordReview, String> {
     KeywordReview findByMemberAndBook(Member member, Book book);
+    List<KeywordReview> findAllByBook(Book book);
 }

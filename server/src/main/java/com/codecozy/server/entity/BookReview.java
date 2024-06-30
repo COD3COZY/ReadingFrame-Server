@@ -1,6 +1,8 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -31,6 +33,9 @@ public class BookReview {
     @Column(name = "review_text", length = 200, nullable = false)
     private String reviewText;
 
+    @Column(name = "review_date", nullable = false)
+    private LocalDate reviewDate;
+
     @OneToOne(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
     private BookReviewReaction bookReviewReaction;
 
@@ -44,6 +49,7 @@ public class BookReview {
                 .member(member)
                 .book(book)
                 .reviewText(reviewText)
+                .reviewDate(LocalDate.now())
                 .build();
     }
 }
