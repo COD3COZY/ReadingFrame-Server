@@ -1,6 +1,7 @@
 package com.codecozy.server.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +34,12 @@ public class Book {
     @Column(name = "total_page", nullable = false)
     private int totalPage;
 
+    @Column(length = 100)
+    private String publisher;
+
+    @Column(name = "publication_date")
+    private LocalDate publicationDate;
+
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<Bookmark> bookmarks;
 
@@ -55,9 +62,12 @@ public class Book {
     @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
 
-    public Book(String isbn) { this.isbn = isbn; }
+    public Book(String isbn) {
+        this.isbn = isbn;
+    }
 
-    public static Book create(String isbn, String cover, String title, String author, String category, int totalPage) {
+    public static Book create(String isbn, String cover, String title, String author, String category, int totalPage,
+                              String publisher, LocalDate publicationDate) {
         return Book.builder()
                 .isbn(isbn)
                 .cover(cover)
@@ -65,6 +75,8 @@ public class Book {
                 .author(author)
                 .category(category)
                 .totalPage(totalPage)
+                .publisher(publisher)
+                .publicationDate(publicationDate)
                 .build();
     }
 }

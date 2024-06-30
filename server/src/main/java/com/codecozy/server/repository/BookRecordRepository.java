@@ -24,5 +24,8 @@ public interface BookRecordRepository extends JpaRepository<BookRecord, String> 
     // 특정 유저의 특정 독서 상태, 특정 숨김 여부를 갖고 있는 모든 독서 노트 가져오기
     List<BookRecord> findAllByMemberAndReadingStatusAndIsHidden(Member member, int readingStatus, boolean isHidden);
 
+    // 특정 유저의 특정 문자열이 이름에 포함된 모든 독서 노트 가져오기
+    List<BookRecord> findAllByMemberAndBookTitleContains(Member member, String title);
+
     Long countByLocationList(LocationList locationList);
 }

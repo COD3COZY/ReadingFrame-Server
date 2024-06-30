@@ -5,5 +5,7 @@ public record BookCreateRequest (
     String title,
     String author,
     String category,
-    String totalPage
+    int totalPage,
+    String publisher,
+    String publicationDate
 ) {}
