@@ -19,7 +19,7 @@ public record GetReadingNoteResponse(
         String mainLocation,
         String startDate,
         String recentDate,
-        List<GetBookmarkPreviewResponse> bookmarks,
-        List<GetMemoResponse> memos,
-        List<GetPersonalDictionaryPreviewResponse> characters
+        List<BookmarkPreviewResponse> bookmarks,
+        List<MemoResponse> memos,
+        List<PersonalDictionaryPreviewResponse> characters
 ) {}

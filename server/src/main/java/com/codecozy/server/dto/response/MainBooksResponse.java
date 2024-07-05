@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record GetMainBooksResponse(
+public record MainBooksResponse(
         int readingStatus,
         String isbn,
         String cover,

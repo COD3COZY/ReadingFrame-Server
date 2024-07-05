@@ -2,8 +2,8 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.dto.response.GetAllBookshelfResponse;
-import com.codecozy.server.dto.response.GetDetailBookshelfResponse;
+import com.codecozy.server.dto.response.AllBookshelfResponse;
+import com.codecozy.server.dto.response.DetailBookshelfResponse;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
@@ -34,7 +34,7 @@ public class BookshelfService {
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMember(member);
 
         // 응답 dto
-        List<GetAllBookshelfResponse> bookshelfResponseList = new ArrayList<>();
+        List<AllBookshelfResponse> bookshelfResponseList = new ArrayList<>();
 
         // 책유형별 책장
         if (bookshelfType == 0) {
@@ -73,9 +73,9 @@ public class BookshelfService {
             }
 
             // dto에 정보 담기
-            bookshelfResponseList.add(new GetAllBookshelfResponse(0, code0Count, code0PageList));
-            bookshelfResponseList.add(new GetAllBookshelfResponse(1, code1Count, code1PageList));
-            bookshelfResponseList.add(new GetAllBookshelfResponse(2, code2Count, code2PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(0, code0Count, code0PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(1, code1Count, code1PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(2, code2Count, code2PageList));
         }
         // 독서상태별 책장
         else if (bookshelfType == 1) {
@@ -109,9 +109,9 @@ public class BookshelfService {
             }
 
             // dto에 정보 담기
-            bookshelfResponseList.add(new GetAllBookshelfResponse(0, code0Count, code0PageList));
-            bookshelfResponseList.add(new GetAllBookshelfResponse(1, code1Count, code1PageList));
-            bookshelfResponseList.add(new GetAllBookshelfResponse(2, code2Count, code2PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(0, code0Count, code0PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(1, code1Count, code1PageList));
+            bookshelfResponseList.add(new AllBookshelfResponse(2, code2Count, code2PageList));
         }
         // 장르별 책장
         else if (bookshelfType == 2) {
@@ -175,7 +175,7 @@ public class BookshelfService {
 
             // dto에 정보 담기
             for (int i = 0; i < 8; i++) {
-                bookshelfResponseList.add(new GetAllBookshelfResponse(i, countList.get(i), pageList.get(i)));
+                bookshelfResponseList.add(new AllBookshelfResponse(i, countList.get(i), pageList.get(i)));
             }
         }
 
@@ -191,7 +191,7 @@ public class BookshelfService {
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMember(member);
 
         // 응답 dto
-        List<GetDetailBookshelfResponse> detailBookshelfResponseList = new ArrayList<>();
+        List<DetailBookshelfResponse> detailBookshelfResponseList = new ArrayList<>();
 
         // 책유형
         if (bookshelfCode.charAt(0) == '0') {
@@ -206,7 +206,7 @@ public class BookshelfService {
                     float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
-                    detailBookshelfResponseList.add(new GetDetailBookshelfResponse(
+                    detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),
@@ -233,7 +233,7 @@ public class BookshelfService {
                     float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
-                    detailBookshelfResponseList.add(new GetDetailBookshelfResponse(
+                    detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),
@@ -260,7 +260,7 @@ public class BookshelfService {
                     float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
-                    detailBookshelfResponseList.add(new GetDetailBookshelfResponse(
+                    detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
                             bookRecord.getBook().getAuthor(),

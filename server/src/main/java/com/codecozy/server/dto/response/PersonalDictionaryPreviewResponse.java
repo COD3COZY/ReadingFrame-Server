@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record GetPersonalDictionaryPreviewResponse(
+public record PersonalDictionaryPreviewResponse(
         int emoji,
         String name,
         String preview

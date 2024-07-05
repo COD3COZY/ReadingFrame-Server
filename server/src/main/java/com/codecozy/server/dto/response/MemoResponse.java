@@ -1,9 +1,9 @@
 package com.codecozy.server.dto.response;
 
-public record GetBookmarkPreviewResponse(
+public record MemoResponse(
         String date,
         int markPage,
         int markPercent,
-        String location,
+        String memoText,
         String uuid
 ) {}

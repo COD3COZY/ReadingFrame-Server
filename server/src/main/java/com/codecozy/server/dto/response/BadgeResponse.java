@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetBadgeResponse {
+public class BadgeResponse {
     private int badgeCode;
     private boolean isGotBadge;
     private String date;
