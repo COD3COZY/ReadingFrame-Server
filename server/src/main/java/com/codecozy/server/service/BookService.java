@@ -437,6 +437,13 @@ public class BookService {
             // 한줄평에 대한 반응 검색 후 모든 반응 합산
             for (BookReview bookReview : bookReviews) {
                 BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+
+                // 반응한 한줄평이 없는 경우
+                if (bookReviewReaction == null) {
+                    reactionMap.put(bookReview.getCommentId(), 0);
+                    break;
+                }
+
                 reactionMap.put(bookReviewReaction.getBookReviewReactionId(),
                         bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
                         + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount());
@@ -460,11 +467,15 @@ public class BookService {
 
                 // 한줄평 리액션 수 리스트
                 List<Integer> reactions = new ArrayList<>();
-                reactions.add(bookReviewReaction.getHeartCount());
-                reactions.add(bookReviewReaction.getGoodCount());
-                reactions.add(bookReviewReaction.getWowCount());
-                reactions.add(bookReviewReaction.getSadCount());
-                reactions.add(bookReviewReaction.getAngryCount());
+                if (bookReviewReaction != null) {
+                    reactions.add(bookReviewReaction.getHeartCount());
+                    reactions.add(bookReviewReaction.getGoodCount());
+                    reactions.add(bookReviewReaction.getWowCount());
+                    reactions.add(bookReviewReaction.getSadCount());
+                    reactions.add(bookReviewReaction.getAngryCount());
+                } else {
+                    for (int j = 0; j < 5; j++) reactions.add(0);
+                }
 
                 // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
                 boolean isMyReaction = false;
@@ -1715,7 +1726,7 @@ public class BookService {
         LocalDate publicationDate = converterService.stringToDate(bookInformation.publicationDate());
         bookRepository.save(
                 Book.create(isbn, bookInformation.cover(), bookInformation.title(), bookInformation.author(),
-                        bookInformation.category(), bookInformation.totalPage(),
+                        bookInformation.categoryName(), bookInformation.totalPage(),
                         bookInformation.publisher(), publicationDate));
         return bookRepository.findByIsbn(isbn);
     }
