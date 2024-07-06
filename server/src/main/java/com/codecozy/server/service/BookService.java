@@ -1716,8 +1716,25 @@ public class BookService {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
+        // 반환 리스트
+        List<GetAllMarkerResponse> allMarkers = new ArrayList<>();
+
+        // 대표위치(0)에서 검색
+        List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
+        for (BookRecord bookRecord : bookRecords) {
+            LocationList location = bookRecord.getLocationList();
+            allMarkers.add(new GetAllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), false));
+        }
+
+        // 북마크(1)에서 검색
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
+        for (Bookmark bookmark : bookmarks) {
+            LocationList location = bookmark.getLocationList();
+            allMarkers.add(new GetAllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), true));
+        }
+
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, "성공", allMarkers),
                 HttpStatus.OK);
     }
 
