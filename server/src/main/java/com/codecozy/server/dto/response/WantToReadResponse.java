@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record GetWantToReadResponse(
+public record WantToReadResponse(
         String isbn,
         String cover,
         String title,

@@ -1,9 +1,11 @@
 package com.codecozy.server.dto.response;
 
-public record GetMemoResponse(
+import java.util.List;
+
+public record BookmarkResponse(
         String date,
         int markPage,
         int markPercent,
-        String memoText,
+        List<String> location,
         String uuid
 ) {}
