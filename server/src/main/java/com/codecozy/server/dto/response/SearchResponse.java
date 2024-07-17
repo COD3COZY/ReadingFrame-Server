@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GetSearchResponse {
+public class SearchResponse {
     private int totalCount;
     List<SearchDto> searchList;
 

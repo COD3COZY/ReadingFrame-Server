@@ -2,12 +2,12 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.dto.response.GetFinishReadResponse;
-import com.codecozy.server.dto.response.GetMainBooksResponse;
+import com.codecozy.server.dto.response.FinishReadResponse;
+import com.codecozy.server.dto.response.MainBooksResponse;
 import com.codecozy.server.dto.response.GetMainResponse;
-import com.codecozy.server.dto.response.GetReadingResponse;
-import com.codecozy.server.dto.response.GetSearchResponse;
-import com.codecozy.server.dto.response.GetWantToReadResponse;
+import com.codecozy.server.dto.response.ReadingResponse;
+import com.codecozy.server.dto.response.SearchResponse;
+import com.codecozy.server.dto.response.WantToReadResponse;
 import com.codecozy.server.dto.response.SearchDto;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
@@ -55,7 +55,7 @@ public class HomeService {
     private final int FINISH_READ = 2;      // 다 읽음
 
     // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
-    private GetSearchResponse parsingData(String jsonStr) {
+    private SearchResponse parsingData(String jsonStr) {
         // JSON 데이터 가져오기
         JSONParser jsonParser = new JSONParser();
         JSONObject jsonObj = new JSONObject();
@@ -103,7 +103,7 @@ public class HomeService {
         }
 
         // 최종 응답 DTO 구성
-        return new GetSearchResponse(itemCount, searchDto);
+        return new SearchResponse(itemCount, searchDto);
     }
 
     // 메인 화면 조회
@@ -112,7 +112,7 @@ public class HomeService {
         Member member = memberRepository.findByMemberId(memberId);
 
         /** 전체 책 리스트 가져오기 **/
-        List<GetMainBooksResponse> booksList = new ArrayList<>();
+        List<MainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
         List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member,
@@ -126,7 +126,7 @@ public class HomeService {
             int readPage = bookRecord.getMarkPage();
             int readingPercent = converterService.pageToPercent(readPage, totalPage);
 
-            booksList.add(new GetMainBooksResponse(
+            booksList.add(new MainBooksResponse(
                     READING,
                     book.getIsbn(),
                     book.getCover(),
@@ -147,7 +147,7 @@ public class HomeService {
         for (BookRecord bookRecord : wantToReadBooks) {
             Book book = bookRecord.getBook();
 
-            booksList.add(new GetMainBooksResponse(
+            booksList.add(new MainBooksResponse(
                     WANT_TO_READ,
                     book.getIsbn(),
                     book.getCover(),
@@ -168,7 +168,7 @@ public class HomeService {
         for (BookRecord bookRecord : finishReadBooks) {
             Book book = bookRecord.getBook();
 
-            booksList.add(new GetMainBooksResponse(
+            booksList.add(new MainBooksResponse(
                     FINISH_READ,
                     book.getIsbn(),
                     book.getCover(),
@@ -204,7 +204,7 @@ public class HomeService {
     public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText)
             throws IOException {
         // 응답 DTO
-        GetSearchResponse response = new GetSearchResponse(0, new ArrayList<>());
+        SearchResponse response = new SearchResponse(0, new ArrayList<>());
 
         // 독서노트 내 검색된 책들의 isbn 값을 저장하는 리스트 (중복 제거 위함)
         List<String> isbnList = new ArrayList<>();
@@ -267,7 +267,7 @@ public class HomeService {
             }
 
             // 파싱
-            GetSearchResponse parsingData = parsingData(result.toString());
+            SearchResponse parsingData = parsingData(result.toString());
 
             // 파싱 데이터에서 불러온 책 count 수 저장
             int totalCount = parsingData.getTotalCount();
@@ -306,12 +306,12 @@ public class HomeService {
                 WANT_TO_READ);
 
         // 해당 값 dto 정보 담기
-        List<GetWantToReadResponse> wantToReadBooks = new ArrayList<>();
+        List<WantToReadResponse> wantToReadBooks = new ArrayList<>();
         for (BookRecord bookRecord : bookRecordList) {
             // 해당 책 정보 꺼내기
             Book book = bookRecord.getBook();
 
-            wantToReadBooks.add(new GetWantToReadResponse(
+            wantToReadBooks.add(new WantToReadResponse(
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
@@ -326,7 +326,7 @@ public class HomeService {
     }
 
     // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
-    private GetReadingResponse getReadingBookInfo(Member member, BookRecord bookRecord) {
+    private ReadingResponse getReadingBookInfo(Member member, BookRecord bookRecord) {
         // 책 정보 가져오기
         Book book = bookRecord.getBook();
 
@@ -338,7 +338,7 @@ public class HomeService {
         // 리뷰의 유무 가져오기
         Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
 
-        return new GetReadingResponse(
+        return new ReadingResponse(
                 book.getIsbn(),
                 book.getCover(),
                 book.getTitle(),
@@ -369,7 +369,7 @@ public class HomeService {
                 READING, true);
 
         // dto 정보 넣기
-        List<GetReadingResponse> readingBooks = new ArrayList<>();
+        List<ReadingResponse> readingBooks = new ArrayList<>();
 
         // 숨기지 않은 책들 먼저 정보 넣기
         for (BookRecord bookRecord : notHiddenBooks) {
@@ -397,7 +397,7 @@ public class HomeService {
                 member, FINISH_READ);
 
         // dto 정보 넣기
-        List<GetFinishReadResponse> finishReadBooks = new ArrayList<>();
+        List<FinishReadResponse> finishReadBooks = new ArrayList<>();
         for (BookRecord bookRecord : bookRecordList) {
             // 책 정보 가져오기
             Book book = bookRecord.getBook();
@@ -406,7 +406,7 @@ public class HomeService {
             Boolean isWriteReview = bookReviewRepository.findByMemberAndBook(member, book) != null;
 
             // dto 정보 추가
-            finishReadBooks.add(new GetFinishReadResponse(
+            finishReadBooks.add(new FinishReadResponse(
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),

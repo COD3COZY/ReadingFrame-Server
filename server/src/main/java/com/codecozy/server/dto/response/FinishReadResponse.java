@@ -1,7 +1,7 @@
 package com.codecozy.server.dto.response;
 
 // 홈 - 다 읽은 책들 가져올 때 쓰는 DTO
-public record GetFinishReadResponse(
+public record FinishReadResponse(
         String isbn,
         String cover,
         String title,

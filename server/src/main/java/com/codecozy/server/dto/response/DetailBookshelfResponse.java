@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record GetDetailBookshelfResponse(
+public record DetailBookshelfResponse(
         String ISBN,
         String cover,
         String title,

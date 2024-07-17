@@ -4,8 +4,8 @@ import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.SignUpAppleRequest;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
-import com.codecozy.server.dto.response.GetBadgeResponse;
-import com.codecozy.server.dto.response.GetProfileResponse;
+import com.codecozy.server.dto.response.BadgeResponse;
+import com.codecozy.server.dto.response.ProfileResponse;
 import com.codecozy.server.dto.response.SignUpKakaoResponse;
 import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Member;
@@ -120,7 +120,7 @@ public class MemberService {
         String profileImgCode = member.getProfile();
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공",
-                new GetProfileResponse(nickName, badgeCount, profileImgCode)),
+                new ProfileResponse(nickName, badgeCount, profileImgCode)),
                 HttpStatus.OK);
     }
 
@@ -131,30 +131,30 @@ public class MemberService {
         List<Badge> badgeList = badgeRepository.findAllByMember(member);
 
         // 배지 목록 세팅
-        List<GetBadgeResponse> badgeResponseList = new ArrayList<>();
+        List<BadgeResponse> badgeResponseList = new ArrayList<>();
         // BookCount 관련 배지
         for (int i = 0; i <= 3; i++) {
-            GetBadgeResponse tempBadge = new GetBadgeResponse(i, false, null);
+            BadgeResponse tempBadge = new BadgeResponse(i, false, null);
             badgeResponseList.add(tempBadge);
         }
         // finisher 관련 배지
         for (int i = 10; i <= 13; i++) {
-            GetBadgeResponse tempBadge = new GetBadgeResponse(i, false, null);
+            BadgeResponse tempBadge = new BadgeResponse(i, false, null);
             badgeResponseList.add(tempBadge);
         }
         // record MVP 관련 배지
         for (int i = 20; i <= 22; i++) {
-            GetBadgeResponse tempBadge = new GetBadgeResponse(i, false, null);
+            BadgeResponse tempBadge = new BadgeResponse(i, false, null);
             badgeResponseList.add(tempBadge);
         }
         // review master 관련 배지
         for (int i = 30; i <= 32; i++) {
-            GetBadgeResponse tempBadge = new GetBadgeResponse(i, false, null);
+            BadgeResponse tempBadge = new BadgeResponse(i, false, null);
             badgeResponseList.add(tempBadge);
         }
         // 배지 코드만 빼기
         List<Integer> badgeCodeList = new ArrayList<>();
-        for (GetBadgeResponse badgeResponse : badgeResponseList) {
+        for (BadgeResponse badgeResponse : badgeResponseList) {
             badgeCodeList.add(badgeResponse.getBadgeCode());
         }
 

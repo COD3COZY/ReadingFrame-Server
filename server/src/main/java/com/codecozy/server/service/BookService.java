@@ -21,7 +21,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -154,13 +155,13 @@ public class BookService {
         String recentDate = converterService.dateToString(bookRecord.getRecentDate());
 
         List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
-        List<GetBookmarkPreviewResponse> bookmarks = new ArrayList<>();
+        List<BookmarkPreviewResponse> bookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarkList) {
             int markPage = bookmark.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
             String dateStr = converterService.dateToString(bookmark.getDate());
 
-            bookmarks.add(new GetBookmarkPreviewResponse(
+            bookmarks.add(new BookmarkPreviewResponse(
                     dateStr,
                     markPage,
                     markPercent,
@@ -170,13 +171,13 @@ public class BookService {
         }
 
         List<Memo> memoList = memoRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
-        List<GetMemoResponse> memos = new ArrayList<>();
+        List<MemoResponse> memos = new ArrayList<>();
         for (Memo memo : memoList) {
             int markPage = memo.getMarkPage();
             int markPercent = converterService.pageToPercent(markPage, totalPage);
             String dateStr = converterService.dateToString(memo.getDate());
 
-            memos.add(new GetMemoResponse(
+            memos.add(new MemoResponse(
                     dateStr,
                     markPage,
                     markPercent,
@@ -187,9 +188,9 @@ public class BookService {
 
         List<PersonalDictionary> personalDictionaryList = personalDictionaryRepository.findTop3ByMemberAndBookOrderByNameAsc(
                 member, book);
-        List<GetPersonalDictionaryPreviewResponse> characters = new ArrayList<>();
+        List<PersonalDictionaryPreviewResponse> characters = new ArrayList<>();
         for (PersonalDictionary personalDictionary : personalDictionaryList) {
-            characters.add(new GetPersonalDictionaryPreviewResponse(
+            characters.add(new PersonalDictionaryPreviewResponse(
                     personalDictionary.getEmoji(),
                     personalDictionary.getName(),
                     personalDictionary.getPreview()
@@ -326,7 +327,7 @@ public class BookService {
 
         urlConnection.disconnect();
 
-        GetSearchBookResponse response = dataParsing(result.toString());
+        SearchBookResponse response = dataParsing(result.toString());
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -404,7 +405,7 @@ public class BookService {
             }
         }
 
-        response = new GetSearchBookResponse(response.cover(), response.title(), response.author(), categoryName, response.readingStatus(), response.publisher(), response.publicationDate(),
+        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName, response.readingStatus(), response.publisher(), response.publicationDate(),
                 response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
@@ -422,7 +423,7 @@ public class BookService {
 
         // 응답 객체 생성
         List<CommentDetailResponse> response = new ArrayList<>();
-        
+
         if (request.orderType()) { // orderType이 반응순이라면
             // 해당 책의 모든 한줄평 찾기
             List<BookReview> bookReviews = bookReviewRepository.findAllByBook(book);
@@ -1240,7 +1241,7 @@ public class BookService {
     // 인물사전 전체조회
     public ResponseEntity<DefaultResponse> getPersonalDictionary(Long memberId, String isbn) {
         // 응답으로 보낼 인물사전 List
-        List<GetPersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
+        List<PersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1256,7 +1257,7 @@ public class BookService {
 
             // 응답으로 보낼 내용에 더하기
             personalDictionaryList.add(
-                    new GetPersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(),
+                    new PersonalDictionaryResponse(personalDictionary.getEmoji(), personalDictionary.getName(),
                             personalDictionary.getPreview(), personalDictionary.getDescription()));
         }
 
@@ -1347,7 +1348,7 @@ public class BookService {
     // 메모 전체조회
     public ResponseEntity<DefaultResponse> getMemo(Long memberId, String isbn) {
         // 응답으로 보낼 메모 List
-        List<GetMemoResponse> memoList = new ArrayList<>();
+        List<MemoResponse> memoList = new ArrayList<>();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1368,7 +1369,7 @@ public class BookService {
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(memo.getDate());
                 memoList.add(
-                        new GetMemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+                        new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
@@ -1376,7 +1377,7 @@ public class BookService {
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(memo.getDate());
                 memoList.add(
-                        new GetMemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+                        new MemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
         }
 
@@ -1542,7 +1543,7 @@ public class BookService {
     // 책갈피 전체조회
     public ResponseEntity<DefaultResponse> getBookmark(Long memberId, String isbn) {
         // 응답으로 보낼 메모 List
-        List<GetBookmarkResponse> bookmarkList = new ArrayList<>();
+        List<BookmarkResponse> bookmarkList = new ArrayList<>();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1569,7 +1570,7 @@ public class BookService {
 
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(bookmark.getDate());
-                bookmarkList.add(new GetBookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location,
+                bookmarkList.add(new BookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location,
                         bookmark.getUuid()));
             } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 // 페이지 -> 퍼센트 계산
@@ -1578,7 +1579,7 @@ public class BookService {
                 // 응답으로 보낼 내용에 더하기
                 String dateStr = converterService.dateToString(bookmark.getDate());
                 bookmarkList.add(
-                        new GetBookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+                        new BookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
             }
         }
 
@@ -1668,7 +1669,7 @@ public class BookService {
     // 최근 등록 위치 조회
     public ResponseEntity<DefaultResponse> getRecentLocation(Long memberId) {
         // 응답으로 보낼 객체 리스트
-        List<GetRecentLocationResponse> location = new ArrayList<>();
+        List<RecentLocationResponse> location = new ArrayList<>();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1678,7 +1679,7 @@ public class BookService {
             LocationList memberLocation = value.getLocationList();
 
             // 응답으로 보낼 객체에 추가
-            location.add(new GetRecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
+            location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
                     memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
         }
 
@@ -1865,7 +1866,7 @@ public class BookService {
     }
 
     // 알라딘 API 데이터 파싱
-    public GetSearchBookResponse dataParsing(String jsonData) {
+    public SearchBookResponse dataParsing(String jsonData) {
         try {
             JSONObject jsonResult, jsonResultSub;
             JSONParser jsonParser = new JSONParser();
@@ -1880,7 +1881,7 @@ public class BookService {
             // subInfo 데이터 받기
             jsonResultSub = (JSONObject) jsonResult.get("subInfo");
 
-            return new GetSearchBookResponse(jsonResult.get("cover").toString(),
+            return new SearchBookResponse(jsonResult.get("cover").toString(),
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
                     jsonResult.get("categoryName").toString(), -1,
