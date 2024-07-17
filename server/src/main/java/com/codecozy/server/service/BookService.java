@@ -1590,7 +1590,7 @@ public class BookService {
     // 전체 위치 조회
     public ResponseEntity<DefaultResponse> getAllLocation(Long memberId, GetAllLocationRequest request) {
         // 응답으로 보낼 객체 리스트
-        List<GetAllLocationResponse> locationInfo = new ArrayList<>();
+        List<LocationInfoDto> locationInfo = new ArrayList<>();
 
         int orderNumber = request.orderNumber();
 
@@ -1601,12 +1601,19 @@ public class BookService {
         String date;
         String title;
         int readPage;
+        long locationId;
+        String placeName;
+        boolean isBookRecordEnd = false;
+        boolean isBookmarkEnd = false;
 
         // 독서노트에서 정보 받아오기
         List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
         int size = bookRecords.size();
         BookRecord bookRecord;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 이번이 독서노트 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
+            if ((orderNumber + 1) * 20 >= size) isBookRecordEnd = true;
+
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
             if (i >= size) {
                 break;
@@ -1619,14 +1626,12 @@ public class BookService {
 
             date = converterService.dateToString(bookRecord.getStartDate());
             title = bookRecord.getBook().getTitle();
+            readPage = bookRecord.getMarkPage();
+            locationId = bookRecord.getLocationList().getLocationId();
+            placeName = bookRecord.getLocationList().getPlaceName();
 
-            List<String> location = new ArrayList<>();
-            location.add(bookRecord.getLocationList().getPlaceName());
-            location.add(bookRecord.getLocationList().getAddress());
-            location.add(String.valueOf(bookRecord.getLocationList().getLatitude()));
-            location.add(String.valueOf(bookRecord.getLocationList().getLongitude()));
+            locationInfo.add(new LocationInfoDto(date, false, title, readPage, locationId, placeName));
 
-            locationInfo.add(new GetAllLocationResponse(date, false, title, 0, location));
         }
 
         // 책갈피에서 정보 받아오기
@@ -1634,6 +1639,10 @@ public class BookService {
         size = bookmarks.size();
         Bookmark bookmark;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 이번이 책갈피 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
+            if ((orderNumber + 1) * 20 >= size) isBookmarkEnd = true;
+
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
             if (i >= size) {
                 break;
             }
@@ -1646,18 +1655,16 @@ public class BookService {
             date = converterService.dateToString(bookmark.getDate());
             title = bookmark.getBook().getTitle();
             readPage = bookmark.getMarkPage();
+            locationId = bookmark.getLocationList().getLocationId();
+            placeName = bookmark.getLocationList().getPlaceName();
 
-            List<String> location = new ArrayList<>();
-            location.add(bookmark.getLocationList().getPlaceName());
-            location.add(bookmark.getLocationList().getAddress());
-            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
-            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
-
-            locationInfo.add(new GetAllLocationResponse(date, true, title, readPage, location));
+            locationInfo.add(new LocationInfoDto(date, true, title, readPage, locationId, placeName));
         }
 
+        GetAllLocationResponse getAllLocationResponse = new GetAllLocationResponse(locationInfo, (isBookRecordEnd && isBookmarkEnd));
+
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", locationInfo),
+                DefaultResponse.from(StatusCode.OK, "성공", getAllLocationResponse),
                 HttpStatus.OK);
     }
 
