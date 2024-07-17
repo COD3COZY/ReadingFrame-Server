@@ -1588,11 +1588,9 @@ public class BookService {
     }
 
     // 전체 위치 조회
-    public ResponseEntity<DefaultResponse> getAllLocation(Long memberId, GetAllLocationRequest request) {
-        // 응답으로 보낼 객체 리스트
+    public ResponseEntity<DefaultResponse> getAllLocation(Long memberId, int orderNumber) {
+        // 응답으로 보낼 위치 리스트
         List<LocationInfoDto> locationInfo = new ArrayList<>();
-
-        int orderNumber = request.orderNumber();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1631,7 +1629,6 @@ public class BookService {
             placeName = bookRecord.getLocationList().getPlaceName();
 
             locationInfo.add(new LocationInfoDto(date, false, title, readPage, locationId, placeName));
-
         }
 
         // 책갈피에서 정보 받아오기
@@ -1742,6 +1739,87 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", allMarkers),
+                HttpStatus.OK);
+    }
+
+    // 마크 세부 조회
+    public ResponseEntity<DefaultResponse> getMarkDetail(Long memberId, MarkDetailRequest request) {
+        // 응답으로 보낼 위치 리스트
+        List<LocationInfoDto> locationInfo = new ArrayList<>();
+
+        // 사용자 받아오기
+        Member member = memberRepository.findByMemberId(memberId);
+
+        int orderNumber = request.orderNumber();
+
+        // Response 전달 시 들어가는 데이터
+        String date;
+        String title;
+        int readPage;
+        long locationId = request.locationId();
+        String placeName;
+        boolean isBookRecordEnd = false;
+        boolean isBookmarkEnd = false;
+
+        // locationId로 위치 정보 검색
+        LocationList locationList = locationRepository.findByLocationId(locationId);
+
+        // 독서노트(대표위치)에서 해당 위치 검색
+        List<BookRecord> bookRecords = bookRecordRepository.findAllByMemberAndLocationList(member, locationList);
+        int size = bookRecords.size();
+        BookRecord bookRecord;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 이번이 독서노트 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
+            if ((orderNumber + 1) * 20 >= size) isBookRecordEnd = true;
+
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
+            if (i >= size) {
+                break;
+            }
+
+            bookRecord = bookRecords.get(i);
+            if (bookRecord.getLocationList() == null) {
+                break;
+            }
+
+            date = converterService.dateToString(bookRecord.getStartDate());
+            title = bookRecord.getBook().getTitle();
+            readPage = bookRecord.getMarkPage();
+            locationId = bookRecord.getLocationList().getLocationId();
+            placeName = bookRecord.getLocationList().getPlaceName();
+
+            locationInfo.add(new LocationInfoDto(date, false, title, readPage, locationId, placeName));
+        }
+
+        // 책갈피에서 해당 위치 검색
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByMemberAndLocationList(member, locationList);
+        size = bookmarks.size();
+        Bookmark bookmark;
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 이번이 책갈피 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
+            if ((orderNumber + 1) * 20 >= size) isBookmarkEnd = true;
+
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
+            if (i >= size) {
+                break;
+            }
+
+            bookmark = bookmarks.get(i);
+            if (bookmark.getLocationList() == null) {
+                break;
+            }
+
+            date = converterService.dateToString(bookmark.getDate());
+            title = bookmark.getBook().getTitle();
+            readPage = bookmark.getMarkPage();
+            locationId = bookmark.getLocationList().getLocationId();
+            placeName = bookmark.getLocationList().getPlaceName();
+
+            locationInfo.add(new LocationInfoDto(date, true, title, readPage, locationId, placeName));
+        }
+
+        return new ResponseEntity<>(
+                DefaultResponse.from(StatusCode.OK, "성공", new GetAllLocationResponse(locationInfo, (isBookRecordEnd && isBookmarkEnd))),
                 HttpStatus.OK);
     }
 

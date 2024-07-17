@@ -333,10 +333,10 @@ public class BookController {
     // 전체 위치 조회 API
     @GetMapping("/getAllLocation")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
-                                         @RequestBody GetAllLocationRequest request) {
+                                         @RequestBody Map<String, Integer> orderNumberMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return bookService.getAllLocation(memberId, request);
+        return bookService.getAllLocation(memberId, orderNumberMap.get("orderNumber"));
     }
 
     // 최근 등록 위치 조회 API
@@ -364,4 +364,12 @@ public class BookController {
         return bookService.getAllMarker(memberId);
     }
 
+    // 마크 세부 조회 API
+    @GetMapping("/getMarkDetail")
+    public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
+                                        @RequestBody MarkDetailRequest request) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.getMarkDetail(memberId, request);
+    }
 }

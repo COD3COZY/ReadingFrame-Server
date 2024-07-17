@@ -4,5 +4,5 @@ import java.util.List;
 
 public record GetAllLocationResponse(
         List<LocationInfoDto> locationInfoDto,
-        boolean isMore
+        boolean isEnd
 ) {}
