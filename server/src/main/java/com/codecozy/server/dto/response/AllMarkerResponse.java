@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record GetAllMarkerResponse(
+public record AllMarkerResponse(
         long locationId,
         double latitude,
         double longitude,
