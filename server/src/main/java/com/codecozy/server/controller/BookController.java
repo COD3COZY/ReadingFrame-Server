@@ -88,6 +88,15 @@ public class BookController {
         return bookService.searchBookDetail(memberId, isbn);
     }
 
+    // 한줄평 추가 조회 API
+    @GetMapping("/commentDetail/{isbn}")
+    public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
+                                        @PathVariable("isbn") String isbn, @RequestBody CommentDetailRequest request) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.commentDetail(memberId, isbn, request);
+    }
+
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
@@ -324,10 +333,10 @@ public class BookController {
     // 전체 위치 조회 API
     @GetMapping("/getAllLocation")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
-                                         @RequestBody GetAllLocationRequest request) {
+                                         @RequestBody Map<String, Integer> orderNumberMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return bookService.getAllLocation(memberId, request);
+        return bookService.getAllLocation(memberId, orderNumberMap.get("orderNumber"));
     }
 
     // 최근 등록 위치 조회 API
@@ -345,5 +354,22 @@ public class BookController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookService.deleteRecentLocation(memberId, request);
+    }
+
+    // 지도 마크 조회 API
+    @GetMapping("/getAllMarker")
+    public ResponseEntity getAllMarker(@RequestHeader("xAuthToken") String token) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.getAllMarker(memberId);
+    }
+
+    // 마크 세부 조회 API
+    @GetMapping("/getMarkDetail")
+    public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
+                                        @RequestBody MarkDetailRequest request) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        return bookService.getMarkDetail(memberId, request);
     }
 }

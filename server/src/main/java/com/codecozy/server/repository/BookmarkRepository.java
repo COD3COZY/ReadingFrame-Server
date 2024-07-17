@@ -10,11 +10,16 @@ import java.util.List;
 
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Bookmark findByMemberAndBookAndUuid(Member member, Book book, String uuid);
+
     // 특정 유저의 모든 책갈피 가져오기
     List<Bookmark> findAllByMember(Member member);
 
     List<Bookmark> findAllByMemberAndBook(Member member, Book book);
+
     Long countByLocationList(LocationList locationList);
+
+    // 특정 유저의 책갈피 중 locationId 값으로 검색하기
+    List<Bookmark> findAllByMemberAndLocationList(Member member, LocationList locationList);
 
     // 특정 유저의 최근 책갈피 3개 가져오기
     List<Bookmark> findTop3ByMemberAndBookOrderByDateDesc(Member member, Book book);
