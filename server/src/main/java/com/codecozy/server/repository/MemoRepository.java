@@ -1,5 +1,6 @@
 package com.codecozy.server.repository;
 
+import com.codecozy.server.composite_key.MemoKey;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.entity.Memo;
@@ -7,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface MemoRepository extends JpaRepository<Memo, Long> {
+public interface MemoRepository extends JpaRepository<Memo, MemoKey> {
     Memo findByMemberAndBookAndUuid(Member member, Book book, String uuid);
     List<Memo> findAllByMemberAndBook(Member member, Book book);
 

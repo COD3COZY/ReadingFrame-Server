@@ -2,7 +2,6 @@ package com.codecozy.server.repository;
 
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookReview;
-import com.codecozy.server.entity.KeywordReview;
 import com.codecozy.server.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
