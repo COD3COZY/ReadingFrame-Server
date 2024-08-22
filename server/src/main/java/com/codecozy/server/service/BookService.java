@@ -957,6 +957,7 @@ public class BookService {
         if (bookReview != null) {
             // 한줄평에 대한 반응 종류, 여부 레코드 찾기
             BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            // FIXME: bookReviewReviewer List로 받아와야 함
             BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
 
             // 해당 한줄평에 대한 반응 종류 레코드 지우기
@@ -965,6 +966,7 @@ public class BookService {
             }
             // 해당 한줄평에 대한 반응 여부 레코드 지우기
             if (bookReviewReviewer != null) {
+                // FIXME: 받아온 bookReviewReviewer List를 지우는 작업 필요
                 bookReviewReviewerRepository.deleteById(bookReview);
             }
 

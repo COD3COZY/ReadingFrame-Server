@@ -1,5 +1,6 @@
 package com.codecozy.server.repository;
 
+import com.codecozy.server.composite_key.BookRecordKey;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.LocationList;
@@ -8,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface BookRecordRepository extends JpaRepository<BookRecord, String> {
+public interface BookRecordRepository extends JpaRepository<BookRecord, BookRecordKey> {
     // 특정 유저의 특정 책의 독서기록 가져오기
     BookRecord findByMemberAndBook(Member member, Book book);
 
