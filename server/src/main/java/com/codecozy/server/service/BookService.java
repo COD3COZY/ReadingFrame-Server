@@ -443,7 +443,7 @@ public class BookService {
                     break;
                 }
 
-                reactionMap.put(bookReviewReaction.getBookReviewReactionId(),
+                reactionMap.put(bookReviewReaction.getBookReview().getCommentId(),
                         bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
                         + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount());
             }
@@ -927,10 +927,10 @@ public class BookService {
         if (bookReviewReaction != null) {
             bookReviewReactionRepository.delete(bookReviewReaction);
         }
-        // 한줄평 반응 여부 찾고 삭제
-        BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
-        if (bookReviewReviewer != null) {
-            bookReviewReviewerRepository.delete(bookReviewReviewer);
+        // 한줄평 반응 여부 모두 찾고 삭제
+        List<BookReviewReviewer> bookReviewReviewers = bookReviewReviewerRepository.findAllByBookReview(bookReview);
+        for (int i = 0; i < bookReviewReviewers.size(); i++) {
+            bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
         }
 
         // 한줄평 삭제
@@ -955,13 +955,13 @@ public class BookService {
         BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
         // 한줄평이 있으면
         if (bookReview != null) {
-            // 한줄평에 대한 반응 종류, 여부 레코드 찾기
+            // 한줄평에 대한 반응 종류, 여부 레코드(하나라도 있는지) 찾기
             BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
             BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
 
             // 해당 한줄평에 대한 반응 종류 레코드 지우기
             if (bookReviewReaction != null) {
-                bookReviewReactionRepository.deleteById(bookReview);
+                bookReviewReactionRepository.delete(bookReviewReaction);
             }
             // 해당 한줄평에 대한 반응 여부 레코드 지우기
             if (bookReviewReviewer != null) {
@@ -1860,7 +1860,7 @@ public class BookService {
         // 반응 여부 false, 종류 0인 레코드 생성
         bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
         // 카운트 수정에 사용할 용도로 반환
-        return bookReviewReviewerRepository.findByBookReview(bookReview);
+        return bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
     }
 
     // 알라딘 API 데이터 파싱
