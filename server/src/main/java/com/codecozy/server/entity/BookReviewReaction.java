@@ -11,9 +11,10 @@ import lombok.*;
 @Table(name = "BOOK_REVIEW_REACTION")
 public class BookReviewReaction {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long bookReviewReactionId;
+    @Column(name = "comment_id")
+    private Long commentId;
 
+    @MapsId
     @OneToOne
     @JoinColumn(name = "comment_id", referencedColumnName = "comment_id")
     private BookReview bookReview;
