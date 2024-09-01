@@ -27,6 +27,9 @@ public class Member {
     @Column(length = 2, nullable = false)
     private String profile;
 
+    @OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
+    private MemberKakao memberKakao;
+
     //@OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
     //@PrimaryKeyJoinColumn(name = "member_apple")
     //private MemberApple memberApple;
