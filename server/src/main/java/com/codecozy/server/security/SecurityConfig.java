@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     @Autowired
     private JwtAuthenticateFilter jwtAuthenticateFilter;
-    private final String[] allowedUrls = {"/", "/nickname/**", "/sign-up/**"};
+    private final String[] allowedUrls = {"/", "/nickname/**", "/sign-up/**", "/sign-in/**"};
 
     // H2 콘솔 사용을 위한 설정
     @Bean
