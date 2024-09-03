@@ -9,7 +9,9 @@ import com.codecozy.server.dto.response.ProfileResponse;
 import com.codecozy.server.dto.response.SignUpKakaoResponse;
 import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Member;
+import com.codecozy.server.entity.MemberKakao;
 import com.codecozy.server.repository.BadgeRepository;
+import com.codecozy.server.repository.MemberKakaoRepository;
 import com.codecozy.server.repository.MemberRepository;
 import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class MemberService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
+    private final MemberKakaoRepository memberKakaoRepository;
     private final BadgeRepository badgeRepository;
     private final ConverterService converterService;
 
@@ -48,6 +51,26 @@ public class MemberService {
 
         // 토큰 생성
         Long memberId = member.getMemberId();
+        String accessToken = tokenProvider.createAccessToken(memberId);
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+                HttpStatus.OK);
+    }
+
+    // 카카오 로그인
+    public ResponseEntity<DefaultResponse> signInKakao(String email) {
+        // 사용자 기가입 여부 검증
+        MemberKakao memberKakao = memberKakaoRepository.findByEmail(email);
+
+        // 기가입 유저 X
+        if (memberKakao == null) {
+            // 실패 응답
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 사용자가 존재하지 않습니다."),
+                    HttpStatus.NOT_FOUND);
+       }
+        // 기가입 유저 O
+        // 토큰 생성 및 응답
+        Long memberId = memberKakao.getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),

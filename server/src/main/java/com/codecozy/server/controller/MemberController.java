@@ -31,6 +31,12 @@ public class MemberController {
         return memberService.signUpKakao(request);
     }
 
+    // 카카오 로그인
+    @PostMapping("sign-in/kakao")
+    public ResponseEntity signInKakao(@RequestBody Map<String, String> emailMap) {
+        return memberService.signInKakao(emailMap.get("email"));
+    }
+
     // 닉네임 변경
     @PatchMapping("/nickname")
     public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token,
