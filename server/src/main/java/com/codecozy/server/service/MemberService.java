@@ -49,6 +49,10 @@ public class MemberService {
         memberRepository.save(member);
         member = memberRepository.findByNickname(request.nickname());
 
+        // 카카오 유저 등록
+        MemberKakao memberKakao = MemberKakao.create(member, request.email());
+        memberKakaoRepository.save(memberKakao);
+
         // 토큰 생성
         Long memberId = member.getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);

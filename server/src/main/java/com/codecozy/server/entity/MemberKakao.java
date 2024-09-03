@@ -33,5 +33,10 @@ public class MemberKakao {
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
-    
+    public static MemberKakao create(Member member, String email) {
+        return MemberKakao.builder()
+                .member(member)
+                .email(email)
+                .build();
+    }
 }
