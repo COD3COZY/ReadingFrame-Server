@@ -4,6 +4,7 @@ import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,6 +58,12 @@ public class JwtAuthenticateFilter extends OncePerRequestFilter {
             // 상태 코드 및 에러 메시지 세팅 (400)
             statusCode = StatusCode.BAD_REQUEST;
             exceptionMessage = "토큰이 존재하지 않습니다.";
+        } catch (MalformedJwtException e) {
+            log.error("토큰의 값이 유효하지 않음");
+
+            // 상태 코드 및 에러 메시지 세팅 (400)
+            statusCode = StatusCode.BAD_REQUEST;
+            exceptionMessage = "토큰의 값이 유효하지 않습니다.";
         } catch (io.jsonwebtoken.SignatureException e) {
             log.error("토큰의 서명이 올바르지 않음");
 
