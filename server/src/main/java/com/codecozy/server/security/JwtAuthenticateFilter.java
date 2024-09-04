@@ -71,7 +71,7 @@ public class JwtAuthenticateFilter extends OncePerRequestFilter {
 
             // 상태 코드 및 에러 메시지 세팅 (404)
             statusCode = StatusCode.NOT_FOUND;
-            exceptionMessage = "(토큰오류) 해당 유저를 찾을 수 없습니다.";
+            exceptionMessage = e.getMessage();
         }
 
         // 토큰이 무언가 잘못되었다면
