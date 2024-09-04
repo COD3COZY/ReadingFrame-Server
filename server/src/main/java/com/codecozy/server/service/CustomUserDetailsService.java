@@ -20,7 +20,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = memberRepository.findByMemberId(memberId);
 
         if (member == null) {
-            throw new UsernameNotFoundException("해당 유저가 없습니다.");
+            throw new UsernameNotFoundException("(토큰 오류) 해당 유저가 존재하지 않습니다.");
         }
 
         return new CustomUserDetails(username);

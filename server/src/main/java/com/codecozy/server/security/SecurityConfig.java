@@ -17,15 +17,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
-    private JwtAuthenticateFilter jwtAuthenticateFilter;
+    private TokenProvider tokenProvider;
     private final String[] allowedUrls = {"/", "/nickname/**", "/sign-up/**", "/sign-in/**"};
 
-    // H2 콘솔 사용을 위한 설정
     @Bean
-    @ConditionalOnProperty(name = "spring.h2.console.enabled", havingValue = "true")
-    public WebSecurityCustomizer configureH2ConsoleEnable() {
-        return web -> web.ignoring()
-                .requestMatchers(PathRequest.toH2Console());
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+                           .requestMatchers(allowedUrls)    // 일부 url 허용
+                           .requestMatchers(PathRequest.toH2Console()); // h2 콘솔 사용을 위함
     }
 
     @Bean
@@ -33,13 +32,13 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)  // 쿠키 사용 안 함
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers(allowedUrls).permitAll()    // requestMatchers의 인자로 전달된 url은 모두에게 허용
-                                .anyRequest().authenticated()    // 그 외의 모든 요청은 인증 필요
+                        requests.anyRequest().authenticated()   // 그 외 모든 요청은 인증 필요
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )    // 세션을 사용하지 않으므로 STATELESS 설정
-                .addFilterBefore(jwtAuthenticateFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticateFilter(tokenProvider),
+                        UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 }
