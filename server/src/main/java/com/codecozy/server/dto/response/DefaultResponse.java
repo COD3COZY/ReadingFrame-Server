@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class DefaultResponse<T> {
-    private int statusCode;
+    private int status;
     private String message;
     private T data;
 
@@ -18,7 +18,7 @@ public class DefaultResponse<T> {
 
     public static <T> DefaultResponse<T> from(final int statusCode, final String message, final T data) {
         return DefaultResponse.<T>builder()
-                .statusCode(statusCode)
+                .status(statusCode)
                 .message(message)
                 .data(data)
                 .build();

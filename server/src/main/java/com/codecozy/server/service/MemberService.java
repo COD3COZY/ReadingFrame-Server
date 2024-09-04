@@ -142,12 +142,12 @@ public class MemberService {
         List<Badge> badgeList = badgeRepository.findAllByMember(member);
 
         // 보낼 데이터
-        String nickName = member.getNickname();
+        String nickname = member.getNickname();
         int badgeCount = badgeList.size();
         String profileImgCode = member.getProfile();
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공",
-                new ProfileResponse(nickName, badgeCount, profileImgCode)),
+                new ProfileResponse(nickname, badgeCount, profileImgCode)),
                 HttpStatus.OK);
     }
 

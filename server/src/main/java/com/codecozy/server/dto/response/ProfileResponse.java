@@ -1,7 +1,7 @@
 package com.codecozy.server.dto.response;
 
 public record ProfileResponse(
-        String nickName,
+        String nickname,
         int badgeCount,
         String profileImageCode
 ) {}
