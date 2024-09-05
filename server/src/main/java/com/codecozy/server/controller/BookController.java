@@ -1,7 +1,6 @@
 package com.codecozy.server.controller;
 
 import com.codecozy.server.dto.request.*;
-import com.codecozy.server.dto.response.GetReadingNoteResponse;
 import com.codecozy.server.security.TokenProvider;
 import com.codecozy.server.service.BookService;
 import lombok.RequiredArgsConstructor;
