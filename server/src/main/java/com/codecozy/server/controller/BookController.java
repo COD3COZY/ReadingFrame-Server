@@ -35,7 +35,7 @@ public class BookController {
     }
 
     // 책별 독서노트 조회 API
-    @GetMapping("/readingNote")
+    @GetMapping("/readingNote/{isbn}")
     public ResponseEntity getReadingNote(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -88,10 +88,13 @@ public class BookController {
     }
 
     // 한줄평 추가 조회 API
-    @GetMapping("/commentDetail/{isbn}")
+    @GetMapping("/commentDetail")
     public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
-                                        @PathVariable("isbn") String isbn, @RequestBody CommentDetailRequest request) {
+                                        @RequestParam("isbn") String isbn,
+                                        @RequestParam("orderNumber") Integer orderNumber,
+                                        @RequestParam("orderType") Boolean orderType) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
+        CommentDetailRequest request = new CommentDetailRequest(orderNumber, orderType);
 
         return bookService.commentDetail(memberId, isbn, request);
     }
@@ -330,12 +333,12 @@ public class BookController {
     }
 
     // 전체 위치 조회 API
-    @GetMapping("/getAllLocation")
+    @GetMapping("/getAllLocation/{orderNumber}")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
-                                         @RequestBody Map<String, Integer> orderNumberMap) {
+                                         @PathVariable("orderNumber") Integer orderNumber) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return bookService.getAllLocation(memberId, orderNumberMap.get("orderNumber"));
+        return bookService.getAllLocation(memberId, orderNumber);
     }
 
     // 최근 등록 위치 조회 API
@@ -366,8 +369,10 @@ public class BookController {
     // 마크 세부 조회 API
     @GetMapping("/getMarkDetail")
     public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
-                                        @RequestBody MarkDetailRequest request) {
+                                        @RequestParam("locationId") Long locationId,
+                                        @RequestParam("orderNumber") Integer orderNumber) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
+        MarkDetailRequest request = new MarkDetailRequest(locationId, orderNumber);
 
         return bookService.getMarkDetail(memberId, request);
     }

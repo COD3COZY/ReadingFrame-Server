@@ -30,12 +30,12 @@ public class HomeController {
     }
 
     // 검색
-    @GetMapping("/search")
+    @GetMapping("/search/{searchText}")
     public ResponseEntity getSearchList(@RequestHeader("xAuthToken") String token,
-            @RequestBody Map<String, String> searchTextMap) throws IOException {
+            @PathVariable("searchText") String searchText) throws IOException {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return homeService.getSearchList(memberId, searchTextMap.get("searchText"));
+        return homeService.getSearchList(memberId, searchText);
     }
 
     // 읽고 싶은 책 조회
