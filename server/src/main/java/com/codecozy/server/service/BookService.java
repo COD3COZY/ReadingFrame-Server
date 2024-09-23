@@ -7,6 +7,7 @@ import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -22,6 +23,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BookService {
@@ -136,21 +138,46 @@ public class BookService {
         int readPage = bookRecord.getMarkPage();
         int readingPercent = converterService.pageToPercent(readPage, totalPage);
         String keywordReview = bookRecord.getKeyWord();
-        String commentReview = bookReviewRepository.findByMemberAndBook(member, book).getReviewText();
+        String commentReview = null;
+        try {
+            commentReview = bookReviewRepository.findByMemberAndBook(member, book).getReviewText();
+        } catch (NullPointerException e) {
+            log.info("해당 책의 한줄평 없음");
+        }
 
-        String selectReviewStr = keywordReviewRepository.findByMemberAndBook(member, book).getSelectReviewCode();
-        String[] selectReviewStrList = selectReviewStr.split(",");
+        String selectReviewStr = null;
+        String[] selectReviewStrList = null;
         List<Integer> selectReview = new ArrayList<>();
-        for (String s : selectReviewStrList) {
-            selectReview.add(Integer.valueOf(s));
+        boolean existSelectReview = true;
+        try {
+            selectReviewStr = keywordReviewRepository.findByMemberAndBook(member, book).getSelectReviewCode();
+            selectReviewStrList = selectReviewStr.split(",");
+        } catch (NullPointerException e) {
+            log.info("해당 책의 선택 리뷰 없음");
+            existSelectReview = false;
+        }
+        if (existSelectReview) {
+            for (String s : selectReviewStrList) {
+                selectReview.add(Integer.valueOf(s));
+            }
         }
 
         boolean isMine = bookRecord.isMine();
         int bookType = bookRecord.getBookType();
         int readingStatus = bookRecord.getReadingStatus();
-        String mainLocation = bookRecord.getLocationList().getPlaceName();
+        String mainLocation = null;
+        try {
+            mainLocation = bookRecord.getLocationList().getPlaceName();
+        } catch (NullPointerException e) {
+            log.info("해당 책의 대표 위치 없음");
+        }
         String startDate = converterService.dateToString(bookRecord.getStartDate());
-        String recentDate = converterService.dateToString(bookRecord.getRecentDate());
+        String recentDate = null;
+        try {
+            recentDate = converterService.dateToString(bookRecord.getRecentDate());
+        } catch (NullPointerException e) {
+            log.info("해당 책의 마지막으로 읽은 날짜 없음");
+        }
 
         List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
         List<BookmarkPreviewResponse> bookmarks = new ArrayList<>();

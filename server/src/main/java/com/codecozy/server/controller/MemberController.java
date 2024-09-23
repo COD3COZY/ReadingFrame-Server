@@ -38,7 +38,7 @@ public class MemberController {
     }
 
     // 닉네임 변경
-    @PatchMapping("/nickname")
+    @PatchMapping("/nickname-modify")
     public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token,
                                          @RequestBody Map<String, String> nicknameMap) {
         return memberService.modifyNickname(token, nicknameMap.get("nickname"));

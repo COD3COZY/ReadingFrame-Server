@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BadgeResponse {
     private int badgeCode;
-    private boolean isGotBadge;
+    private Boolean isGotBadge;
     private String date;
 
-    public void setIsGotBadge(boolean isGotBadge) {
+    public void setIsGotBadge(Boolean isGotBadge) {
         this.isGotBadge = isGotBadge;
     }
 
