@@ -719,6 +719,10 @@ public class BookService {
                     bookReviewReviewer.setReactionCode(request.commentReaction());
                     // 새 반응 카운트 하나 올리기
                     bookReviewReaction.setReactionCountUp(request.commentReaction());
+                    
+                    // 반응 수정하기
+                    bookReviewReviewerRepository.save(bookReviewReviewer);
+                    bookReviewReactionRepository.save(bookReviewReaction);
                 } else {
                     return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
                             HttpStatus.CONFLICT);
@@ -763,14 +767,18 @@ public class BookService {
                     // 기존 반응 카운트 하나 내리기
                     bookReviewReaction.setReactionCountDown(bookReviewReviewer.getReactionCode());
 
-                    // 반응이 하나도 없으면 반응 카운트 레코드 삭제
+                    // 신고/반응이 하나도 없으면 반응 카운트 레코드 삭제
                     int cnt = bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount()
                             + bookReviewReaction.getWowCount()
-                            + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount();
+                            + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount()
+                            + bookReviewReaction.getReportHatefulCount()
+                            + bookReviewReaction.getReportSpamCount();
                     if (cnt <= 0) {
                         bookReviewReactionRepository.delete(bookReviewReaction);
                     }
 
+                    // 반응 여부 false로 변경
+                    bookReviewReviewer.setIsReactionReverse();
                     // 신고/반응 여부도 없다면 신고/반응 여부, 종류 레코드 삭제
                     if (!bookReviewReviewer.isReport() && !bookReviewReviewer.isReaction()) {
                         bookReviewReviewerRepository.delete(bookReviewReviewer);
