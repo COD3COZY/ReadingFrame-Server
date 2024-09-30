@@ -533,11 +533,15 @@ public class BookService {
 
                 // 한줄평 리액션 수 리스트
                 List<Integer> reactions = new ArrayList<>();
-                reactions.add(bookReviewReaction.getHeartCount());
-                reactions.add(bookReviewReaction.getGoodCount());
-                reactions.add(bookReviewReaction.getWowCount());
-                reactions.add(bookReviewReaction.getSadCount());
-                reactions.add(bookReviewReaction.getAngryCount());
+                if (bookReviewReaction != null) {
+                    reactions.add(bookReviewReaction.getHeartCount());
+                    reactions.add(bookReviewReaction.getGoodCount());
+                    reactions.add(bookReviewReaction.getWowCount());
+                    reactions.add(bookReviewReaction.getSadCount());
+                    reactions.add(bookReviewReaction.getAngryCount());
+                } else {
+                    for (int j = 0; j < 5; j++) reactions.add(0);
+                }
 
                 // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
                 boolean isMyReaction = false;
