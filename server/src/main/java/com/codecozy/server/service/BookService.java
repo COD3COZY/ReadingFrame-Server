@@ -453,9 +453,9 @@ public class BookService {
             // 해당 책의 모든 한줄평 찾기
             List<BookReview> bookReviews = bookReviewRepository.findAllByBook(book);
 
-            if (bookReviews == null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록된 한줄평이 없습니다."),
-                        HttpStatus.CONFLICT);
+            if (bookReviews.size() <= 0) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록된 한줄평이 없습니다."),
+                        HttpStatus.NOT_FOUND);
             }
 
             // 한줄평 ID와 반응 합산 수를 저장할 맵
@@ -519,9 +519,9 @@ public class BookService {
             // 날짜 내림차순으로 해당 책의 모든 한줄평 찾기
             List<BookReview> bookReviews = bookReviewRepository.findAllByBookOrderByReviewDateDesc(book);
 
-            if (bookReviews == null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록된 한줄평이 없습니다."),
-                        HttpStatus.CONFLICT);
+            if (bookReviews.size() <= 0) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록된 한줄평이 없습니다."),
+                        HttpStatus.NOT_FOUND);
             }
 
             // 원하는 위치의 한줄평만 반환
@@ -577,8 +577,8 @@ public class BookService {
         BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
@@ -658,8 +658,8 @@ public class BookService {
         BookReview bookReview = bookReviewRepository.findByMemberAndBook(commentMember, book);
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
@@ -728,16 +728,16 @@ public class BookService {
                     bookReviewReviewerRepository.save(bookReviewReviewer);
                     bookReviewReactionRepository.save(bookReviewReaction);
                 } else {
-                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
-                            HttpStatus.CONFLICT);
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                            HttpStatus.NOT_FOUND);
                 }
             } else {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
-                        HttpStatus.CONFLICT);
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                        HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -788,16 +788,16 @@ public class BookService {
                         bookReviewReviewerRepository.delete(bookReviewReviewer);
                     }
                 } else {
-                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
-                            HttpStatus.CONFLICT);
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                            HttpStatus.NOT_FOUND);
                 }
             } else {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평에 남긴 반응이 없습니다."),
-                        HttpStatus.CONFLICT);
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                        HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -874,8 +874,8 @@ public class BookService {
         if (request.keyword() != null) {
             BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
             if (bookRecord == null) { // 독서 노트가 없으면 충돌 메세지
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "독서 노트가 없습니다."),
-                        HttpStatus.CONFLICT);
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "독서 노트가 없습니다."),
+                        HttpStatus.NOT_FOUND);
             }
 
             // 키워드 설정
@@ -947,8 +947,8 @@ public class BookService {
             bookRecord.setKeyWord(null);
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         // 선택리뷰 찾고 삭제
@@ -1009,8 +1009,8 @@ public class BookService {
             // 한줄평 지우기
             bookReviewRepository.delete(bookReview);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 한줄평이 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1033,8 +1033,8 @@ public class BookService {
         if (bookRecord != null) {
             bookRecord.setStartDate(converterService.stringToDate(startDate));
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1057,8 +1057,8 @@ public class BookService {
         if (bookRecord != null) {
             bookRecord.setRecentDate(converterService.stringToDate(recentDate));
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "해당 독서노트가 없습니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1174,6 +1174,12 @@ public class BookService {
             // 대표위치 삭제 전 위치 객체 받아오기
             LocationList preLocation = bookRecord.getLocationList();
 
+            // 삭제하려는 위치 객체가 없으면
+            if (preLocation == null) {
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트의 대표 위치가 없습니다."),
+                        HttpStatus.NOT_FOUND);
+            }
+
             //  대표위치 삭제
             bookRecord.deleteLocationList();
             bookRecordRepository.save(bookRecord);
@@ -1186,6 +1192,9 @@ public class BookService {
             if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
                 locationRepository.delete(preLocation);
             }
+        } else {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1242,8 +1251,8 @@ public class BookService {
                     Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 인물입니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 인물입니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1266,6 +1275,10 @@ public class BookService {
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);
+        } else {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 인물이 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1346,8 +1359,8 @@ public class BookService {
             memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 메모입니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 메모입니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
@@ -1374,6 +1387,10 @@ public class BookService {
         if (memo != null) {
             // 메모 삭제
             memoRepository.delete(memo);
+        } else {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 메모가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1532,8 +1549,8 @@ public class BookService {
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "등록하지 않은 책갈피입니다."),
-                    HttpStatus.CONFLICT);
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 책갈피입니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1569,6 +1586,10 @@ public class BookService {
 
             // 책갈피 삭제
             bookmarkRepository.delete(bookmark);
+        } else {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 책갈피가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1644,6 +1665,14 @@ public class BookService {
         // 독서노트에서 정보 받아오기
         List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
         int size = bookRecords.size();
+
+        // 위치 데이터가 없는 경우
+        if (size <= 0) {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
+
         BookRecord bookRecord;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 독서노트 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
