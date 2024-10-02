@@ -854,7 +854,11 @@ public class BookService {
         // 독서노트의 마지막 기록 날짜 업데이트
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
-        bookRecordDate.setLastDate(LocalDateTime.now());
+        if (bookRecordDate == null) {
+            bookRecordDate = BookRecordDate.create(bookRecord);
+        } else {
+            bookRecordDate.setLastDate(LocalDateTime.now());
+        }
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(

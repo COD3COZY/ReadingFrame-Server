@@ -60,7 +60,7 @@ public class BookRecord {
     @Column(name = "key_word", length = 15)
     private String keyWord;
 
-    @OneToOne(mappedBy = "bookRecord")
+    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private BookRecordDate bookRecordDate;
 
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
