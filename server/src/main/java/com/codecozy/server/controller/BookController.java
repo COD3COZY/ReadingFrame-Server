@@ -206,12 +206,12 @@ public class BookController {
     }
 
     // 책별 대표 위치 변경 API
-    @PatchMapping("/modifyMainLocation/{isbn}")
+    @PatchMapping("/patchMainLocation/{isbn}")
     public ResponseEntity modifyMainLocation(@RequestHeader("xAuthToken") String token,
                                              @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return bookService.modifyMainLocation(memberId, isbn, request);
+        return bookService.patchMainLocation(memberId, isbn, request);
     }
 
     // 책별 대표 위치 삭제 API

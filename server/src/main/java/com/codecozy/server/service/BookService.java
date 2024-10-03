@@ -1114,7 +1114,7 @@ public class BookService {
     }
 
     // 책별 대표 위치 변경
-    public ResponseEntity<DefaultResponse> modifyMainLocation(Long memberId, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> patchMainLocation(Long memberId, String isbn, LocationRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
