@@ -603,6 +603,7 @@ public class BookService {
             bookReviewReaction.setReportCountUp(request.reportType());
             bookReviewReviewer.setIsReportReverse();
             bookReviewReviewer.setReportType(request.reportType());
+            bookReviewReviewerRepository.save(bookReviewReviewer);
         }
         // 이미 신고했던 경우
         else {
