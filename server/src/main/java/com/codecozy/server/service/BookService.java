@@ -1133,10 +1133,12 @@ public class BookService {
         if (bookRecord != null) { // 해당 독서 노트가 있는 경우에만
             // 쓰이지 않는 위치면 삭제하기 위해 변경 전 위치를 받아옴
             LocationList preLocation = bookRecord.getLocationList();
+
+            // 해당 독서 노트의 대표 위치 변경
             bookRecord.setLocationList(locationList);
 
+            // 변경 전 위치가 다른 곳에서도 사용되지 않으면 locationRepository에서 삭제
             if (preLocation != null) {
-                // 다른 곳에서 사용중이 아닌 위치면 삭제
                 Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
                 Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
                 Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
@@ -1145,6 +1147,10 @@ public class BookService {
                     locationRepository.delete(preLocation);
                 }
             }
+        } else {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서 노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         // 사용자 최근 검색 위치에 등록
@@ -1748,6 +1754,12 @@ public class BookService {
                     memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
         }
 
+        if (location.size() <= 0) {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
+
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", location),
                 HttpStatus.OK);
@@ -1763,17 +1775,26 @@ public class BookService {
         if (locationList != null) {
             // 최근 등록 위치에서 해당 위치가 있는지 확인하고 삭제
             MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
-            if (memberLocation != null) {
+            if (memberLocation != null) { // 해당 멤버의 최근 등록 위치에 해당 위치가 있으면
+                // 최근 등록 위치에서 해당 위치 삭제
                 memberLocationRepository.delete(memberLocation);
-            }
 
-            // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+                // 다른 곳에서 사용중이 아닌 위치면 locationRepository에서 삭제
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
 
-            if (bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(locationList);
+                if (bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                    locationRepository.delete(locationList);
+                }
+            } else {
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.NOT_FOUND, "최근 등록된 위치가 아닙니다."),
+                        HttpStatus.NOT_FOUND);
             }
+        } else {
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "등록되지 않은 위치입니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1801,6 +1822,12 @@ public class BookService {
         for (Bookmark bookmark : bookmarks) {
             LocationList location = bookmark.getLocationList();
             allMarkers.add(new AllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), true));
+        }
+
+        if (allMarkers.size() <= 0) { // 조회할 마크가 하나도 없는 경우
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 마크가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
@@ -1882,6 +1909,12 @@ public class BookService {
             placeName = bookmark.getLocationList().getPlaceName();
 
             locationInfo.add(new LocationInfoDto(date, true, title, readPage, locationId, placeName));
+        }
+
+        if (locationInfo.size() <= 0) { // 세부 조회할 마크가 하나도 없는 경우
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, "세부 조회할 마크가 없습니다."),
+                    HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
