@@ -603,6 +603,7 @@ public class BookService {
             bookReviewReaction.setReportCountUp(request.reportType());
             bookReviewReviewer.setIsReportReverse();
             bookReviewReviewer.setReportType(request.reportType());
+            bookReviewReviewerRepository.save(bookReviewReviewer);
         }
         // 이미 신고했던 경우
         else {
@@ -1114,7 +1115,7 @@ public class BookService {
     }
 
     // 책별 대표 위치 변경
-    public ResponseEntity<DefaultResponse> modifyMainLocation(Long memberId, String isbn, LocationRequest request) {
+    public ResponseEntity<DefaultResponse> patchMainLocation(Long memberId, String isbn, LocationRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
