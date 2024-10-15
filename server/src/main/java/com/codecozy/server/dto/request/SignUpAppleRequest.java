@@ -1,7 +1,8 @@
 package com.codecozy.server.dto.request;
 
 public record SignUpAppleRequest(
-        String id_token,
+        String userIdentifier,
+        String idToken,
         String nickname,
-        String profileImageCode
+        String profile
 ) {}

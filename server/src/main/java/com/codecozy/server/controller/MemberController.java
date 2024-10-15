@@ -1,5 +1,7 @@
 package com.codecozy.server.controller;
 
+import com.codecozy.server.dto.request.SignInAppleRequest;
+import com.codecozy.server.dto.request.SignUpAppleRequest;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.service.MemberService;
 import java.util.Map;
@@ -32,9 +34,21 @@ public class MemberController {
     }
 
     // 카카오 로그인
-    @PostMapping("sign-in/kakao")
+    @PostMapping("/sign-in/kakao")
     public ResponseEntity signInKakao(@RequestBody Map<String, String> emailMap) {
         return memberService.signInKakao(emailMap.get("email"));
+    }
+
+    // 애플 회원가입
+    @PostMapping("/sign-up/apple")
+    public ResponseEntity signUpApple(@RequestBody SignUpAppleRequest request) throws Exception {
+        return memberService.signUpApple(request);
+    }
+
+    // 애플 로그인
+    @PostMapping("/sign-in/apple")
+    public ResponseEntity signInApple(@RequestBody SignInAppleRequest request) {
+        return memberService.signInApple(request);
     }
 
     // 닉네임 변경

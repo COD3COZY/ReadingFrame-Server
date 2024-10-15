@@ -30,9 +30,9 @@ public class Member {
     @OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
     private MemberKakao memberKakao;
 
-    //@OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
-    //@PrimaryKeyJoinColumn(name = "member_apple")
-    //private MemberApple memberApple;
+    @OneToOne(mappedBy = "member", cascade = CascadeType.REMOVE)
+    @PrimaryKeyJoinColumn(name = "member_apple")
+    private MemberApple memberApple;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<Badge> badges;
