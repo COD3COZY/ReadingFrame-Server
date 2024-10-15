@@ -1,6 +1,7 @@
 package com.codecozy.server.service;
 
 import com.codecozy.server.context.StatusCode;
+import com.codecozy.server.dto.request.SignInAppleRequest;
 import com.codecozy.server.dto.request.SignUpAppleRequest;
 import com.codecozy.server.dto.request.SignUpKakaoRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
@@ -9,14 +10,17 @@ import com.codecozy.server.dto.response.ProfileResponse;
 import com.codecozy.server.dto.response.SignUpKakaoResponse;
 import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Member;
+import com.codecozy.server.entity.MemberApple;
 import com.codecozy.server.entity.MemberKakao;
 import com.codecozy.server.repository.BadgeRepository;
+import com.codecozy.server.repository.MemberAppleRepository;
 import com.codecozy.server.repository.MemberKakaoRepository;
 import com.codecozy.server.repository.MemberRepository;
 import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.NonUniqueResultException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,8 +31,10 @@ public class MemberService {
     private final TokenProvider tokenProvider;
     private final MemberRepository memberRepository;
     private final MemberKakaoRepository memberKakaoRepository;
+    private final MemberAppleRepository memberAppleRepository;
     private final BadgeRepository badgeRepository;
     private final ConverterService converterService;
+    private final AppleTokenService appleTokenService;
 
     // 닉네임 중복 검증
     public ResponseEntity<DefaultResponse> validateNickname(String nickname) {
@@ -82,16 +88,58 @@ public class MemberService {
     }
 
     // 애플 회원가입
-    public ResponseEntity<DefaultResponse> signUpApple(SignUpAppleRequest request) {
+    public ResponseEntity<DefaultResponse> signUpApple(SignUpAppleRequest request) throws Exception {
+        // idToken 유효성 검증(JWK 확인, Claim 확인)
+        if (!appleTokenService.isValid(request.idToken())) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "ID 토큰이 유효하지 않습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        // 이미 가입한 유저인지 확인
+        MemberApple signedUpUser = memberAppleRepository.findByUserIdentifier(request.userIdentifier());
+        if (signedUpUser != null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 가입한 회원입니다."),
+                    HttpStatus.CONFLICT);
+        }
+
         // 유저 생성 및 저장
-        Member member = Member.create(request.nickname(), request.profileImageCode());
+        Member member = Member.create(request.nickname(), request.profile());
         memberRepository.save(member);
         member = memberRepository.findByNickname(request.nickname());
 
+        // 애플 유저 등록
+        MemberApple memberApple = MemberApple.create(member, request.userIdentifier(), request.idToken());
+        memberAppleRepository.save(memberApple);
+
         // 토큰 생성
         Long memberId = member.getMemberId();
+        String accessToken = tokenProvider.createAccessToken(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+                HttpStatus.OK);
+    }
+
+    // 애플 로그인
+    public ResponseEntity<DefaultResponse> signInApple(SignInAppleRequest request) {
+        // idToken 유효성 검증
+        if (!appleTokenService.isValid(request.idToken())) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "ID 토큰이 유효하지 않습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        // DB에 저장된 회원인지 확인
+        MemberApple memberApple = memberAppleRepository.findByUserIdentifier(request.userIdentifier());
+
+        if (memberApple == null) {
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 사용자가 존재하지 않습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
+
+        // 토큰 생성 및 응답
+        Long memberId = memberApple.getMember().getMemberId();
+        String accessToken = tokenProvider.createAccessToken(memberId);
+
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
 
