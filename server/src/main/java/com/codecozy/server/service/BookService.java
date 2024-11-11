@@ -1037,6 +1037,7 @@ public class BookService {
         // 읽기 시작한 날짜 변경
         if (bookRecord != null) {
             bookRecord.setStartDate(converterService.stringToDate(startDate));
+            bookRecordRepository.save(bookRecord);
         } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
                     HttpStatus.NOT_FOUND);
@@ -1061,6 +1062,7 @@ public class BookService {
         // 마지막 읽은 날짜 변경
         if (bookRecord != null) {
             bookRecord.setRecentDate(converterService.stringToDate(recentDate));
+            bookRecordRepository.save(bookRecord);
         } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
                     HttpStatus.NOT_FOUND);
@@ -1281,8 +1283,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
-                request.characterName());
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);
@@ -1580,18 +1581,20 @@ public class BookService {
         // 책갈피가 있으면
         Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (bookmark != null) {
-            // 참조하고 있는 위치 받아오기
-            LocationList deleteLocation = locationRepository.findByLocationId(
-                    bookmark.getLocationList().getLocationId());
+            // 위치 정보를 포함하고 있으면
+            if (bookmark.getLocationList() != null) {
+                // 참조하고 있는 위치 받아오기
+                LocationList deleteLocation = locationRepository.findByLocationId(bookmark.getLocationList().getLocationId());
 
-            // 다른 곳에서 사용중이 아닌 위치면 삭제
-            if (deleteLocation != null) {
-                Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
-                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
-                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+                // 다른 곳에서 사용중이 아닌 위치면 삭제
+                if (deleteLocation != null) {
+                    Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
+                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
+                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
 
-                if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                    locationRepository.delete(deleteLocation);
+                    if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
+                        locationRepository.delete(deleteLocation);
+                    }
                 }
             }
 
