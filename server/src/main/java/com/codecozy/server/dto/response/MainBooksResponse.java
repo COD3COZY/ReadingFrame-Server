@@ -9,5 +9,6 @@ public record MainBooksResponse(
         int readingPercent,
         int totalPage,
         int readPage,
-        Boolean isMine
+        Boolean isMine,
+        Boolean isWriteReview
 ) {}
