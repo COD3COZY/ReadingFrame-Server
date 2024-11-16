@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -874,17 +875,20 @@ public class BookService {
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        if (bookRecord == null) { // 독서 노트가 없으면 충돌 메세지
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "독서 노트가 없습니다."),
+                    HttpStatus.NOT_FOUND);
+        }
 
         // 키워드 리뷰가 있으면 독서 노트에 수정
         if (request.keyword() != null) {
-            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-            if (bookRecord == null) { // 독서 노트가 없으면 충돌 메세지
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "독서 노트가 없습니다."),
-                        HttpStatus.NOT_FOUND);
-            }
-
             // 키워드 설정
             bookRecord.setKeyWord(request.keyword());
+            bookRecordRepository.save(bookRecord);
+        } else { // 키워드 리뷰가 없으면 null로 설정
+            bookRecord.setKeyWord(null);
             bookRecordRepository.save(bookRecord);
         }
 
@@ -908,11 +912,15 @@ public class BookService {
                 keywordReview = KeywordReview.create(member, book, selected);
                 keywordReviewRepository.save(keywordReview);
             }
+        } else { // 선택 리뷰가 없으면 선택 키워드 리뷰 레코드 삭제
+            KeywordReview keywordReview = keywordReviewRepository.findByMemberAndBook(member, book);
+            if (keywordReview != null) {
+                keywordReviewRepository.delete(keywordReview);
+            }
         }
 
         // 한줄평이 있으면 레코드 수정
         if (request.comment() != null) {
-
             BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
             if (bookReview != null) {
                 // 한줄평 수정
@@ -923,10 +931,27 @@ public class BookService {
                 bookReview = BookReview.create(member, book, request.comment());
                 bookReviewRepository.save(bookReview);
             }
+        } else { // 없으면 한줄평 레코드 삭제
+            BookReview bookReview = bookReviewRepository.findByMemberAndBook(member, book);
+
+            // 한줄평 반응 종류 찾고 삭제
+            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            if (bookReviewReaction != null) {
+                bookReviewReactionRepository.delete(bookReviewReaction);
+            }
+            // 한줄평 반응 여부 모두 찾고 삭제
+            List<BookReviewReviewer> bookReviewReviewers = bookReviewReviewerRepository.findAllByBookReview(bookReview);
+            for (int i = 0; i < bookReviewReviewers.size(); i++) {
+                bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
+            }
+
+            if (bookReview != null) {
+                bookReviewRepository.delete(bookReview);
+            }
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
