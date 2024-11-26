@@ -856,11 +856,10 @@ public class BookService {
         }
 
         // 독서노트에 첫 리뷰 날짜 기록
-        //BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        //bookRecord.setCreateDate(converterService.stringToDate(request.date()));
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        bookRecord.setFirstReviewDate(converterService.stringToDate(request.date()));
 
         // 최근 날짜와 비교해 더 최근이면 수정
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         LocalDate date = converterService.stringToDate(request.date());
         if (bookRecord.getRecentDate() == null) {
             bookRecord.setRecentDate(date);
