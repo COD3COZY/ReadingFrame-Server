@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -21,6 +23,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -852,8 +855,22 @@ public class BookService {
             bookReviewRepository.save(bookReview);
         }
 
-        // 독서노트의 마지막 기록 날짜 업데이트
+        // 독서노트에 첫 리뷰 날짜 기록
+        //BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        //bookRecord.setCreateDate(converterService.stringToDate(request.date()));
+
+        // 최근 날짜와 비교해 더 최근이면 수정
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        LocalDate date = converterService.stringToDate(request.date());
+        if (bookRecord.getRecentDate() == null) {
+            bookRecord.setRecentDate(date);
+        } else {
+            if (date.isAfter(bookRecord.getRecentDate())) {
+                bookRecord.setRecentDate(date);
+            }
+        }
+
+        // 독서노트의 마지막 기록 날짜 업데이트
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
         if (bookRecordDate == null) {
             bookRecordDate = BookRecordDate.create(bookRecord);
@@ -1365,12 +1382,21 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
+        // 최근 날짜와 비교해 더 최근이면 수정
         LocalDate date = converterService.stringToDate(request.date());
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        if (bookRecord.getRecentDate() == null) {
+            bookRecord.setRecentDate(date);
+        } else {
+            if (date.isAfter(bookRecord.getRecentDate())) {
+                bookRecord.setRecentDate(date);
+            }
+        }
+
         memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
@@ -1388,10 +1414,17 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 최근 날짜와 비교해 더 최근이면 수정
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        LocalDate date = converterService.stringToDate(request.date());
+        if (date.isAfter(bookRecord.getRecentDate())) {
+            bookRecord.setRecentDate(date);
+            bookRecordRepository.save(bookRecord);
+        }
+
         // 메모가 있으면
         Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (memo != null) {
-            LocalDate date = converterService.stringToDate(request.date());
             memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         } else {
@@ -1400,7 +1433,6 @@ public class BookService {
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
@@ -1510,12 +1542,43 @@ public class BookService {
             }
         }
 
+        // 책갈피 페이지에 따른 읽는중, 다읽음 수정
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        bookRecord.setMarkPage(request.markPage());
+        if (bookRecord.getBookType() == 0) { // 종이책인 경우
+            if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
+                bookRecord.setReadingStatus(2); // 다읽음으로 수정
+            }
+            else {
+                bookRecord.setReadingStatus(1);
+            }
+        } else { // 전자책, 오디오북인 경우
+            if (request.markPage() >= 100) { // 100% 이상이면
+                bookRecord.setReadingStatus(2);
+            }
+            else {
+                bookRecord.setReadingStatus(1);
+            }
+        }
+
+        // 최근 날짜와 비교해 더 최근이면 수정
         LocalDate date = converterService.stringToDate(request.date());
+        if (bookRecord.getRecentDate() == null) {
+            bookRecord.setRecentDate(date);
+        } else {
+            if (date.isAfter(bookRecord.getRecentDate())) {
+                bookRecord.setRecentDate(date);
+            }
+        }
+
+        // readingStatus, recentDate 수정 내용 저장
+        bookRecordRepository.save(bookRecord);
+
+        // 책갈피 생성, 저장
         bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
         bookmarkRepository.save(bookmark);
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
@@ -1574,13 +1637,20 @@ public class BookService {
                 }
             }
 
-            // 페이지 그대로 책갈피 등록
+            // 최근 날짜와 비교해 더 최근이면 수정
+            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+            bookRecord.setMarkPage(request.markPage());
             LocalDate date = converterService.stringToDate(request.date());
+            if (date.isAfter(bookRecord.getRecentDate())) {
+                bookRecord.setRecentDate(date);
+                bookRecordRepository.save(bookRecord);
+            }
+
+            // 페이지 그대로 책갈피 등록
             bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
             bookmarkRepository.save(bookmark);
 
             // 독서노트의 마지막 기록 날짜 업데이트
-            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
             BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);

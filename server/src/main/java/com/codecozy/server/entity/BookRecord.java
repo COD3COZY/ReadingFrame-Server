@@ -77,6 +77,8 @@ public class BookRecord {
 
     public void setLocationList(LocationList locationList) { this.locationList = locationList; }
 
+    public void setCreateDate(LocalDateTime createDate) { this.createDate = createDate; }
+
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
     public void setRecentDate(LocalDate recentDate) { this.recentDate = recentDate; }
