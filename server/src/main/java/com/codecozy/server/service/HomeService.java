@@ -12,13 +12,13 @@ import com.codecozy.server.dto.response.SearchDto;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.BookReview;
-import com.codecozy.server.entity.KeywordReview;
+import com.codecozy.server.entity.SelectReview;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.BookRecordDateRepository;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
 import com.codecozy.server.repository.BookReviewRepository;
-import com.codecozy.server.repository.KeywordReviewRepository;
+import com.codecozy.server.repository.SelectReviewRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class HomeService {
     private final BookRecordRepository bookRecordRepository;
     private final BookRecordDateRepository bookRecordDateRepository;
     private final BookReviewRepository bookReviewRepository;
-    private final KeywordReviewRepository keywordReviewRepository;
+    private final SelectReviewRepository selectReviewRepository;
 
     // 독서 상태 상수 값
     private final int UNREGISTERED = -1;    // 미등록
@@ -135,7 +135,7 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            KeywordReview selectReview = keywordReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
             // 3. 한줄평 리뷰
             BookReview commentReview = bookReviewRepository.findByMemberAndBook(member, book);
             // 리뷰들 중 하나라도 있으면 true
@@ -192,7 +192,7 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            KeywordReview selectReview = keywordReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
             // 3. 한줄평 리뷰
             BookReview commentReview = bookReviewRepository.findByMemberAndBook(member, book);
             // 리뷰들 중 하나라도 있으면 true

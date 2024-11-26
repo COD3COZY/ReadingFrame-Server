@@ -49,8 +49,8 @@ public class Member {
     private List<BookReview> bookReviews;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    @Column(name = "keyword_reviews")
-    private List<KeywordReview> keywordReviews;
+    @Column(name = "select_reviews")
+    private List<SelectReview> selectReviews;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Column(name = "member_locations")

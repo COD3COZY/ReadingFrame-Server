@@ -11,7 +11,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public class KeywordReviewKey implements Serializable {
+public class SelectReviewKey implements Serializable {
     private Member member;
     private Book book;
 }

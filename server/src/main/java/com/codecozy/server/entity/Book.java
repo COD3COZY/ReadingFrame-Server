@@ -52,8 +52,8 @@ public class Book {
     private List<BookReview> bookReviews;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    @Column(name = "keyword_reviews")
-    private List<KeywordReview> keywordReviews;
+    @Column(name = "select_reviews")
+    private List<SelectReview> selectReviews;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<Memo> memos;

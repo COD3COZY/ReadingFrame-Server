@@ -1,6 +1,6 @@
 package com.codecozy.server.entity;
 
-import com.codecozy.server.composite_key.KeywordReviewKey;
+import com.codecozy.server.composite_key.SelectReviewKey;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@IdClass(KeywordReviewKey.class)
-@Table(name = "KEYWORD_REVIEW")
-public class KeywordReview {
+@IdClass(SelectReviewKey.class)
+@Table(name = "SELECT_REVIEW")
+public class SelectReview {
     @Id
     @ManyToOne
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
@@ -30,11 +30,11 @@ public class KeywordReview {
 
     public void setSelectReviewCode(String selectReviewCode) { this.selectReviewCode = selectReviewCode; }
 
-    public static KeywordReview create(Member member, Book book, String selectReviewCode) {
-        return KeywordReview.builder()
-                .member(member)
-                .book(book)
-                .selectReviewCode(selectReviewCode)
-                .build();
+    public static SelectReview create(Member member, Book book, String selectReviewCode) {
+        return SelectReview.builder()
+                           .member(member)
+                           .book(book)
+                           .selectReviewCode(selectReviewCode)
+                           .build();
     }
 }
