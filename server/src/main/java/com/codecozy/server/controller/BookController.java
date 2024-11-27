@@ -70,15 +70,6 @@ public class BookController {
         return bookService.modifyBookType(memberId, isbn, bookTypeMap.get("bookType"));
     }
 
-    // 읽은 페이지 변경 API
-    @PatchMapping("/page/{isbn}")
-    public ResponseEntity modifyReadingPage(@RequestHeader("xAuthToken") String token,
-                                            @PathVariable("isbn") String isbn, @RequestBody ModifyPageRequest request) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-
-        return bookService.modifyReadingPage(memberId, isbn, request);
-    }
-
     // 도서정보 초기 조회 API
     @GetMapping("/bookDetail/{isbn}")
     public ResponseEntity searchBookDetail(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) throws IOException {
