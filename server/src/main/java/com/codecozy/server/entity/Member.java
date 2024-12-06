@@ -45,10 +45,6 @@ public class Member {
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    @Column(name = "book_reviews")
-    private List<BookReview> bookReviews;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Column(name = "select_reviews")
     private List<SelectReview> selectReviews;
 

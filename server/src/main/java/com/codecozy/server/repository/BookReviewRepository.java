@@ -1,16 +1,15 @@
 package com.codecozy.server.repository;
 
 import com.codecozy.server.entity.Book;
+import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.BookReview;
-import com.codecozy.server.entity.Member;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-
 public interface BookReviewRepository extends JpaRepository<BookReview, Long> {
-    BookReview findByMemberAndBook(Member member, Book book);
-    int countByBook(Book book);
-    List<BookReview> findAllByBook(Book book);
-    List<BookReview> findAllByBookOrderByReviewDateDesc(Book book);
+    BookReview findByBookRecord(BookRecord bookRecord);
+    int countByBookRecordBook(Book book);
+    List<BookReview> findAllByBookRecordBook(Book book);
+    List<BookReview> findAllByBookRecordBookOrderByReviewDateDesc(Book book);
     BookReview findByCommentId(Long commentId);
 }
