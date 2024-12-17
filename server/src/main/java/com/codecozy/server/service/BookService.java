@@ -303,34 +303,6 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    // 읽은 페이지 변경
-    public ResponseEntity<DefaultResponse> modifyReadingPage(Long memberId, String isbn, ModifyPageRequest request) {
-        // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
-
-        // 해당 책 찾기
-        Book book = bookRepository.findByIsbn(isbn);
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-
-        // 페이지 단위일 경우
-        if (request.type()) {
-            bookRecord.setMarkPage(request.page());
-        }
-        // 퍼센트 단위일 경우
-        else {
-            int totalPage = book.getTotalPage();
-            int markPage = converterService.percentToPage(request.page(), totalPage);
-            bookRecord.setMarkPage(markPage);
-        }
-
-        // 변경사항 반영
-        bookRecordRepository.save(bookRecord);
-
-        return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
-                HttpStatus.OK);
-    }
-
     // 도서 정보 초기 조회 API
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
