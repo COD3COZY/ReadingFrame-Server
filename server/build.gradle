@@ -49,6 +49,9 @@ dependencies {
 
 	// JSON 데이터 처리 라이브러리
 	implementation group: 'org.json', name: 'json', version: '20230618'
+
+	// assertJ
+	testImplementation 'org.assertj:assertj-core:3.24.2'
 }
 
 tasks.named('test') {
