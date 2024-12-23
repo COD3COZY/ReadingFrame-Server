@@ -66,6 +66,12 @@ public class BookRecord {
     @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private BookRecordDate bookRecordDate;
 
+    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    private BookReview bookReview;
+
+    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    private SelectReview selectReview;
+
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 
     public void setBookType(int bookType) { this.bookType = bookType; }

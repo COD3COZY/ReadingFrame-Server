@@ -21,13 +21,12 @@ public class BookReview {
     @Column(name = "comment_id")
     private Long commentId;
 
-    @ManyToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
-    private Member member;
-
-    @ManyToOne
-    @JoinColumn(name = "isbn", referencedColumnName = "isbn")
-    private Book book;
+    @OneToOne
+    @JoinColumns({
+            @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
+            @JoinColumn(name = "isbn", referencedColumnName = "isbn")
+    })
+    private BookRecord bookRecord;
 
     @Column(name = "review_text", length = 200, nullable = false)
     private String reviewText;
@@ -43,10 +42,9 @@ public class BookReview {
 
     public void setReviewText(String reviewText) { this.reviewText = reviewText; }
 
-    public static BookReview create(Member member, Book book, String reviewText) {
+    public static BookReview create(BookRecord bookRecord, String reviewText) {
         return BookReview.builder()
-                .member(member)
-                .book(book)
+                .bookRecord(bookRecord)
                 .reviewText(reviewText)
                 .reviewDate(LocalDate.now())
                 .build();

@@ -33,14 +33,12 @@ public class LocationList {
     private double longitude;
 
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
-    @Column(name = "member_locations")
     private List<MemberLocation> memberLocations;
 
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     private List<Bookmark> bookmarks;
 
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
-    @Column(name = "book_records")
     private List<BookRecord> bookRecords;
 
     public void setPlaceName(String placeName) { this.placeName = placeName; }
