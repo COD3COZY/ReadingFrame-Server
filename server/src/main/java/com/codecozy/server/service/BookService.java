@@ -5,6 +5,8 @@ import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
+
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -304,9 +307,7 @@ public class BookService {
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
 
-        String urlStr =
-                "http://www.aladin.co.kr/ttb/api/ItemLookUp.aspx?ttbkey=ttbtmzl2350811001&itemIdType=ISBN&ItemId="
-                        + isbn + "&output=js&Version=20131101";
+        String urlStr = createURL(isbn);
 
         URL url = new URL(urlStr);
 
@@ -2031,6 +2032,30 @@ public class BookService {
         bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
         // 카운트 수정에 사용할 용도로 반환
         return bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+    }
+
+    // yaml 파일 읽고 url 작성
+    public String createURL(String isbn) {
+        String baseUrl = null;
+        String ttbKey = null;
+        String output = null;
+        String version = null;
+        String itemIdType = null;
+
+        Yaml yaml = new Yaml();
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("aladinConfig.yml");
+        if (inputStream != null) {
+            Map<String, Object> yamlData = yaml.load(inputStream);
+            Map<String, Object> aladinApi = (Map<String, Object>) yamlData.get("aladin_api");
+
+            baseUrl = (String) aladinApi.get("base_url");
+            ttbKey = (String) aladinApi.get("ttbkey");
+            output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
+            version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
+            itemIdType = (String) aladinApi.get("item_id_type");
+        }
+
+        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType, isbn, output, version);
     }
 
     // 알라딘 API 데이터 파싱
