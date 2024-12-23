@@ -53,6 +53,9 @@ public class BookRecord {
     @Column(name = "recent_date")
     private LocalDate recentDate;
 
+    @Column(name = "first_review_date")
+    private LocalDate firstReviewDate;
+
     @ColumnDefault("0")
     @Column(name = "mark_page", nullable = false)
     private int markPage;
@@ -80,6 +83,8 @@ public class BookRecord {
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
     public void setRecentDate(LocalDate recentDate) { this.recentDate = recentDate; }
+
+    public void setFirstReviewDate(LocalDate firstReviewDate) { this.firstReviewDate = firstReviewDate; }
 
     public void deleteLocationList() { this.locationList = null; }
 
