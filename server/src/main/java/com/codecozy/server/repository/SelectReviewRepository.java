@@ -2,13 +2,12 @@ package com.codecozy.server.repository;
 
 import com.codecozy.server.composite_key.SelectReviewKey;
 import com.codecozy.server.entity.Book;
+import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.SelectReview;
-import com.codecozy.server.entity.Member;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-
 public interface SelectReviewRepository extends JpaRepository<SelectReview, SelectReviewKey> {
-    SelectReview findByMemberAndBook(Member member, Book book);
-    List<SelectReview> findAllByBook(Book book);
+    SelectReview findByBookRecord(BookRecord bookRecord);
+    List<SelectReview> findAllByBookRecordBook(Book book);
 }

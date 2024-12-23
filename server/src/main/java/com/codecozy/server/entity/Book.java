@@ -48,10 +48,6 @@ public class Book {
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    @Column(name = "select_reviews")
-    private List<SelectReview> selectReviews;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<Memo> memos;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)

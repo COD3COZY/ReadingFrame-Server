@@ -24,12 +24,13 @@ class SelectReviewTest {
                 LocalDate.now());
 
         // when
-        SelectReview selectReview = SelectReview.create(member, book, "1,2,3");
+        SelectReview selectReview = SelectReview.create(BookRecord.create(member, book),
+                "1,2,3");
 
         // then
         // 멤버 정보, 책 정보, 선택 리뷰 코드 정보 검증
-        assertThat(selectReview.getMember()).isEqualTo(member);
-        assertThat(selectReview.getBook()).isEqualTo(book);
+        assertThat(selectReview.getBookRecord().getMember()).isEqualTo(member);
+        assertThat(selectReview.getBookRecord().getBook()).isEqualTo(book);
         assertThat(selectReview.getSelectReviewCode()).isEqualTo("1,2,3");
     }
 }

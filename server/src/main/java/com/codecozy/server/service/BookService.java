@@ -150,7 +150,7 @@ public class BookService {
         List<Integer> selectReview = new ArrayList<>();
         boolean existSelectReview = true;
         try {
-            selectReviewStr = selectReviewRepository.findByMemberAndBook(member, book).getSelectReviewCode();
+            selectReviewStr = selectReviewRepository.findByBookRecord(bookRecord).getSelectReviewCode();
             selectReviewStrList = selectReviewStr.split(",");
         } catch (NullPointerException e) {
             log.info("해당 책의 선택 리뷰 없음");
@@ -372,7 +372,7 @@ public class BookService {
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
 
         // selectedReview 검색
-        List<SelectReview> selectedReview = selectReviewRepository.findAllByBook(book);
+        List<SelectReview> selectedReview = selectReviewRepository.findAllByBookRecordBook(book);
         // 실제로 반환하는 한줄평 반응
         List<Integer> selectedReviewList = new ArrayList<>();
         // max 값 위치를 체크하기 위한 리스트
@@ -832,7 +832,7 @@ public class BookService {
         // 선택 리뷰가 있으면 레코드 추가
         if (request.select() != null) {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
-            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
             if (selectReview != null) {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 리뷰입니다."),
                         HttpStatus.CONFLICT);
@@ -843,7 +843,7 @@ public class BookService {
                 selected += request.select().get(id) + ",";
             }
 
-            selectReview = SelectReview.create(member, book, selected);
+            selectReview = SelectReview.create(bookRecord, selected);
             selectReviewRepository.save(selectReview);
         }
 
@@ -901,7 +901,7 @@ public class BookService {
         // 선택 리뷰가 있으면 레코드 수정
         if (request.select() != null) {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
-            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
 
             String selected = "";
             for (int id = 0; id < request.select().size(); id++) {
@@ -915,11 +915,11 @@ public class BookService {
                 selectReviewRepository.save(selectReview);
             } else {
                 // 이전에 선택 리뷰를 등록하지 않은 경우 새로 생성
-                selectReview = SelectReview.create(member, book, selected);
+                selectReview = SelectReview.create(bookRecord, selected);
                 selectReviewRepository.save(selectReview);
             }
         } else { // 선택 리뷰가 없으면 선택 키워드 리뷰 레코드 삭제
-            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
             if (selectReview != null) {
                 selectReviewRepository.delete(selectReview);
             }
@@ -988,7 +988,7 @@ public class BookService {
         }
 
         // 선택리뷰 찾고 삭제
-        SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+        SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
         if (selectReview != null) {
             selectReviewRepository.delete(selectReview);
         }

@@ -135,7 +135,7 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
             // 3. 한줄평 리뷰
             BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
             // 리뷰들 중 하나라도 있으면 true
@@ -192,7 +192,7 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByMemberAndBook(member, book);
+            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
             // 3. 한줄평 리뷰
             BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
             // 리뷰들 중 하나라도 있으면 true
