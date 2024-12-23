@@ -2048,7 +2048,7 @@ public class BookService {
             Map<String, Object> yamlData = yaml.load(inputStream);
             Map<String, Object> aladinApi = (Map<String, Object>) yamlData.get("aladin_api");
 
-            baseUrl = (String) aladinApi.get("base_url");
+            baseUrl = (String) aladinApi.get("lookup_url");
             ttbKey = (String) aladinApi.get("ttbkey");
             output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
             version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
