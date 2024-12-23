@@ -22,6 +22,7 @@ import com.codecozy.server.repository.KeywordReviewRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -29,6 +30,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -38,6 +41,7 @@ import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.Yaml;
 
 @Slf4j
 @Service
@@ -269,12 +273,7 @@ public class HomeService {
 
         // 알라딘 내 책 검색 (1~4 페이지의 정보 모두 담기)
         for (int i = 1; i < 5; i++) {
-            String urlStr =
-                    "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey=ttbtmzl2350811001&Query="
-                            + searchText
-                            + "&QueryType=Keyword&Start="
-                            + i
-                            + "&MaxResults=50&Cover=Big&Output=JS&Version=20131101";
+            String urlStr = createURL(searchText, i);
 
             URL url = new URL(urlStr);
 
@@ -474,5 +473,27 @@ public class HomeService {
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공"),
                 HttpStatus.OK);
+    }
+
+    // yaml 파일 읽고 url 작성
+    public String createURL(String searchText, int i) {
+        String baseUrl = null;
+        String ttbKey = null;
+        String output = null;
+        String version = null;
+
+        Yaml yaml = new Yaml();
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("aladinConfig.yml");
+        if (inputStream != null) {
+            Map<String, Object> yamlData = yaml.load(inputStream);
+            Map<String, Object> aladinApi = (Map<String, Object>) yamlData.get("aladin_api");
+
+            baseUrl = (String) aladinApi.get("search_url");
+            ttbKey = (String) aladinApi.get("ttbkey");
+            output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
+            version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
+        }
+
+        return String.format("%s?ttbkey=%s&Query=%s&QueryType=Keyword&Start=%d&MaxResults=50&Cover=Big&Output=%s&Version=%s", baseUrl, ttbKey, searchText, i, output, version);
     }
 }
