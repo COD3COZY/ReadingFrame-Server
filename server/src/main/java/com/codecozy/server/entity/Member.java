@@ -41,18 +41,15 @@ public class Member {
     private List<Bookmark> bookmarks;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    @Column(name = "book_records")
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    @Column(name = "member_locations")
     private List<MemberLocation> memberLocations;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<Memo> memos;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)

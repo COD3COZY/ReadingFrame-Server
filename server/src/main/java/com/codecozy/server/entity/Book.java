@@ -44,14 +44,12 @@ public class Book {
     private List<Bookmark> bookmarks;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    @Column(name = "book_records")
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<Memo> memos;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    @Column(name = "personal_dictionaries")
     private List<PersonalDictionary> personalDictionaries;
 
     public Book(String isbn) {
