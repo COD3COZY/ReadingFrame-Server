@@ -198,7 +198,7 @@ public class BookService {
             ));
         }
 
-        List<Memo> memoList = memoRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
+        List<Memo> memoList = memoRepository.findTop3ByBookRecordOrderByDateDesc(bookRecord);
         List<MemoResponse> memos = new ArrayList<>();
         for (Memo memo : memoList) {
             int markPage = memo.getMarkPage();
@@ -1353,7 +1353,10 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        Memo memo = memoRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (memo != null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 메모입니다."),
                     HttpStatus.CONFLICT);
@@ -1361,7 +1364,6 @@ public class BookService {
 
         // 최근 날짜와 비교해 더 최근이면 수정
         LocalDate date = converterService.stringToDate(request.date());
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord.getRecentDate() == null) {
             bookRecord.setRecentDate(date);
         } else {
@@ -1400,7 +1402,7 @@ public class BookService {
         }
 
         // 메모가 있으면
-        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        Memo memo = memoRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (memo != null) {
             memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
@@ -1427,8 +1429,11 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 메모가 있으면
-        Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        Memo memo = memoRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (memo != null) {
             // 메모 삭제
             memoRepository.delete(memo);
@@ -1454,8 +1459,11 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 한 유저의 한 책에 대한 메모 전체 검색
-        List<Memo> memos = memoRepository.findAllByMemberAndBook(member, book);
+        List<Memo> memos = memoRepository.findAllByBookRecord(bookRecord);
         for (int i = 0; i < memos.size(); i++) {
             Memo memo = memos.get(i);
 
