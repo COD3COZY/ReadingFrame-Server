@@ -15,13 +15,11 @@ import lombok.*;
 public class Memo {
     @Id
     @ManyToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
-    private Member member;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "isbn", referencedColumnName = "isbn")
-    private Book book;
+    @JoinColumns({
+            @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
+            @JoinColumn(name = "isbn", referencedColumnName = "isbn")
+    })
+    private BookRecord bookRecord;
 
     @Id
     @Column(length = 40, nullable = false)
@@ -36,10 +34,9 @@ public class Memo {
     @Column(name = "memo_text", length = 1000, nullable = false)
     private String memoText;
 
-    public static Memo create(Member member, Book book, String uuid, int markPage, LocalDate date, String memoText) {
+    public static Memo create(BookRecord bookRecord, String uuid, int markPage, LocalDate date, String memoText) {
         return Memo.builder()
-                .member(member)
-                .book(book)
+                .bookRecord(bookRecord)
                 .uuid(uuid)
                 .markPage(markPage)
                 .date(date)

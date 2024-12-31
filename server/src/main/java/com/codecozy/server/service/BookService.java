@@ -1370,7 +1370,7 @@ public class BookService {
             }
         }
 
-        memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
+        memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
         // 독서노트의 마지막 기록 날짜 업데이트
@@ -1402,7 +1402,7 @@ public class BookService {
         // 메모가 있으면
         Memo memo = memoRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
         if (memo != null) {
-            memo = Memo.create(member, book, request.uuid(), request.markPage(), date, request.memoText());
+            memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 메모입니다."),

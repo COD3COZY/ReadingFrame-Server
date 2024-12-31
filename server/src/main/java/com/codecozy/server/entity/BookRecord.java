@@ -76,6 +76,9 @@ public class BookRecord {
     @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private List<Bookmark> bookmarks;
 
+    @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    private List<Memo> memos;
+
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 
     public void setBookType(int bookType) { this.bookType = bookType; }
