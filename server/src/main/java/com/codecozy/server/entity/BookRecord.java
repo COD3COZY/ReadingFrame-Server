@@ -4,6 +4,7 @@ import com.codecozy.server.composite_key.BookRecordKey;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,6 +72,9 @@ public class BookRecord {
 
     @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private SelectReview selectReview;
+
+    @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    private List<Bookmark> bookmarks;
 
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 

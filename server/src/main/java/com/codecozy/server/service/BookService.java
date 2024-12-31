@@ -834,7 +834,6 @@ public class BookService {
         }
 
         // 독서노트에 첫 리뷰 날짜 기록
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         bookRecord.setFirstReviewDate(converterService.stringToDate(request.date()));
 
         // 최근 날짜와 비교해 더 최근이면 수정
@@ -1553,7 +1552,7 @@ public class BookService {
         bookRecordRepository.save(bookRecord);
 
         // 책갈피 생성, 저장
-        bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
+        bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationList, date);
         bookmarkRepository.save(bookmark);
 
         // 독서노트의 마지막 기록 날짜 업데이트
@@ -1625,7 +1624,7 @@ public class BookService {
             }
 
             // 페이지 그대로 책갈피 등록
-            bookmark = Bookmark.create(member, book, request.uuid(), request.markPage(), locationList, date);
+            bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationList, date);
             bookmarkRepository.save(bookmark);
 
             // 독서노트의 마지막 기록 날짜 업데이트
@@ -1802,7 +1801,7 @@ public class BookService {
             }
 
             date = converterService.dateToString(bookmark.getDate());
-            title = bookmark.getBook().getTitle();
+            title = bookmark.getBookRecord().getBook().getTitle();
             readPage = bookmark.getMarkPage();
             locationId = bookmark.getLocationList().getLocationId();
             placeName = bookmark.getLocationList().getPlaceName();
@@ -1983,7 +1982,7 @@ public class BookService {
             }
 
             date = converterService.dateToString(bookmark.getDate());
-            title = bookmark.getBook().getTitle();
+            title = bookmark.getBookRecord().getBook().getTitle();
             readPage = bookmark.getMarkPage();
             locationId = bookmark.getLocationList().getLocationId();
             placeName = bookmark.getLocationList().getPlaceName();

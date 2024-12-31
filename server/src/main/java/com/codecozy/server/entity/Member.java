@@ -38,9 +38,6 @@ public class Member {
     private List<Badge> badges;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    private List<Bookmark> bookmarks;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)

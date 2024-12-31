@@ -41,9 +41,6 @@ public class Book {
     private LocalDate publicationDate;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    private List<Bookmark> bookmarks;
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
