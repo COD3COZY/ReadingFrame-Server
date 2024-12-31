@@ -182,7 +182,7 @@ public class BookService {
             log.info("해당 책의 마지막으로 읽은 날짜 없음");
         }
 
-        List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByMemberAndBookOrderByDateDesc(member, book);
+        List<Bookmark> bookmarkList = bookmarkRepository.findTop3ByBookRecordOrderByDateDesc(bookRecord);
         List<BookmarkPreviewResponse> bookmarks = new ArrayList<>();
         for (Bookmark bookmark : bookmarkList) {
             int markPage = bookmark.getMarkPage();
@@ -1492,7 +1492,10 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
-        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        // 해당 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
+        Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 책갈피입니다."),
                     HttpStatus.CONFLICT);
@@ -1520,7 +1523,6 @@ public class BookService {
         }
 
         // 책갈피 페이지에 따른 읽는중, 다읽음 수정
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         bookRecord.setMarkPage(request.markPage());
         if (bookRecord.getBookType() == 0) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
@@ -1573,8 +1575,11 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 책갈피가 있으면
-        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
 
             // 수정할 위치를 받았으면
@@ -1615,7 +1620,6 @@ public class BookService {
             }
 
             // 최근 날짜와 비교해 더 최근이면 수정
-            BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
             bookRecord.setMarkPage(request.markPage());
             LocalDate date = converterService.stringToDate(request.date());
             if (date.isAfter(bookRecord.getRecentDate())) {
@@ -1649,8 +1653,11 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 책갈피가 있으면
-        Bookmark bookmark = bookmarkRepository.findByMemberAndBookAndUuid(member, book, request.uuid());
+        Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
             // 위치 정보를 포함하고 있으면
             if (bookmark.getLocationList() != null) {
@@ -1693,8 +1700,11 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 한 유저의 한 책에 대한 메모 전체 검색
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByMemberAndBook(member, book);
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecord(bookRecord);
         for (int i = 0; i < bookmarks.size(); i++) {
             Bookmark bookmark = bookmarks.get(i);
 
@@ -1783,7 +1793,7 @@ public class BookService {
         }
 
         // 책갈피에서 정보 받아오기
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMember(member);
         size = bookmarks.size();
         Bookmark bookmark;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
@@ -1897,7 +1907,7 @@ public class BookService {
         }
 
         // 북마크(1)에서 검색
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMember(member);
         for (Bookmark bookmark : bookmarks) {
             LocationList location = bookmark.getLocationList();
             allMarkers.add(new AllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), true));
@@ -1964,7 +1974,7 @@ public class BookService {
         }
 
         // 책갈피에서 해당 위치 검색
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByMemberAndLocationList(member, locationList);
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMemberAndLocationList(member, locationList);
         size = bookmarks.size();
         Bookmark bookmark;
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
