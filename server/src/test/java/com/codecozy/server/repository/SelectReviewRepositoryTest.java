@@ -22,27 +22,23 @@ class SelectReviewRepositoryTest {
     private TestEntityManager testEntityManager;
 
     @Autowired
-    private MemberRepository memberRepository;
-
-    @Autowired
-    private BookRepository bookRepository;
-
-    @Autowired
     private BookRecordRepository bookRecordRepository;
 
     @Autowired
     private SelectReviewRepository selectReviewRepository;
 
-    private String bookIsbn = "9791190090018";
-    private Long memberId;
+    private final String isbn = "9791190090018";
+
+    private Member member;
+    private Book book;
+    private BookRecord bookRecord;
 
     @BeforeEach
     void setup() {
-        Member member = memberRepository.save(Member.create("이름", "01"));
-        memberId = member.getMemberId();
-
-        Book book = bookRepository.save(Book.create(
-                bookIsbn,
+        // 유저, 책, 독서노트 세팅
+        member = testEntityManager.persist(Member.create("이름", "01"));
+        book = testEntityManager.persist(Book.create(
+                isbn,
                 "http://example.com/cover.jpg",
                 "제목",
                 "작가",
@@ -50,10 +46,10 @@ class SelectReviewRepositoryTest {
                 300,
                 "출판사",
                 LocalDate.now()));
+        bookRecord = testEntityManager.persist(BookRecord.create(member, book));
 
-        BookRecord bookRecord = bookRecordRepository.save(BookRecord.create(member, book));
-
-        selectReviewRepository.save(SelectReview.create(bookRecord, "11"));
+        // 선택 리뷰 생성
+        testEntityManager.persist(SelectReview.create(bookRecord, "11"));
 
         // DB 반영 및 영속성 컨텍스트 초기화
         testEntityManager.flush();
@@ -64,25 +60,22 @@ class SelectReviewRepositoryTest {
     @DisplayName("독서노트(부모)를 삭제하면 선택리뷰(자식)도 삭제된다")
     void deleteTest() {
         // given
-        Member member = memberRepository.findByMemberId(memberId);
-        Book book = bookRepository.findByIsbn(bookIsbn);
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecord foundBookRecord = testEntityManager.find(BookRecord.class,
+                testEntityManager.getId(bookRecord));
 
         // when
-        bookRecordRepository.delete(bookRecord);
+        testEntityManager.remove(foundBookRecord);
 
         // then
+        // 부모 삭제 확인
+        assertThat(bookRecordRepository.findByMemberAndBook(member, book)).isNull();
+        // 자식 삭제 확인
         assertThat(selectReviewRepository.findByBookRecord(bookRecord)).isNull();
     }
 
     @Test
     @DisplayName("독서노트로 선택리뷰 찾기")
     void findByBookRecord() {
-        // given
-        Member member = memberRepository.findByMemberId(memberId);
-        Book book = bookRepository.findByIsbn(bookIsbn);
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-
         // when
         SelectReview find = selectReviewRepository.findByBookRecord(bookRecord);
 
@@ -95,13 +88,13 @@ class SelectReviewRepositoryTest {
     void findAllByBookRecordBook() {
         // given
         // member 1명 추가 생성
-        Member member2 = memberRepository.save(Member.create("이름2", "02"));
+        Member member2 = testEntityManager.persist(Member.create("이름2", "02"));
 
-        Book book = bookRepository.findByIsbn(bookIsbn);
+        book = testEntityManager.find(Book.class, isbn);
 
         // member2의 선택리뷰 추가
-        BookRecord bookRecord2 = bookRecordRepository.save(BookRecord.create(member2, book));
-        selectReviewRepository.save(SelectReview.create(bookRecord2, "22"));
+        BookRecord bookRecord2 = testEntityManager.persist(BookRecord.create(member2, book));
+        testEntityManager.persist(SelectReview.create(bookRecord2, "22"));
 
         // when
         List<SelectReview> findList = selectReviewRepository.findAllByBookRecordBook(book);
