@@ -22,29 +22,23 @@ class MemoRepositoryTest {
     private TestEntityManager testEntityManager;
 
     @Autowired
-    private MemberRepository memberRepository;
-
-    @Autowired
-    private BookRepository bookRepository;
-
-    @Autowired
     private BookRecordRepository bookRecordRepository;
 
     @Autowired
     private MemoRepository memoRepository;
 
-    private final String isbn = "9791190090018";
     private final String uuid = "b1526767-b6bc-427e-9f11-825ed2084cc8";
 
-    private Long memberId;
+    private Member member;
+    private Book book;
+    private BookRecord bookRecord;
 
     @BeforeEach
     void setup() {
         // 유저, 책 세팅
-        Member member = memberRepository.save(Member.create("이름", "01"));
-        memberId = member.getMemberId();
-        Book book = bookRepository.save(Book.create(
-                isbn,
+        member = testEntityManager.persist(Member.create("이름", "01"));
+        book = testEntityManager.persist(Book.create(
+                "9791190090018",
                 "http://example.com/cover.jpg",
                 "제목",
                 "작가",
@@ -54,10 +48,10 @@ class MemoRepositoryTest {
                 LocalDate.now()));
 
         // 독서노트 생성
-        BookRecord bookRecord = bookRecordRepository.save(BookRecord.create(member, book));
+        bookRecord = testEntityManager.persist(BookRecord.create(member, book));
 
         // 메모 추가
-        memoRepository.save(Memo.create(
+        testEntityManager.persist(Memo.create(
                 bookRecord,
                 uuid,
                 10,
@@ -69,38 +63,26 @@ class MemoRepositoryTest {
         testEntityManager.clear();
     }
 
-    // 유저, 책 정보로 독서노트 객체를 가져오는 함수
-    BookRecord getBookRecord() {
-        Member member = memberRepository.findByMemberId(memberId);
-        Book book = bookRepository.findByIsbn(isbn);
-
-        return bookRecordRepository.findByMemberAndBook(member, book);
-    }
-
     @Test
     @DisplayName("독서노트(부모) 삭제 시 메모(자식)가 삭제된다")
     void deleteTest() {
         // given
-        Member member = memberRepository.findByMemberId(memberId);
-        Book book = bookRepository.findByIsbn(isbn);
-        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+        BookRecord foundBookRecord = testEntityManager.find(BookRecord.class,
+                testEntityManager.getId(bookRecord));
 
         // when
-        bookRecordRepository.delete(bookRecord);
+        testEntityManager.remove(foundBookRecord);
 
         // then
         // 부모 삭제 확인
         assertThat(bookRecordRepository.findByMemberAndBook(member, book)).isNull();
         // 자식 삭제 확인
-        assertThat(memoRepository.findByBookRecordAndUuid(bookRecord, uuid)).isNull();
+        assertThat(memoRepository.findAllByBookRecord(bookRecord)).isEmpty();
     }
 
     @Test
     @DisplayName("독서노트 객체와 uuid 값으로 메모 한 개를 찾는다")
     void findByBookRecordAndUuid() {
-        // given
-        BookRecord bookRecord = getBookRecord();
-
         // when
         Memo find = memoRepository.findByBookRecordAndUuid(bookRecord, uuid);
 
@@ -114,7 +96,8 @@ class MemoRepositoryTest {
     @DisplayName("특정 독서노트 내에 있는 모든 메모를 찾는다")
     void findAllByBookRecord() {
         // given
-        BookRecord bookRecord = getBookRecord();
+        bookRecord = testEntityManager.find(BookRecord.class,
+                testEntityManager.getId(bookRecord));
 
         // 메모 하나 더 추가
         memoRepository.save(Memo.create(
@@ -137,7 +120,8 @@ class MemoRepositoryTest {
     @DisplayName("특정 독서노트 내에 작성한 최근 3개의 메모를 찾는다")
     void findTop3ByBookRecordOrderByDateDesc() {
         // given
-        BookRecord bookRecord = getBookRecord();
+        bookRecord = testEntityManager.find(BookRecord.class,
+                testEntityManager.getId(bookRecord));
 
         // 메모 2개 추가
         memoRepository.save(Memo.create(
