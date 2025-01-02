@@ -44,9 +44,6 @@ public class Member {
     private List<MemberLocation> memberLocations;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    private List<PersonalDictionary> personalDictionaries;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;
 
     public static Member create(String nickname, String profile) {

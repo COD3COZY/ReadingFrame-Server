@@ -79,6 +79,9 @@ public class BookRecord {
     @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private List<Memo> memos;
 
+    @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    private List<PersonalDictionary> personalDictionaries;
+
     public void setReadingStatus(int readingStatus) { this.readingStatus = readingStatus; }
 
     public void setBookType(int bookType) { this.bookType = bookType; }

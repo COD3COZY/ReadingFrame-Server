@@ -1242,6 +1242,9 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 해당 인물이 중복됐는지 검색
         PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
                 request.name());
@@ -1252,7 +1255,7 @@ public class BookService {
                     HttpStatus.CONFLICT);
         } else {
             // 인물사전에 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(),
+            personalDictionary = PersonalDictionary.create(bookRecord, request.name(),
                     Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         }
@@ -1271,6 +1274,9 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 해당 인물이 있는지 검색
         PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
                 request.name());
@@ -1278,7 +1284,7 @@ public class BookService {
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
             // 인물사전에서 수정 등록
-            personalDictionary = PersonalDictionary.create(member, book, request.name(),
+            personalDictionary = PersonalDictionary.create(bookRecord, request.name(),
                     Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         } else {

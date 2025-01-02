@@ -43,9 +43,6 @@ public class Book {
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
-    private List<PersonalDictionary> personalDictionaries;
-
     public Book(String isbn) {
         this.isbn = isbn;
     }
