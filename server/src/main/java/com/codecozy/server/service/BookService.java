@@ -214,8 +214,8 @@ public class BookService {
             ));
         }
 
-        List<PersonalDictionary> personalDictionaryList = personalDictionaryRepository.findTop3ByMemberAndBookOrderByNameAsc(
-                member, book);
+        List<PersonalDictionary> personalDictionaryList =
+                personalDictionaryRepository.findTop3ByBookRecordOrderByNameAsc(bookRecord);
         List<PersonalDictionaryPreviewResponse> characters = new ArrayList<>();
         for (PersonalDictionary personalDictionary : personalDictionaryList) {
             characters.add(new PersonalDictionaryPreviewResponse(
@@ -1246,7 +1246,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 해당 인물이 중복됐는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
+        PersonalDictionary personalDictionary = personalDictionaryRepository.findByBookRecordAndName(bookRecord,
                 request.name());
 
         // 중복된 인물이면 (이름이 중복됐으면)
@@ -1278,8 +1278,8 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book,
-                request.name());
+        PersonalDictionary personalDictionary =
+                personalDictionaryRepository.findByBookRecordAndName(bookRecord, request.name());
 
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
@@ -1306,8 +1306,12 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 해당 인물이 있는지 검색
-        PersonalDictionary personalDictionary = personalDictionaryRepository.findByMemberAndBookAndName(member, book, request.name());
+        PersonalDictionary personalDictionary =
+                personalDictionaryRepository.findByBookRecordAndName(bookRecord, request.name());
         if (personalDictionary != null) {
             // 인물사전에서 삭제
             personalDictionaryRepository.delete(personalDictionary);
@@ -1334,9 +1338,12 @@ public class BookService {
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
 
+        // 독서노트 가져오기
+        BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
+
         // 한 유저의 한 책에 대한 인물사전 전체 검색
-        List<PersonalDictionary> personalDictionaries = personalDictionaryRepository.findAllByMemberAndBook(member,
-                book);
+        List<PersonalDictionary> personalDictionaries =
+                personalDictionaryRepository.findAllByBookRecord(bookRecord);
         for (int i = 0; i < personalDictionaries.size(); i++) {
             PersonalDictionary personalDictionary = personalDictionaries.get(i);
 
