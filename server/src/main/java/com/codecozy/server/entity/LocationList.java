@@ -41,11 +41,6 @@ public class LocationList {
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
-    public void setPlaceName(String placeName) { this.placeName = placeName; }
-    public void setAddress(String address) { this.address = address; }
-    public void setLatitude(double latitude) { this.latitude = latitude; }
-    public void setLongitude(double longitude) { this.longitude = longitude; }
-
     public static LocationList create(String placeName, String address, double latitude, double longitude) {
         return LocationList.builder()
                 .placeName(placeName)

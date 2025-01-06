@@ -60,8 +60,8 @@ public class BookServiceTest {
         when(bookRecordDateRepository.findByBookRecord(bookRecord)).thenReturn(bookRecordDate);
 
         // 북마크 데이터
-        Bookmark bookmark = Bookmark.create(member, book, "3b7d", 50, null, LocalDate.of(2024, 12, 10));
-        when(bookmarkRepository.findByMemberAndBookAndUuid(member, book, "3b7d")).thenReturn(bookmark);
+        Bookmark bookmark = Bookmark.create(bookRecord, "3b7d", 50, null, LocalDate.of(2024, 12, 10));
+        when(bookmarkRepository.findByBookRecordAndUuid(bookRecord, "3b7d")).thenReturn(bookmark);
     }
 
     @AfterEach

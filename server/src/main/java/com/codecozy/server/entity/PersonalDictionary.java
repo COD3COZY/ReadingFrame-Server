@@ -17,13 +17,11 @@ import lombok.NoArgsConstructor;
 public class PersonalDictionary {
     @Id
     @ManyToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
-    private Member member;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "isbn", referencedColumnName = "isbn")
-    private Book book;
+    @JoinColumns({
+            @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
+            @JoinColumn(name = "isbn", referencedColumnName = "isbn")
+    })
+    private BookRecord bookRecord;
 
     @Id
     @Column(length = 20, nullable = false)
@@ -38,10 +36,9 @@ public class PersonalDictionary {
     @Column(length = 1000)
     private String description;
 
-    public static PersonalDictionary create(Member member, Book book, String name, int emoji, String preview, String description) {
+    public static PersonalDictionary create(BookRecord bookRecord, String name, int emoji, String preview, String description) {
         return PersonalDictionary.builder()
-                .member(member)
-                .book(book)
+                .bookRecord(bookRecord)
                 .name(name)
                 .emoji(emoji)
                 .preview(preview)

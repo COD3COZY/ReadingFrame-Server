@@ -38,19 +38,10 @@ public class Member {
     private List<Badge> badges;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    private List<Bookmark> bookmarks;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<MemberLocation> memberLocations;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    private List<Memo> memos;
-
-    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
-    private List<PersonalDictionary> personalDictionaries;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;

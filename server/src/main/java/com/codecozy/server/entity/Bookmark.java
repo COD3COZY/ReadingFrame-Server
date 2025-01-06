@@ -18,13 +18,11 @@ import lombok.NoArgsConstructor;
 public class Bookmark {
     @Id
     @ManyToOne
-    @JoinColumn(name = "member_id", referencedColumnName = "member_id")
-    private Member member;
-
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "isbn", referencedColumnName = "isbn")
-    private Book book;
+    @JoinColumns({
+            @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
+            @JoinColumn(name = "isbn", referencedColumnName = "isbn")
+    })
+    private BookRecord bookRecord;
 
     @Id
     @Column(length = 40, nullable = false)
@@ -40,10 +38,9 @@ public class Bookmark {
     @Column(nullable = false)
     private LocalDate date;
 
-    public static Bookmark create(Member member, Book book, String uuid, int markPage, LocationList locationList, LocalDate date) {
+    public static Bookmark create(BookRecord bookRecord, String uuid, int markPage, LocationList locationList, LocalDate date) {
         return Bookmark.builder()
-                .member(member)
-                .book(book)
+                .bookRecord(bookRecord)
                 .uuid(uuid)
                 .markPage(markPage)
                 .locationList(locationList)
