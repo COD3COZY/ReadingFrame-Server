@@ -1689,78 +1689,22 @@ public class BookService {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
-        // Response 전달 시 들어가는 데이터
-        String date;
-        String title;
-        int readPage;
-        long locationId;
-        String placeName;
-        boolean isBookRecordEnd = false;
-        boolean isBookmarkEnd = false;
+        // 조회할 위치가 더 있는지에 대한 flag
+        BooleanWrapper isBookRecordEnd = new BooleanWrapper();
+        isBookRecordEnd.setValue(false);
+        BooleanWrapper isBookmarkEnd = new BooleanWrapper();
+        isBookmarkEnd.setValue(false);
 
-        // 독서노트에서 정보 받아오기
-        List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
-        int size = bookRecords.size();
+        addLocationsAll(member, orderNumber, false, locationInfo, isBookRecordEnd);
+        addLocationsAll(member, orderNumber, true, locationInfo, isBookmarkEnd);
 
-        // 위치 데이터가 없는 경우
-        if (size <= 0) {
+        if (locationInfo.isEmpty()) {
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
                     HttpStatus.NOT_FOUND);
         }
 
-        BookRecord bookRecord;
-        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
-            // 이번이 독서노트 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
-            if ((orderNumber + 1) * 20 >= size) isBookRecordEnd = true;
-
-            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
-            if (i >= size) {
-                break;
-            }
-
-            bookRecord = bookRecords.get(i);
-            if (bookRecord.getLocationList() == null) {
-                break;
-            }
-
-            date = converterService.dateToString(bookRecord.getStartDate());
-            title = bookRecord.getBook().getTitle();
-            readPage = bookRecord.getMarkPage();
-            locationId = bookRecord.getLocationList().getLocationId();
-            placeName = bookRecord.getLocationList().getPlaceName();
-
-            locationInfo.add(new LocationInfoDto(date, false, title, readPage, locationId, placeName));
-        }
-
-        // 책갈피에서 정보 받아오기
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMember(member);
-        size = bookmarks.size();
-        Bookmark bookmark;
-        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
-            // 이번이 책갈피 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
-            if ((orderNumber + 1) * 20 >= size) isBookmarkEnd = true;
-
-            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
-            if (i >= size) {
-                break;
-            }
-
-            bookmark = bookmarks.get(i);
-            if (bookmark.getLocationList() == null) {
-                break;
-            }
-
-            date = converterService.dateToString(bookmark.getDate());
-            title = bookmark.getBookRecord().getBook().getTitle();
-            readPage = bookmark.getMarkPage();
-            locationId = bookmark.getLocationList().getLocationId();
-            placeName = bookmark.getLocationList().getPlaceName();
-
-            locationInfo.add(new LocationInfoDto(date, true, title, readPage, locationId, placeName));
-        }
-
-        AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo, (isBookRecordEnd && isBookmarkEnd));
+        AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()));
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, "성공", allLocationResponse),
@@ -1927,6 +1871,56 @@ public class BookService {
         memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDateTime.now()));
     }
 
+    // 전체 위치 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
+    public void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo, BooleanWrapper isEnd) {
+        // 정보 받아오기
+        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMember(member) : bookRecordRepository.findAllByMember(member);
+
+        int size = records.size();
+        BookRecord bookRecord;
+        Bookmark bookmark;
+        
+        for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
+            // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
+            if ((orderNumber + 1) * 20 >= size) isEnd.setValue(true);
+
+            // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
+            if (i >= size) {
+                break;
+            }
+
+            // Response 전달 시 들어가는 데이터
+            String date;
+            String title;
+            int readPage;
+            long locationId;
+            String placeName;
+            
+            if (isBookmark) { // 책갈피면
+                bookmark = (Bookmark) records.get(i);
+                if (bookmark.getLocationList() == null) break;
+
+                date = converterService.dateToString(bookmark.getDate());
+                title = bookmark.getBookRecord().getBook().getTitle();
+                readPage = bookmark.getMarkPage();
+                locationId = bookmark.getLocationList().getLocationId();
+                placeName = bookmark.getLocationList().getPlaceName();
+
+            } else { // 독서노트면
+                bookRecord = (BookRecord) records.get(i);
+                if (bookRecord.getLocationList() == null) break;
+
+                date = converterService.dateToString(bookRecord.getStartDate());
+                title = bookRecord.getBook().getTitle();
+                readPage = bookRecord.getMarkPage();
+                locationId = bookRecord.getLocationList().getLocationId();
+                placeName = bookRecord.getLocationList().getPlaceName();
+            }
+
+            locationInfo.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
+        }
+    }
+
     // 마크 세부 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
     public void addLocations(Member member, LocationList locationList, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo, BooleanWrapper isEnd) {
         // 북마크인지 여부에 따라 필요한 레포지토리 검색
@@ -1973,7 +1967,7 @@ public class BookService {
                 placeName = bookRecord.getLocationList().getPlaceName();
             }
 
-            locationInfo.add(new LocationInfoDto(date, false, title, readPage, locationId, placeName));
+            locationInfo.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
         }
     }
 
