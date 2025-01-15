@@ -24,16 +24,16 @@ public class MemberLocation {
     @Id
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
-    private LocationList locationList;
+    private LocationInfo locationInfo;
 
     @Id
     @Column(nullable = false)
     private LocalDateTime date;
 
-    public static MemberLocation create(Member member, LocationList locationList, LocalDateTime date) {
+    public static MemberLocation create(Member member, LocationInfo locationInfo, LocalDateTime date) {
         return MemberLocation.builder()
                 .member(member)
-                .locationList(locationList)
+                .locationInfo(locationInfo)
                 .date(date)
                 .build();
     }

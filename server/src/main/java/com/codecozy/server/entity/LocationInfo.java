@@ -13,8 +13,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "LOCATION_LIST")
-public class LocationList {
+@Table(name = "LOCATION_INFO")
+public class LocationInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "location_id")
@@ -32,21 +32,21 @@ public class LocationList {
     @Column(nullable = false)
     private double longitude;
 
-    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationInfo", cascade = CascadeType.REMOVE)
     private List<MemberLocation> memberLocations;
 
-    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationInfo", cascade = CascadeType.REMOVE)
     private List<Bookmark> bookmarks;
 
-    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationInfo", cascade = CascadeType.REMOVE)
     private List<BookRecord> bookRecords;
 
-    public static LocationList create(String placeName, String address, double latitude, double longitude) {
-        return LocationList.builder()
-                .placeName(placeName)
-                .address(address)
-                .latitude(latitude)
-                .longitude(longitude)
-                .build();
+    public static LocationInfo create(String placeName, String address, double latitude, double longitude) {
+        return LocationInfo.builder()
+                           .placeName(placeName)
+                           .address(address)
+                           .latitude(latitude)
+                           .longitude(longitude)
+                           .build();
     }
 }

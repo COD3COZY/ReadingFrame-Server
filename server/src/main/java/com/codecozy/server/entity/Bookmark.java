@@ -33,17 +33,17 @@ public class Bookmark {
 
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
-    private LocationList locationList;
+    private LocationInfo locationInfo;
 
     @Column(nullable = false)
     private LocalDate date;
 
-    public static Bookmark create(BookRecord bookRecord, String uuid, int markPage, LocationList locationList, LocalDate date) {
+    public static Bookmark create(BookRecord bookRecord, String uuid, int markPage, LocationInfo locationInfo, LocalDate date) {
         return Bookmark.builder()
                 .bookRecord(bookRecord)
                 .uuid(uuid)
                 .markPage(markPage)
-                .locationList(locationList)
+                .locationInfo(locationInfo)
                 .date(date)
                 .build();
     }

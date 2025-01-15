@@ -1,9 +1,9 @@
 package com.codecozy.server.repository;
 
-import com.codecozy.server.entity.LocationList;
+import com.codecozy.server.entity.LocationInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface LocationRepository extends JpaRepository<LocationList, Long> {
-    LocationList findByLocationId(long locationId);
-    LocationList findByPlaceName(String placeName);
+public interface LocationRepository extends JpaRepository<LocationInfo, Long> {
+    LocationInfo findByLocationId(long locationId);
+    LocationInfo findByPlaceName(String placeName);
 }
