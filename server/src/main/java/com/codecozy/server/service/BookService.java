@@ -1780,8 +1780,7 @@ public class BookService {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
-        // 반환 리스트(두 스트림에서 검색하고 리스트로 병합)
-        // 각각 독서노트와 책갈피에서 검색한 결과로 스트림을 만들어 위치아이디, 위도, 경도, locationType을 map에 담아 병합하여 리스트 생성
+        // 독서노트의 대표위치, 책갈피의 위치를 가져와 리스트 생성
         List<AllMarkerResponse> allMarkers = Stream.concat(
                 bookRecordRepository.findAllByMember(member).stream()
                         .map(bookRecord -> new AllMarkerResponse(
