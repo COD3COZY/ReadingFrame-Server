@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Bookmark;
-import com.codecozy.server.entity.LocationList;
+import com.codecozy.server.entity.LocationInfo;
 import com.codecozy.server.entity.Member;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +32,7 @@ class BookmarkRepositoryTest {
 
     private Member member;
     private Book book;
-    private LocationList location;
+    private LocationInfo location;
     private BookRecord bookRecord;
 
     @BeforeEach
@@ -50,7 +50,7 @@ class BookmarkRepositoryTest {
                 LocalDate.now()));
 
         // 위치 세팅
-        location = testEntityManager.persist(LocationList.create(
+        location = testEntityManager.persist(LocationInfo.create(
                 "학교",
                 "서울시",
                 52,
@@ -140,7 +140,7 @@ class BookmarkRepositoryTest {
     @DisplayName("특정 유저, 특정 위치에 있는 모든 책갈피 찾기")
     void findAllByBookRecordMemberAndLocationList() {
         // when
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMemberAndLocationList(
+        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(
                 member, location);
 
         // then

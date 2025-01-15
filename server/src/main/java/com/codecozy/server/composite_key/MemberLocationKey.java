@@ -1,6 +1,6 @@
 package com.codecozy.server.composite_key;
 
-import com.codecozy.server.entity.LocationList;
+import com.codecozy.server.entity.LocationInfo;
 import com.codecozy.server.entity.Member;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -14,6 +14,6 @@ import java.io.Serializable;
 @EqualsAndHashCode
 public class MemberLocationKey implements Serializable {
     private Member member;
-    private LocationList locationList;
+    private LocationInfo locationInfo;
     private LocalDateTime date;
 }

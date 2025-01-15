@@ -3,7 +3,7 @@ package com.codecozy.server.repository;
 import com.codecozy.server.composite_key.BookRecordKey;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
-import com.codecozy.server.entity.LocationList;
+import com.codecozy.server.entity.LocationInfo;
 import com.codecozy.server.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -29,7 +29,7 @@ public interface BookRecordRepository extends JpaRepository<BookRecord, BookReco
     List<BookRecord> findAllByMemberAndBookTitleContains(Member member, String title);
 
     // 특정 유저의 독서노트 중 locationId 값으로 검색하기
-    List<BookRecord> findAllByMemberAndLocationList(Member member, LocationList locationList);
+    List<BookRecord> findAllByMemberAndLocationInfo(Member member, LocationInfo locationInfo);
 
-    Long countByLocationList(LocationList locationList);
+    Long countByLocationInfo(LocationInfo locationInfo);
 }

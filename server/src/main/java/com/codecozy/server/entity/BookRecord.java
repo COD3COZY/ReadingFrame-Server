@@ -37,7 +37,7 @@ public class BookRecord {
 
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
-    private LocationList locationList;
+    private LocationInfo locationInfo;
 
     @Column(name = "is_mine", nullable = false)
     private boolean isMine;
@@ -94,7 +94,7 @@ public class BookRecord {
 
     public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
 
-    public void setLocationList(LocationList locationList) { this.locationList = locationList; }
+    public void setLocationInfo(LocationInfo locationInfo) { this.locationInfo = locationInfo; }
 
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
@@ -102,7 +102,7 @@ public class BookRecord {
 
     public void setFirstReviewDate(LocalDate firstReviewDate) { this.firstReviewDate = firstReviewDate; }
 
-    public void deleteLocationList() { this.locationList = null; }
+    public void deleteLocationInfo() { this.locationInfo = null; }
 
     // 읽고 싶은 책 등록 시 사용하는 create 메소드
     public static BookRecord create(Member member, Book book) {
@@ -111,7 +111,7 @@ public class BookRecord {
                 .book(book)
                 .readingStatus(0)
                 .bookType(-1)
-                .locationList(null)
+                .locationInfo(null)
                 .isMine(false)
                 .isHidden(false)
                 .createDate(LocalDateTime.now())
@@ -121,13 +121,13 @@ public class BookRecord {
                 .build();
     }
 
-    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationList locationList, boolean isMine, LocalDate startDate, LocalDate recentDate) {
+    public static BookRecord create(Member member, Book book, int readingStatus, int bookType, LocationInfo locationInfo, boolean isMine, LocalDate startDate, LocalDate recentDate) {
         return BookRecord.builder()
                 .member(member)
                 .book(book)
                 .readingStatus(readingStatus)
                 .bookType(bookType)
-                .locationList(locationList)
+                .locationInfo(locationInfo)
                 .isMine(isMine)
                 .isHidden(false)
                 .createDate(LocalDateTime.now())

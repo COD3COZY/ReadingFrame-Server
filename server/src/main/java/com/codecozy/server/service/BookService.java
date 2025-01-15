@@ -39,7 +39,7 @@ public class BookService {
     private final BookRecordRepository bookRecordRepository;
     private final BookRecordDateRepository bookRecordDateRepository;
     private final MemberRepository memberRepository;
-    private final LocationRepository locationRepository;
+    private final LocationInfoRepository locationInfoRepository;
     private final MemberLocationRepository memberLocationRepository;
     private final BookReviewRepository bookReviewRepository;
     private final BookReviewReactionRepository bookReviewReactionRepository;
@@ -59,7 +59,7 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
 
         // 자주 사용되는 객체 재사용 용도로 선언
-        LocationList locationList = null;
+        LocationInfo locationInfo = null;
         MemberLocation memberLocation = null;
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
@@ -79,16 +79,17 @@ public class BookService {
             double longitude = Double.parseDouble(request.mainLocation().longitude());
 
             // 이미 있는 위치인지 검색
-            locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
-            if (locationList == null) {
-                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
+            locationInfo = locationInfoRepository.findByPlaceName(request.mainLocation().placeName());
+            if (locationInfo == null) {
+                locationInfo = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
                         latitude, longitude);
             }
 
-            memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                    locationInfo);
             // 최근 위치 검색 기록에 없으면 추가
             if (memberLocation == null) {
-                registerRecentLocation(member, locationList);
+                registerRecentLocation(member, locationInfo);
             }
         }
 
@@ -98,7 +99,8 @@ public class BookService {
         if (request.recentDate() != null) {
             recentDate = converterService.stringToDate(request.recentDate());
         }
-        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(), locationList,
+        bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(),
+                locationInfo,
                 request.isMine(), startDate, recentDate);
         bookRecord = bookRecordRepository.save(bookRecord);
 
@@ -174,7 +176,7 @@ public class BookService {
         int readingStatus = bookRecord.getReadingStatus();
         String mainLocation = null;
         try {
-            mainLocation = bookRecord.getLocationList().getPlaceName();
+            mainLocation = bookRecord.getLocationInfo().getPlaceName();
         } catch (NullPointerException e) {
             log.info("해당 책의 대표 위치 없음");
         }
@@ -197,7 +199,7 @@ public class BookService {
                     dateStr,
                     markPage,
                     markPercent,
-                    bookmark.getLocationList().getPlaceName(),
+                    bookmark.getLocationInfo().getPlaceName(),
                     bookmark.getUuid()
             ));
         }
@@ -1036,29 +1038,30 @@ public class BookService {
         double longitude = Double.parseDouble(request.longitude());
 
         // 장소명으로 해당 주소 찾기
-        LocationList locationList = locationRepository.findByPlaceName(request.placeName());
+        LocationInfo locationInfo = locationInfoRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
-        if (locationList == null) {
-            locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
+        if (locationInfo == null) {
+            locationInfo = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
         // 사용자 독서노트 검색
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) {
             // 대표 위치가 이미 있으면 CONFLICT 응답
-            if (bookRecord.getLocationList() != null) {
+            if (bookRecord.getLocationInfo() != null) {
                 return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "대표 위치가 이미 있습니다."),
                         HttpStatus.CONFLICT);
             } else { // 대표 위치가 없으면 대표위치 등록
-                bookRecord.setLocationList(locationList);
+                bookRecord.setLocationInfo(locationInfo);
             }
         }
 
         // 사용자 최근 검색 위치에 등록
-        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                locationInfo);
         // 최근 위치 검색 기록에 없으면 추가
         if (memberLocation == null) {
-            registerRecentLocation(member, locationList);
+            registerRecentLocation(member, locationInfo);
         }
 
         return new ResponseEntity<>(
@@ -1079,29 +1082,29 @@ public class BookService {
         double longitude = Double.parseDouble(request.longitude());
 
         // 장소명으로 해당 주소 찾기
-        LocationList locationList = locationRepository.findByPlaceName(request.placeName());
+        LocationInfo locationInfo = locationInfoRepository.findByPlaceName(request.placeName());
         // 등록되지 않은 주소면 새로 등록
-        if (locationList == null) {
-            locationList = registerLocation(request.placeName(), request.address(), latitude, longitude);
+        if (locationInfo == null) {
+            locationInfo = registerLocation(request.placeName(), request.address(), latitude, longitude);
         }
 
         // 사용자 독서노트 검색
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) { // 해당 독서 노트가 있는 경우에만
             // 쓰이지 않는 위치면 삭제하기 위해 변경 전 위치를 받아옴
-            LocationList preLocation = bookRecord.getLocationList();
+            LocationInfo preLocation = bookRecord.getLocationInfo();
 
             // 해당 독서 노트의 대표 위치 변경
-            bookRecord.setLocationList(locationList);
+            bookRecord.setLocationInfo(locationInfo);
 
             // 변경 전 위치가 다른 곳에서도 사용되지 않으면 locationRepository에서 삭제
             if (preLocation != null) {
-                Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
-                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
-                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
+                Long memberLocationCnt = memberLocationRepository.countByLocationInfo(preLocation);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationInfo(preLocation);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationInfo(preLocation);
 
                 if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                    locationRepository.delete(preLocation);
+                    locationInfoRepository.delete(preLocation);
                 }
             }
         } else {
@@ -1111,10 +1114,11 @@ public class BookService {
         }
 
         // 사용자 최근 검색 위치에 등록
-        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+        MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                locationInfo);
         // 최근 위치 검색 기록에 없으면 추가
         if (memberLocation == null) {
-            registerRecentLocation(member, locationList);
+            registerRecentLocation(member, locationInfo);
         }
 
         return new ResponseEntity<>(
@@ -1135,7 +1139,7 @@ public class BookService {
 
         if (bookRecord != null) {
             // 대표위치 삭제 전 위치 객체 받아오기
-            LocationList preLocation = bookRecord.getLocationList();
+            LocationInfo preLocation = bookRecord.getLocationInfo();
 
             // 삭제하려는 위치 객체가 없으면
             if (preLocation == null) {
@@ -1144,16 +1148,16 @@ public class BookService {
             }
 
             //  대표위치 삭제
-            bookRecord.deleteLocationList();
+            bookRecord.deleteLocationInfo();
             bookRecordRepository.save(bookRecord);
 
             // 다른 곳에서 사용중이 아닌 위치면 삭제
-            Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
-            Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
-            Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
+            Long memberLocationCnt = memberLocationRepository.countByLocationInfo(preLocation);
+            Long bookRecordLocationCnt = bookRecordRepository.countByLocationInfo(preLocation);
+            Long bookmarkLocationCnt = bookmarkRepository.countByLocationInfo(preLocation);
 
             if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                locationRepository.delete(preLocation);
+                locationInfoRepository.delete(preLocation);
             }
         } else {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
@@ -1446,24 +1450,25 @@ public class BookService {
                     HttpStatus.CONFLICT);
         }
 
-        LocationList locationList = null;
+        LocationInfo locationInfo = null;
         if (request.mainLocation() != null) {
             // 자주 사용하는 변수 따로 선언
             double latitude = Double.parseDouble(request.mainLocation().latitude());
             double longitude = Double.parseDouble(request.mainLocation().longitude());
 
             // 주소 없으면 등록
-            locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
-            if (locationList == null) {
-                locationList = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
+            locationInfo = locationInfoRepository.findByPlaceName(request.mainLocation().placeName());
+            if (locationInfo == null) {
+                locationInfo = registerLocation(request.mainLocation().placeName(), request.mainLocation().address(),
                         latitude, longitude);
             }
 
             // 사용자 최근 검색 위치에 등록
-            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                    locationInfo);
             // 최근 위치 검색 기록에 없으면 추가
             if (memberLocation == null) {
-                registerRecentLocation(member, locationList);
+                registerRecentLocation(member, locationInfo);
             }
         }
 
@@ -1499,7 +1504,7 @@ public class BookService {
         bookRecordRepository.save(bookRecord);
 
         // 책갈피 생성, 저장
-        bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationList, date);
+        bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
         bookmarkRepository.save(bookmark);
 
         // 독서노트의 마지막 기록 날짜 업데이트
@@ -1528,38 +1533,38 @@ public class BookService {
         if (bookmark != null) {
 
             // 수정할 위치를 받았으면
-            LocationList locationList = null;
+            LocationInfo locationInfo = null;
             if (request.mainLocation() != null) {
                 // 자주 사용하는 변수 따로 선언
                 double latitude = Double.parseDouble(request.mainLocation().latitude());
                 double longitude = Double.parseDouble(request.mainLocation().longitude());
 
                 // 변경 전 위치가 아무데도 사용중이 아니면 삭제하기 위해 받아옴
-                LocationList preLocation = bookmark.getLocationList();
+                LocationInfo preLocation = bookmark.getLocationInfo();
 
                 // 새로 받은 위치가 주소 테이블에 없으면 등록
-                locationList = locationRepository.findByPlaceName(request.mainLocation().placeName());
-                if (locationList == null) {
-                    locationList = registerLocation(request.mainLocation().placeName(),
+                locationInfo = locationInfoRepository.findByPlaceName(request.mainLocation().placeName());
+                if (locationInfo == null) {
+                    locationInfo = registerLocation(request.mainLocation().placeName(),
                             request.mainLocation().address(), latitude, longitude);
                 }
 
                 // 사용자 최근 검색 위치에 등록
-                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member,
-                        locationList);
+                MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                        locationInfo);
                 // 최근 위치 검색 기록에 없으면 추가
                 if (memberLocation == null) {
-                    registerRecentLocation(member, locationList);
+                    registerRecentLocation(member, locationInfo);
                 }
 
                 if (preLocation != null) {
                     // 다른 곳에서 사용중이 아닌 위치면 삭제
-                    Long memberLocationCnt = memberLocationRepository.countByLocationList(preLocation);
-                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(preLocation);
-                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(preLocation);
+                    Long memberLocationCnt = memberLocationRepository.countByLocationInfo(preLocation);
+                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationInfo(preLocation);
+                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationInfo(preLocation);
 
                     if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                        locationRepository.delete(preLocation);
+                        locationInfoRepository.delete(preLocation);
                     }
                 }
             }
@@ -1573,7 +1578,7 @@ public class BookService {
             }
 
             // 페이지 그대로 책갈피 등록
-            bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationList, date);
+            bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
             bookmarkRepository.save(bookmark);
 
             // 독서노트의 마지막 기록 날짜 업데이트
@@ -1605,18 +1610,18 @@ public class BookService {
         Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
             // 위치 정보를 포함하고 있으면
-            if (bookmark.getLocationList() != null) {
+            if (bookmark.getLocationInfo() != null) {
                 // 참조하고 있는 위치 받아오기
-                LocationList deleteLocation = locationRepository.findByLocationId(bookmark.getLocationList().getLocationId());
+                LocationInfo deleteLocation = locationInfoRepository.findByLocationId(bookmark.getLocationInfo().getLocationId());
 
                 // 다른 곳에서 사용중이 아닌 위치면 삭제
                 if (deleteLocation != null) {
-                    Long memberLocationCnt = memberLocationRepository.countByLocationList(deleteLocation);
-                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(deleteLocation);
-                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(deleteLocation);
+                    Long memberLocationCnt = memberLocationRepository.countByLocationInfo(deleteLocation);
+                    Long bookRecordLocationCnt = bookRecordRepository.countByLocationInfo(deleteLocation);
+                    Long bookmarkLocationCnt = bookmarkRepository.countByLocationInfo(deleteLocation);
 
                     if (memberLocationCnt + bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                        locationRepository.delete(deleteLocation);
+                        locationInfoRepository.delete(deleteLocation);
                     }
                 }
             }
@@ -1653,10 +1658,10 @@ public class BookService {
         for(Bookmark bookmark : bookmarks) {
             // 위치 List 저장
             List<String> location = new ArrayList<>();
-            location.add(bookmark.getLocationList().getPlaceName());
-            location.add(bookmark.getLocationList().getAddress());
-            location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
-            location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
+            location.add(bookmark.getLocationInfo().getPlaceName());
+            location.add(bookmark.getLocationInfo().getAddress());
+            location.add(String.valueOf(bookmark.getLocationInfo().getLatitude()));
+            location.add(String.valueOf(bookmark.getLocationInfo().getLongitude()));
 
             // 응답에 보낼 데이터들
             int markPage = bookmark.getMarkPage();
@@ -1720,7 +1725,7 @@ public class BookService {
         // 사용자별 등록 위치 받아오기
         List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
         for (MemberLocation value : memberLocationList) {
-            LocationList memberLocation = value.getLocationList();
+            LocationInfo memberLocation = value.getLocationInfo();
 
             // 응답으로 보낼 객체에 추가
             location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
@@ -1744,20 +1749,21 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 전체 위치에서 검색
-        LocationList locationList = locationRepository.findByLocationId(request.locationId());
-        if (locationList != null) {
+        LocationInfo locationInfo = locationInfoRepository.findByLocationId(request.locationId());
+        if (locationInfo != null) {
             // 최근 등록 위치에서 해당 위치가 있는지 확인하고 삭제
-            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationList(member, locationList);
+            MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,
+                    locationInfo);
             if (memberLocation != null) { // 해당 멤버의 최근 등록 위치에 해당 위치가 있으면
                 // 최근 등록 위치에서 해당 위치 삭제
                 memberLocationRepository.delete(memberLocation);
 
                 // 다른 곳에서 사용중이 아닌 위치면 locationRepository에서 삭제
-                Long bookRecordLocationCnt = bookRecordRepository.countByLocationList(locationList);
-                Long bookmarkLocationCnt = bookmarkRepository.countByLocationList(locationList);
+                Long bookRecordLocationCnt = bookRecordRepository.countByLocationInfo(locationInfo);
+                Long bookmarkLocationCnt = bookmarkRepository.countByLocationInfo(locationInfo);
 
                 if (bookRecordLocationCnt + bookmarkLocationCnt <= 0) {
-                    locationRepository.delete(locationList);
+                    locationInfoRepository.delete(locationInfo);
                 }
             } else {
                 return new ResponseEntity<>(
@@ -1784,15 +1790,15 @@ public class BookService {
         List<AllMarkerResponse> allMarkers = Stream.concat(
                 bookRecordRepository.findAllByMember(member).stream()
                         .map(bookRecord -> new AllMarkerResponse(
-                                bookRecord.getLocationList().getLocationId(),
-                                bookRecord.getLocationList().getLatitude(),
-                                bookRecord.getLocationList().getLongitude(),
+                                bookRecord.getLocationInfo().getLocationId(),
+                                bookRecord.getLocationInfo().getLatitude(),
+                                bookRecord.getLocationInfo().getLongitude(),
                                 false)),
                 bookmarkRepository.findAllByBookRecordMember(member).stream()
                         .map(bookmark -> new AllMarkerResponse(
-                                bookmark.getLocationList().getLocationId(),
-                                bookmark.getLocationList().getLatitude(),
-                                bookmark.getLocationList().getLongitude(),
+                                bookmark.getLocationInfo().getLocationId(),
+                                bookmark.getLocationInfo().getLatitude(),
+                                bookmark.getLocationInfo().getLongitude(),
                                 true
                         ))
         ).collect(Collectors.toList());
@@ -1811,7 +1817,7 @@ public class BookService {
     // 마크 세부 조회
     public ResponseEntity<DefaultResponse> getMarkDetail(Long memberId, MarkDetailRequest request) {
         // 응답으로 보낼 위치 리스트
-        List<LocationInfoDto> locationInfo = new ArrayList<>();
+        List<LocationInfoDto> locationInfoList = new ArrayList<>();
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -1826,20 +1832,20 @@ public class BookService {
         isBookmarkEnd.setValue(false);
 
         // locationId로 위치 정보 검색
-        LocationList locationList = locationRepository.findByLocationId(locationId);
+        LocationInfo locationInfo = locationInfoRepository.findByLocationId(locationId);
 
         // 독서노트, 북마크에서 위치 정보를 가져오는 메소드 호출
-        addLocations(member, locationList, orderNumber, false, locationInfo, isBookRecordEnd);
-        addLocations(member, locationList, orderNumber, true, locationInfo, isBookmarkEnd);
+        addLocations(member, locationInfo, orderNumber, false, locationInfoList, isBookRecordEnd);
+        addLocations(member, locationInfo, orderNumber, true, locationInfoList, isBookmarkEnd);
 
-        if (locationInfo.isEmpty()) { // 세부 조회할 마크가 하나도 없는 경우
+        if (locationInfoList.isEmpty()) { // 세부 조회할 마크가 하나도 없는 경우
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.NOT_FOUND, "세부 조회할 마크가 없습니다."),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", new AllLocationResponse(locationInfo, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
+                DefaultResponse.from(StatusCode.OK, "성공", new AllLocationResponse(locationInfoList, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
                 HttpStatus.OK);
     }
 
@@ -1854,20 +1860,20 @@ public class BookService {
     }
 
     // 위치 등록 및 반환
-    public LocationList registerLocation(String placeName, String address, double latitude, double longitude) {
-        locationRepository.save(LocationList.create(placeName, address, latitude, longitude));
-        return locationRepository.findByPlaceName(placeName);
+    public LocationInfo registerLocation(String placeName, String address, double latitude, double longitude) {
+        locationInfoRepository.save(LocationInfo.create(placeName, address, latitude, longitude));
+        return locationInfoRepository.findByPlaceName(placeName);
     }
 
     // 최근 위치 검색 기록 추가(레코드가 5개 초과되면 삭제하는 코드까지)
-    public void registerRecentLocation(Member member, LocationList locationList) {
+    public void registerRecentLocation(Member member, LocationInfo locationInfo) {
         // 현재 사용자의 최근 위치 검색 레코드가 5개 이상인지 확인하고, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드를 삭제
         if (memberLocationRepository.countAllByMember(member) >= 5) {
             List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
             memberLocationRepository.delete(memberLocationList.get(0));
         }
 
-        memberLocationRepository.save(MemberLocation.create(member, locationList, LocalDateTime.now()));
+        memberLocationRepository.save(MemberLocation.create(member, locationInfo, LocalDateTime.now()));
     }
 
     // 전체 위치 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
@@ -1897,25 +1903,25 @@ public class BookService {
             
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
-                if (bookmark.getLocationList() == null) break;
+                if (bookmark.getLocationInfo() == null) break;
 
                 // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
                 title = bookmark.getBookRecord().getBook().getTitle();
                 readPage = bookmark.getMarkPage();
-                locationId = bookmark.getLocationList().getLocationId();
-                placeName = bookmark.getLocationList().getPlaceName();
+                locationId = bookmark.getLocationInfo().getLocationId();
+                placeName = bookmark.getLocationInfo().getPlaceName();
 
             } else { // 독서노트면
                 bookRecord = (BookRecord) records.get(i);
-                if (bookRecord.getLocationList() == null) break;
+                if (bookRecord.getLocationInfo() == null) break;
 
                 // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
                 title = bookRecord.getBook().getTitle();
                 readPage = bookRecord.getMarkPage();
-                locationId = bookRecord.getLocationList().getLocationId();
-                placeName = bookRecord.getLocationList().getPlaceName();
+                locationId = bookRecord.getLocationInfo().getLocationId();
+                placeName = bookRecord.getLocationInfo().getPlaceName();
             }
 
             // 받아온 정보로 위치 정보 추가
@@ -1924,9 +1930,9 @@ public class BookService {
     }
 
     // 마크 세부 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
-    public void addLocations(Member member, LocationList locationList, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo, BooleanWrapper isEnd) {
+    public void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfoList, BooleanWrapper isEnd) {
         // 북마크인지 여부에 따라 필요한 레포지토리 검색
-        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationList(member, locationList) : bookRecordRepository.findAllByMemberAndLocationList(member, locationList);
+        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(member, locationInfo) : bookRecordRepository.findAllByMemberAndLocationInfo(member, locationInfo);
 
         int size = records.size();
         BookRecord bookRecord;
@@ -1950,29 +1956,29 @@ public class BookService {
 
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
-                if (bookmark.getLocationList() == null) break;
+                if (bookmark.getLocationInfo() == null) break;
 
                 // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
                 title = bookmark.getBookRecord().getBook().getTitle();
                 readPage = bookmark.getMarkPage();
-                locationId = bookmark.getLocationList().getLocationId();
-                placeName = bookmark.getLocationList().getPlaceName();
+                locationId = bookmark.getLocationInfo().getLocationId();
+                placeName = bookmark.getLocationInfo().getPlaceName();
 
             } else { // 독서노트면
                 bookRecord = (BookRecord) records.get(i);
-                if (bookRecord.getLocationList() == null) break;
+                if (bookRecord.getLocationInfo() == null) break;
 
                 // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
                 title = bookRecord.getBook().getTitle();
                 readPage = bookRecord.getMarkPage();
-                locationId = bookRecord.getLocationList().getLocationId();
-                placeName = bookRecord.getLocationList().getPlaceName();
+                locationId = bookRecord.getLocationInfo().getLocationId();
+                placeName = bookRecord.getLocationInfo().getPlaceName();
             }
 
             // 받아온 정보로 위치 정보 추가
-            locationInfo.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
+            locationInfoList.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
         }
     }
 
