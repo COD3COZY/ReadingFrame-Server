@@ -1410,26 +1410,18 @@ public class BookService {
 
         // 한 유저의 한 책에 대한 메모 전체 검색
         List<Memo> memos = memoRepository.findAllByBookRecord(bookRecord);
-        for (int i = 0; i < memos.size(); i++) {
-            Memo memo = memos.get(i);
+        for(Memo memo : memos) {
+            String dateStr = converterService.dateToString(memo.getDate());
 
-            // 종이책이면
-            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
-                // 페이지 -> 퍼센트 계산
+            // 종이책이면 페이지 -> 퍼센트 계산
+            if (bookRecord.getBookType() == 0) {
                 int percent = (int) Math.round(100.0 * memo.getMarkPage() / book.getTotalPage());
-
                 // 응답으로 보낼 내용에 더하기
-                String dateStr = converterService.dateToString(memo.getDate());
-                memoList.add(
-                        new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+                memoList.add(new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
-                // 페이지 -> 퍼센트 계산
                 int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
-
                 // 응답으로 보낼 내용에 더하기
-                String dateStr = converterService.dateToString(memo.getDate());
-                memoList.add(
-                        new MemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
+                memoList.add(new MemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
         }
 
