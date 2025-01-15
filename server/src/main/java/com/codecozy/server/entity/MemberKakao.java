@@ -24,7 +24,7 @@ public class MemberKakao {
     @Column(name = "member_id")
     private Long memberId;
 
-    @Column(length = 320)
+    @Column(length = 320, nullable = false)
     private String email;
 
     // FK로 들고 온 것을 그대로 PK로 설정하기 위함

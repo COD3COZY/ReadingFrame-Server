@@ -32,7 +32,7 @@ public class BookRecordDate {
     })
     private BookRecord bookRecord;
 
-    @Column(name = "last_date")
+    @Column(name = "last_date", nullable = false)
     private LocalDateTime lastDate;
 
     public void setLastDate(LocalDateTime lastDate) { this.lastDate = lastDate; }
