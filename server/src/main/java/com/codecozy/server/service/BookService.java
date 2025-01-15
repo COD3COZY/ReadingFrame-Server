@@ -7,6 +7,7 @@ import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -305,27 +308,9 @@ public class BookService {
 
     // 도서 정보 초기 조회 API
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
-        StringBuilder result = new StringBuilder();
-
-        String urlStr = createURL(isbn);
-
-        URL url = new URL(urlStr);
-
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        urlConnection.setRequestMethod("GET");
-
-        BufferedReader br;
-        br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-
-        String returnLine;
-
-        while ((returnLine = br.readLine()) != null) {
-            result.append(returnLine + "\n\r");
-        }
-
-        urlConnection.disconnect();
-
-        SearchBookResponse response = dataParsing(result.toString());
+        // URL로 도서 API 데이터 가져오기
+        String jsonResponse = getBookDate(isbn);
+        SearchBookResponse response = dataParsing(jsonResponse);
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -338,72 +323,18 @@ public class BookService {
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
 
         // readingStatus 검색
-        int readingStatus = -1;
-        if (bookRecord != null) readingStatus = bookRecord.getReadingStatus();
+        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): -1);
 
         // commentCount 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
 
-        // selectedReview 검색
-        List<SelectReview> selectedReview = selectReviewRepository.findAllByBookRecordBook(book);
-        // 실제로 반환하는 한줄평 반응
-        List<Integer> selectedReviewList = new ArrayList<>();
-        // max 값 위치를 체크하기 위한 리스트
-        int[] integerArray = new int[31];
+        // selectedReview를 검색해 한줄평 반응 찾기
+        List<Integer> selectedReviewList = getSelectedReviewList(selectReviewRepository.findAllByBookRecordBook(book));
 
-        if (selectedReview.isEmpty()) selectedReviewList = null;
-        else {
-            for (int i = 0; i < selectedReview.size(); i++) {
-                // selectedReview 문자열 받아오기
-                String selectedReviews = selectedReview.get(i).getSelectReviewCode();
+        // 해당 책에 대한 한줄평 정보(commentList)를 날짜 내림차순으로 검색해서 실제로 반환하는 commentList(최대 5개) 찾기
+        List<String> commentList = getLatestCommentList(bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
 
-                // , 기준으로 split하고 해당하는 인덱스 위치 1 더하기(max 값으로 정렬 위함)
-                List<String> selected = List.of(selectedReviews.split(","));
-                for (int j = 0; j < selected.size(); j++) integerArray[Integer.parseInt(selected.get(j))] += 1;
-            }
-
-            int listCnt = 0;
-            while (listCnt < 10) {
-                int max = 0;
-
-                // max 찾기
-                for (int i = 0; i < integerArray.length; i++) {
-                    if (integerArray[i] > max) {
-                        max = integerArray[i];
-                    }
-                }
-
-                // max가 0이면 반응이 등록된 내용이 없음
-                if (max == 0) break;
-
-                // max에 해당하는 값을 모두 0으로 만들고, 해당 인덱스는 배열에 넣기
-                for (int i = 0; i < integerArray.length; i++) {
-                    if (integerArray[i] == max) {
-                        integerArray[i] = 0;
-                        selectedReviewList.add(i);
-                        listCnt++;
-                    }
-                }
-            }
-        }
-
-        // 해당 책에 대한 한줄평 정보(commentList)를 날짜를 내림차순으로 검색
-        List<BookReview> bookReviews = bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book);
-        // 실제로 반환하는 commentList
-        List<String> commentList = new ArrayList<>();
-
-        // comment가 없으면 null 반환, 있으면 최신순으로 5개만 받아오기
-        if (bookReviews.isEmpty()) commentList = null;
-        else {
-            int length = bookReviews.size();
-            if (length > 5) length = 5;
-
-            for (int i = 0; i < length; i++) {
-                commentList.add(bookReviews.get(i).getReviewText());
-            }
-        }
-
-        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName, response.readingStatus(), response.publisher(), response.publicationDate(),
+        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName, readingStatus, response.publisher(), response.publicationDate(),
                 response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
@@ -2073,6 +2004,32 @@ public class BookService {
         return bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
     }
 
+    // 도서정보 호출 API 데이터를 가져오는 메소드
+    public String getBookDate(String isbn) throws IOException {
+        StringBuilder result = new StringBuilder();
+        String urlStr = createURL(isbn);
+
+        // URL 객체 생성 및 GET 요청
+        URL url = new URL(urlStr);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        urlConnection.setRequestMethod("GET");
+
+        // try-with-resources (버퍼를 명시적으로 close 하지 않고, 간결하게 처리하기 위함)
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
+            String returnLine;
+
+            // 응답 데이터 한 줄씩 기록
+            while ((returnLine = br.readLine()) != null) {
+                result.append(returnLine + "\n\r");
+            }
+        } finally {
+            urlConnection.disconnect();
+        }
+
+        // 응답 데이터 String 형식으로 변환 후 반환
+        return result.toString();
+    }
+
     // yaml 파일 읽고 url 작성
     public String createURL(String isbn) {
         String baseUrl = null;
@@ -2127,5 +2084,40 @@ public class BookService {
         }
 
         return null;
+    }
+
+    // 선택 리뷰 리스트 생성 메소드
+    public List<Integer> getSelectedReviewList(List<SelectReview> selectedReviews) {
+        if (selectedReviews.isEmpty()) return null;
+
+        // max 값 위치를 체크하기 위한 리스트
+        int[] integerArray = new int[31];
+
+        // selectedReviews 문자열 받아오기
+        for (SelectReview review : selectedReviews) {
+            // , 기준으로 split하고 해당하는 인덱스 위치 1 더하기(max 값으로 정렬 위함)
+            for (String i : review.getSelectReviewCode().split(",")) {
+                integerArray[Integer.parseInt(i)]++;
+            }
+        }
+
+        // max 값 체크 리스트 길이만큼 스트림을 생성해 내림차순으로 정렬, 10개(0 제외)만 뽑아 List로 반환
+        return IntStream.range(0, integerArray.length)
+                .filter(i -> integerArray[i] > 0)
+                .boxed()
+                .sorted((i, j) -> integerArray[j] - integerArray[i])
+                .limit(10)
+                .collect(Collectors.toList());
+    }
+
+    // 댓글 최신순 리스트 생성 메소드
+    public List<String> getLatestCommentList(List<BookReview> bookReviews) {
+        if (bookReviews.isEmpty()) return null;
+
+        // BookReview 스트림을 생성해 최대 5개까지 comment 받아오기
+        return bookReviews.stream()
+                .map(BookReview::getReviewText)
+                .limit(5)
+                .collect(Collectors.toList());
     }
 }
