@@ -1723,12 +1723,14 @@ public class BookService {
         for (MemberLocation value : memberLocationList) {
             LocationList memberLocation = value.getLocationList();
 
-            // 응답으로 보낼 객체에 추가
-            location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
-                    memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
+            if (memberLocation != null) {
+                // 응답으로 보낼 객체에 추가
+                location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
+                        memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
+            }
         }
 
-        if (location.size() <= 0) {
+        if (location.isEmpty()) {
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
                     HttpStatus.NOT_FOUND);
