@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -1848,24 +1849,24 @@ public class BookService {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
-        // 반환 리스트
-        List<AllMarkerResponse> allMarkers = new ArrayList<>();
+        // 반환 리스트(두 스트림에서 검색하고 리스트로 병합)
+        List<AllMarkerResponse> allMarkers = Stream.concat(
+                bookRecordRepository.findAllByMember(member).stream()
+                        .map(bookRecord -> new AllMarkerResponse(
+                                bookRecord.getLocationList().getLocationId(),
+                                bookRecord.getLocationList().getLatitude(),
+                                bookRecord.getLocationList().getLongitude(),
+                                false)),
+                bookmarkRepository.findAllByBookRecordMember(member).stream()
+                        .map(bookmark -> new AllMarkerResponse(
+                                bookmark.getLocationList().getLocationId(),
+                                bookmark.getLocationList().getLatitude(),
+                                bookmark.getLocationList().getLongitude(),
+                                true
+                        ))
+        ).collect(Collectors.toList());
 
-        // 대표위치(0)에서 검색
-        List<BookRecord> bookRecords = bookRecordRepository.findAllByMember(member);
-        for (BookRecord bookRecord : bookRecords) {
-            LocationList location = bookRecord.getLocationList();
-            allMarkers.add(new AllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), false));
-        }
-
-        // 북마크(1)에서 검색
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMember(member);
-        for (Bookmark bookmark : bookmarks) {
-            LocationList location = bookmark.getLocationList();
-            allMarkers.add(new AllMarkerResponse(location.getLocationId(), location.getLatitude(), location.getLongitude(), true));
-        }
-
-        if (allMarkers.size() <= 0) { // 조회할 마크가 하나도 없는 경우
+        if (allMarkers.isEmpty()) { // 조회할 마크가 하나도 없는 경우
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 마크가 없습니다."),
                     HttpStatus.NOT_FOUND);
