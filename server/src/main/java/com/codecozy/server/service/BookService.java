@@ -16,6 +16,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
@@ -1658,9 +1659,7 @@ public class BookService {
 
         // 한 유저의 한 책에 대한 메모 전체 검색
         List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecord(bookRecord);
-        for (int i = 0; i < bookmarks.size(); i++) {
-            Bookmark bookmark = bookmarks.get(i);
-
+        for(Bookmark bookmark : bookmarks) {
             // 위치 List 저장
             List<String> location = new ArrayList<>();
             location.add(bookmark.getLocationList().getPlaceName());
@@ -1668,23 +1667,19 @@ public class BookService {
             location.add(String.valueOf(bookmark.getLocationList().getLatitude()));
             location.add(String.valueOf(bookmark.getLocationList().getLongitude()));
 
+            // 응답에 보낼 데이터들
+            int markPage = bookmark.getMarkPage();
+            String dateStr = converterService.dateToString(bookmark.getDate());
+
             // 종이책이면
-            if (bookRecordRepository.findByMemberAndBook(member, book).getBookType() == 0) {
+            if (bookRecord.getBookType() == 0) {
                 // 페이지 -> 퍼센트 계산
-                int percent = (int) Math.round(100.0 * bookmark.getMarkPage() / book.getTotalPage());
-
-                // 응답으로 보낼 내용에 더하기
-                String dateStr = converterService.dateToString(bookmark.getDate());
-                bookmarkList.add(new BookmarkResponse(dateStr, bookmark.getMarkPage(), percent, location,
-                        bookmark.getUuid()));
-            } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
-                // 페이지 -> 퍼센트 계산
-                int page = (int) Math.round(book.getTotalPage() / 100.0 / bookmark.getMarkPage());
-
-                // 응답으로 보낼 내용에 더하기
-                String dateStr = converterService.dateToString(bookmark.getDate());
-                bookmarkList.add(
-                        new BookmarkResponse(dateStr, page, bookmark.getMarkPage(), location, bookmark.getUuid()));
+                int percent = (int) Math.round(100.0 * markPage / book.getTotalPage());
+                bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, location, bookmark.getUuid()));
+            } else { // 전자책, 오디오북이면
+                // 퍼센트 -> 페이지 계산
+                int page = (int) Math.round(book.getTotalPage() / 100.0 / markPage);
+                bookmarkList.add(new BookmarkResponse(dateStr, page, markPage, location, bookmark.getUuid()));
             }
         }
 
