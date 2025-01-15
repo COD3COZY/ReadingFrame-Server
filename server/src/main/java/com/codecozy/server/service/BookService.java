@@ -1414,11 +1414,11 @@ public class BookService {
 
             // 종이책이면 페이지 -> 퍼센트 계산
             if (bookRecord.getBookType() == 0) {
-                int percent = (int) Math.round(100.0 * memo.getMarkPage() / book.getTotalPage());
+                int percent = converterService.pageToPercent(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
                 memoList.add(new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
-                int page = (int) Math.round(book.getTotalPage() / 100.0 / memo.getMarkPage());
+                int page = converterService.percentToPage(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
                 memoList.add(new MemoResponse(dateStr, page, memo.getMarkPage(), memo.getMemoText(), memo.getUuid()));
             }
@@ -1665,11 +1665,11 @@ public class BookService {
             // 종이책이면
             if (bookRecord.getBookType() == 0) {
                 // 페이지 -> 퍼센트 계산
-                int percent = (int) Math.round(100.0 * markPage / book.getTotalPage());
+                int percent = converterService.pageToPercent(markPage, book.getTotalPage());
                 bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, location, bookmark.getUuid()));
             } else { // 전자책, 오디오북이면
                 // 퍼센트 -> 페이지 계산
-                int page = (int) Math.round(book.getTotalPage() / 100.0 / markPage);
+                int page = converterService.percentToPage(markPage, book.getTotalPage());
                 bookmarkList.add(new BookmarkResponse(dateStr, page, markPage, location, bookmark.getUuid()));
             }
         }
