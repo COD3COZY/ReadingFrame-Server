@@ -1717,15 +1717,16 @@ public class BookService {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
+        // 사용자별 등록 위치 받아오기
         List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
         for (MemberLocation value : memberLocationList) {
             LocationList memberLocation = value.getLocationList();
 
-            if (memberLocation != null) {
+            //if (memberLocation != null) {
                 // 응답으로 보낼 객체에 추가
                 location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
                         memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
-            }
+            //}
         }
 
         if (location.isEmpty()) {
@@ -1782,6 +1783,7 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 반환 리스트(두 스트림에서 검색하고 리스트로 병합)
+        // 각각 독서노트와 책갈피에서 검색한 결과로 스트림을 만들어 위치아이디, 위도, 경도, locationType을 map에 담아 병합하여 리스트 생성
         List<AllMarkerResponse> allMarkers = Stream.concat(
                 bookRecordRepository.findAllByMember(member).stream()
                         .map(bookRecord -> new AllMarkerResponse(
@@ -1900,6 +1902,7 @@ public class BookService {
                 bookmark = (Bookmark) records.get(i);
                 if (bookmark.getLocationList() == null) break;
 
+                // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
                 title = bookmark.getBookRecord().getBook().getTitle();
                 readPage = bookmark.getMarkPage();
@@ -1910,6 +1913,7 @@ public class BookService {
                 bookRecord = (BookRecord) records.get(i);
                 if (bookRecord.getLocationList() == null) break;
 
+                // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
                 title = bookRecord.getBook().getTitle();
                 readPage = bookRecord.getMarkPage();
@@ -1917,6 +1921,7 @@ public class BookService {
                 placeName = bookRecord.getLocationList().getPlaceName();
             }
 
+            // 받아온 정보로 위치 정보 추가
             locationInfo.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
         }
     }
@@ -1950,6 +1955,7 @@ public class BookService {
                 bookmark = (Bookmark) records.get(i);
                 if (bookmark.getLocationList() == null) break;
 
+                // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
                 title = bookmark.getBookRecord().getBook().getTitle();
                 readPage = bookmark.getMarkPage();
@@ -1960,6 +1966,7 @@ public class BookService {
                 bookRecord = (BookRecord) records.get(i);
                 if (bookRecord.getLocationList() == null) break;
 
+                // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
                 title = bookRecord.getBook().getTitle();
                 readPage = bookRecord.getMarkPage();
@@ -1967,6 +1974,7 @@ public class BookService {
                 placeName = bookRecord.getLocationList().getPlaceName();
             }
 
+            // 받아온 정보로 위치 정보 추가
             locationInfo.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
         }
     }
@@ -2002,6 +2010,7 @@ public class BookService {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
         urlConnection.setRequestMethod("GET");
 
+        // 응답 데이터를 받아올 버퍼 생성
         // try-with-resources (버퍼를 명시적으로 close 하지 않고, 간결하게 처리하기 위함)
         try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
             String returnLine;
