@@ -1,6 +1,7 @@
 package com.codecozy.server.service;
 
 import com.codecozy.server.dto.request.BookmarkRequest;
+import com.codecozy.server.dto.request.MemoRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -36,6 +38,8 @@ public class BookServiceTest {
     private BookRecordRepository bookRecordRepository;
     @MockBean
     private BookRecordDateRepository bookRecordDateRepository;
+    @MockBean
+    private MemoRepository memoRepository;
 
     private Member member;
     private Book book;
@@ -62,6 +66,10 @@ public class BookServiceTest {
         // 북마크 데이터
         Bookmark bookmark = Bookmark.create(bookRecord, "3b7d", 50, null, LocalDate.of(2024, 12, 10));
         when(bookmarkRepository.findByBookRecordAndUuid(bookRecord, "3b7d")).thenReturn(bookmark);
+
+        // 메모 데이터
+        Memo memo = Memo.create(bookRecord, "5c8i", 20, LocalDate.of(2024, 12, 31), "춘식이 첫 등장");
+        when(memoRepository.findByBookRecordAndUuid(bookRecord, "5c8i")).thenReturn(memo);
     }
 
     @AfterEach
@@ -135,5 +143,59 @@ public class BookServiceTest {
         assertThat(capturedBookmark.getUuid()).isEqualTo(uuid);
         assertThat(capturedBookmark.getMarkPage()).isEqualTo(page);
         assertThat(capturedBookmark.getDate()).isEqualTo(updateDate);
+    }
+
+    @Test
+    @DisplayName("메모 등록 시 recentDate 업데이트 테스트")
+    public void testUpdateRecentDateWhenAddMemo() {
+        // given
+        String uuid = "6a1b";
+        int page = 50;
+        LocalDate setDate = LocalDate.of(2024, 12, 29);
+        MemoRequest request = new MemoRequest(uuid, "2024.12.29", page, "라이언 첫 등장");
+
+        // save() 메서드 호출 시 전달된 인자 캡처용 captor
+        ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
+
+        // when
+        ResponseEntity<DefaultResponse> response = bookService.addMemo(member.getMemberId(), book.getIsbn(), request);
+
+        // then
+        // 성공 여부 확인과 캡쳐 값 검증(uuid, recentDate, markPage, memoText)
+        assertThat(response.getBody().getMessage()).isEqualTo("성공");
+        verify(memoRepository).save(captor.capture());
+        Memo capturedMemo = captor.getValue();
+
+        assertThat(capturedMemo.getUuid()).isEqualTo(uuid);
+        assertThat(capturedMemo.getBookRecord().getRecentDate()).isEqualTo(setDate);
+        assertThat(capturedMemo.getMarkPage()).isEqualTo(50);
+        assertThat(capturedMemo.getMemoText()).isEqualTo("라이언 첫 등장");
+    }
+
+    @Test
+    @DisplayName("메모 수정 시 recentDate 업데이트 테스트")
+    public void testUpdateRecentDateWhenModifyMemo() {
+        // given
+        String uuid = "5c8i";
+        int page = 60;
+        LocalDate setDate = LocalDate.of(2025, 1, 1);
+        MemoRequest request = new MemoRequest(uuid, "2025.01.01", page, "라이언 두 마리 등장");
+
+        // save() 메서드 호출 시 전달된 인자 캡처용 captor
+        ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
+
+        // when
+        ResponseEntity<DefaultResponse> response = bookService.modifyMemo(member.getMemberId(), book.getIsbn(), request);
+
+        // then
+        // 성공 여부 확인과 캡쳐 값 검증(uuid, recentDate, markPage, memoText)
+        assertThat(response.getBody().getMessage()).isEqualTo("성공");
+        verify(memoRepository).save(captor.capture());
+        Memo capturedMemo = captor.getValue();
+
+        assertThat(capturedMemo.getUuid()).isEqualTo(uuid);
+        assertThat(capturedMemo.getBookRecord().getRecentDate()).isEqualTo(setDate);
+        assertThat(capturedMemo.getMarkPage()).isEqualTo(60);
+        assertThat(capturedMemo.getMemoText()).isEqualTo("라이언 두 마리 등장");
     }
 }
