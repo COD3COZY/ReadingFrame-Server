@@ -34,13 +34,13 @@ public class Book {
     @Column(name = "total_page", nullable = false)
     private int totalPage;
 
-    @Column(length = 100)
+    @Column(length = 100, nullable = false)
     private String publisher;
 
-    @Column(name = "publication_date")
+    @Column(name = "publication_date", nullable = false)
     private LocalDate publicationDate;
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "book")
     private List<BookRecord> bookRecords;
 
     public Book(String isbn) {

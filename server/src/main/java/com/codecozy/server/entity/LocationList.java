@@ -35,10 +35,10 @@ public class LocationList {
     @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
     private List<MemberLocation> memberLocations;
 
-    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationList")
     private List<Bookmark> bookmarks;
 
-    @OneToMany(mappedBy = "locationList", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "locationList")
     private List<BookRecord> bookRecords;
 
     public static LocationList create(String placeName, String address, double latitude, double longitude) {
