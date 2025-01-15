@@ -40,7 +40,7 @@ public class Book {
     @Column(name = "publication_date")
     private LocalDate publicationDate;
 
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "book")
     private List<BookRecord> bookRecords;
 
     public Book(String isbn) {
