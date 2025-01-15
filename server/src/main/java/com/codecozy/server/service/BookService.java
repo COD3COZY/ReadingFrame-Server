@@ -1722,11 +1722,9 @@ public class BookService {
         for (MemberLocation value : memberLocationList) {
             LocationList memberLocation = value.getLocationList();
 
-            //if (memberLocation != null) {
-                // 응답으로 보낼 객체에 추가
-                location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
-                        memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
-            //}
+            // 응답으로 보낼 객체에 추가
+            location.add(new RecentLocationResponse(memberLocation.getLocationId(), memberLocation.getPlaceName(),
+                    memberLocation.getAddress(), memberLocation.getLatitude(), memberLocation.getLongitude()));
         }
 
         if (location.isEmpty()) {
