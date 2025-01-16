@@ -10,6 +10,7 @@ public record GetReadingNoteResponse(
         int totalPage,
         int readPage,
         int readingPercent,
+        String firstReviewDate,
         String keywordReview,
         String commentReview,
         List<Integer> selectReview,
