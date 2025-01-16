@@ -3,11 +3,15 @@ package com.codecozy.server.service;
 import com.codecozy.server.dto.request.BookmarkRequest;
 import com.codecozy.server.dto.request.MemoRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
+import com.codecozy.server.dto.response.GetReadingNoteResponse;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -32,16 +36,19 @@ class BookServiceTest {
     private BookRepository bookRepository;
 
     @Mock
-    private BookmarkRepository bookmarkRepository;
-
-    @Mock
     private BookRecordRepository bookRecordRepository;
 
     @Mock
     private BookRecordDateRepository bookRecordDateRepository;
 
     @Mock
+    private BookmarkRepository bookmarkRepository;
+
+    @Mock
     private MemoRepository memoRepository;
+
+    @Mock
+    private PersonalDictionaryRepository personalDictionaryRepository;
 
     @Mock
     private ConverterService converterService;
@@ -53,7 +60,30 @@ class BookServiceTest {
     private Book book;
     private BookRecord bookRecord;
 
-    /** mock 설정 **/
+    // json 문자열 파싱을 위함
+    private ObjectMapper om = new ObjectMapper();
+
+    /** mock 설정 - BeforeEach에서 사용 **/
+    private void setupConverterService() {
+        lenient().when(converterService.stringToDate(anyString()))
+                .thenAnswer(data -> {
+                    // 전달 받은 인자 가져오기
+                    String dateStr = data.getArgument(0);
+                    return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+                });
+        lenient().when(converterService.dateToString(any()))
+                .thenAnswer(data -> {
+                    LocalDate date = data.getArgument(0);
+                    return date.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+                });
+    }
+
+    /** mock 설정 - 개별 사용 **/
+    private void setupBookRecordDate() {
+        BookRecordDate bookRecordDate = BookRecordDate.create(bookRecord);
+        when(bookRecordDateRepository.findByBookRecord(bookRecord)).thenReturn(bookRecordDate);
+    }
+
     private void setupBookmark(String uuid, int page, LocalDate date) {
         Bookmark bookmark = Bookmark.create(bookRecord, uuid, page, null, date);
         when(bookmarkRepository.findByBookRecordAndUuid(bookRecord, uuid)).thenReturn(bookmark);
@@ -64,25 +94,12 @@ class BookServiceTest {
         when(memoRepository.findByBookRecordAndUuid(bookRecord, uuid)).thenReturn(memo);
     }
 
-    private void setupConverterService() {
-        when(converterService.stringToDate(anyString())).thenAnswer(data -> {
-            // 전달 받은 인자 가져오기
-            String dateStr = data.getArgument(0);
-            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy.MM.dd"));
-        });
-        // 이 메소드는 사용하지 않아 일단 주석처리함
-//        when(converterService.dateToString(any()))
-//                .thenAnswer(data -> {
-//                    LocalDate date = data.getArgument(0);
-//                    return date.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
-//                });
-    }
-
     /** 검증 메소드 **/
     // 북마크 검증
     private void verifyCapturedBookmark(ArgumentCaptor<Bookmark> captor, String uuid, int page, LocalDate date) {
         verify(bookmarkRepository).save(captor.capture());
         Bookmark capturedBookmark = captor.getValue();
+
         assertThat(capturedBookmark.getUuid()).isEqualTo(uuid);
         assertThat(capturedBookmark.getMarkPage()).isEqualTo(page);
         assertThat(capturedBookmark.getDate()).isEqualTo(date);
@@ -92,14 +109,21 @@ class BookServiceTest {
     private void verifyCapturedMemo(ArgumentCaptor<Memo> captor, String uuid, int page, String text, LocalDate date) {
         verify(memoRepository).save(captor.capture());
         Memo capturedMemo = captor.getValue();
+
         assertThat(capturedMemo.getUuid()).isEqualTo(uuid);
         assertThat(capturedMemo.getMarkPage()).isEqualTo(page);
         assertThat(capturedMemo.getMemoText()).isEqualTo(text);
         assertThat(capturedMemo.getBookRecord().getRecentDate()).isEqualTo(date);
     }
 
+    /** 기타 유틸리티 메소드 **/
+    private <T> T getJsonData(ResponseEntity<DefaultResponse> response, Class<T> valueType) throws JsonProcessingException {
+        String jsonStr = om.writeValueAsString(response.getBody().getData());
+        return om.readValue(jsonStr, valueType);
+    }
+
     @BeforeEach
-    void setUp() {
+    void setup() {
         // 테스트 데이터 준비
         member = Member.create("다은", "01");
         book = Book.create(
@@ -110,28 +134,62 @@ class BookServiceTest {
                 LocalDate.of(2019, 6, 24)
         );
         bookRecord = BookRecord.create(member, book);
-        bookRecord.setRecentDate(LocalDate.of(2024, 1, 1));
-        BookRecordDate bookRecordDate = BookRecordDate.create(bookRecord);
+        bookRecord.setStartDate(LocalDate.of(2023, 1, 1));
 
         // 공통 mock 설정
-        when(memberRepository.findByMemberId(member.getMemberId())).thenReturn(member);
-        when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(book);
-        when(bookRecordRepository.findByMemberAndBook(member, book)).thenReturn(bookRecord);
-        when(bookRecordDateRepository.findByBookRecord(bookRecord)).thenReturn(bookRecordDate);
+        lenient().when(memberRepository.findByMemberId(member.getMemberId())).thenReturn(member);
+        lenient().when(bookRepository.findByIsbn(book.getIsbn())).thenReturn(book);
+        lenient().when(bookRecordRepository.findByMemberAndBook(member, book)).thenReturn(bookRecord);
         setupConverterService();
+    }
+
+    @Nested
+    @DisplayName("독서노트 조회 시 리뷰 최초 등록일 조회 테스트")
+    class GetReadingNoteTests {
+        @Test
+        @DisplayName("성공 케이스1 - 리뷰가 등록된 상태일 경우")
+        void success1() throws JsonProcessingException {
+            // given
+            bookRecord.setFirstReviewDate(LocalDate.of(2025, 1, 16));
+
+            // when
+            ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
+
+            // then
+            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+
+            GetReadingNoteResponse dto = getJsonData(response, GetReadingNoteResponse.class);
+            assertThat(dto.firstReviewDate()).isEqualTo("2025.01.16");
+        }
+
+        @Test
+        @DisplayName("성공 케이스2 - 리뷰를 아직 등록하지 않은 상태일 경우")
+        void success2() throws JsonProcessingException {
+            // when
+            ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
+
+            // then
+            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+
+            GetReadingNoteResponse dto = getJsonData(response, GetReadingNoteResponse.class);
+            assertThat(dto.firstReviewDate()).isNull();
+        }
     }
 
     @Test
     @DisplayName("북마크 수정 테스트")
     void modifyBookmark() {
         // given
+        bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         setupBookmark("3b7d", 50, LocalDate.of(2024, 12, 10));
+        setupBookRecordDate();
 
         BookmarkRequest request = new BookmarkRequest("2024.12.17", 110, null, "3b7d");
         ArgumentCaptor<Bookmark> captor = ArgumentCaptor.forClass(Bookmark.class);
 
         // when
-        ResponseEntity<DefaultResponse> response = bookService.modifyBookmark(member.getMemberId(), book.getIsbn(), request);
+        ResponseEntity<DefaultResponse> response = bookService.modifyBookmark(member.getMemberId(), book.getIsbn(),
+                request);
 
         // then
         assertThat(response.getBody().getMessage()).isEqualTo("성공");
@@ -142,7 +200,9 @@ class BookServiceTest {
     @DisplayName("메모 등록 시 recentDate 업데이트 테스트")
     void addMemo() {
         // given
+        bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         when(memoRepository.findByBookRecordAndUuid(bookRecord, "6a1b")).thenReturn(null);
+        setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("6a1b", "2024.12.29", 50, "라이언 첫 등장");
         ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
@@ -159,13 +219,16 @@ class BookServiceTest {
     @DisplayName("메모 수정 시 recentDate 업데이트 테스트")
     void modifyMemo() {
         // given
+        bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         setupMemo("5c8i", 20, LocalDate.of(2024, 12, 31), "춘식이 첫 등장");
+        setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("5c8i", "2025.01.01", 60, "라이언 두 마리 등장");
         ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
 
         // when
-        ResponseEntity<DefaultResponse> response = bookService.modifyMemo(member.getMemberId(), book.getIsbn(), request);
+        ResponseEntity<DefaultResponse> response = bookService.modifyMemo(member.getMemberId(), book.getIsbn(),
+                request);
 
         // then
         assertThat(response.getBody().getMessage()).isEqualTo("성공");
