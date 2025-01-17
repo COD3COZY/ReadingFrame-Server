@@ -146,6 +146,8 @@ public class BookService {
         int totalPage = book.getTotalPage();
         int readPage = bookRecord.getMarkPage();
         int readingPercent = converterService.pageToPercent(readPage, totalPage);
+        String firstReviewDate = bookRecord.getFirstReviewDate() != null ?
+                converterService.dateToString(bookRecord.getFirstReviewDate()) : null;
         String keywordReview = bookRecord.getKeyWord();
         String commentReview = null;
         try {
@@ -240,6 +242,7 @@ public class BookService {
                         totalPage,
                         readPage,
                         readingPercent,
+                        firstReviewDate,
                         keywordReview,
                         commentReview,
                         selectReview,
