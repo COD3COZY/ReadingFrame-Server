@@ -50,6 +50,12 @@ public class BookService {
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
 
+    // 독서 상태 상수 값
+    private final int UNREGISTERED = -1;    // 미등록
+    private final int WANT_TO_READ = 0;     // 읽고 싶은
+    private final int READING = 1;          // 읽는 중
+    private final int FINISH_READ = 2;      // 다 읽음
+
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
         // 사용자 받아오기
@@ -64,7 +70,7 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != -1) { // -1: reading_status가 '읽고싶은'(0)인 경우
+        if (bookRecord != null && bookRecord.getBookType() != UNREGISTERED) { // -1: reading_status가 '읽고싶은'(0)인 경우
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 독서 노트입니다."),
                     HttpStatus.CONFLICT);
         }
@@ -329,7 +335,7 @@ public class BookService {
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
 
         // readingStatus 검색
-        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): -1);
+        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): UNREGISTERED);
 
         // commentCount 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
@@ -1479,17 +1485,17 @@ public class BookService {
         bookRecord.setMarkPage(request.markPage());
         if (bookRecord.getBookType() == 0) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
-                bookRecord.setReadingStatus(2); // 다읽음으로 수정
+                bookRecord.setReadingStatus(FINISH_READ); // 다읽음으로 수정
             }
             else {
-                bookRecord.setReadingStatus(1);
+                bookRecord.setReadingStatus(READING);
             }
         } else { // 전자책, 오디오북인 경우
             if (request.markPage() >= 100) { // 100% 이상이면
-                bookRecord.setReadingStatus(2);
+                bookRecord.setReadingStatus(FINISH_READ);
             }
             else {
-                bookRecord.setReadingStatus(1);
+                bookRecord.setReadingStatus(READING);
             }
         }
 
@@ -2076,7 +2082,8 @@ public class BookService {
             return new SearchBookResponse(jsonResult.get("cover").toString(),
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
-                    jsonResult.get("categoryName").toString(), -1,
+                    jsonResult.get("categoryName").toString(),
+                    UNREGISTERED,
                     jsonResult.get("publisher").toString(),
                     jsonResult.get("pubDate").toString(),
                     Integer.parseInt(jsonResultSub.get("itemPage").toString()),
