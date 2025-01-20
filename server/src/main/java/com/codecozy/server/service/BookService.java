@@ -50,7 +50,7 @@ public class BookService {
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
 
-    // 독서 상태 상수 값
+    // 독서상태 값 모음
     private final int UNREGISTERED = -1;    // 미등록
     private final int WANT_TO_READ = 0;     // 읽고 싶은
     private final int READING = 1;          // 읽는 중
@@ -265,7 +265,8 @@ public class BookService {
     }
 
     // 독서상태 변경
-    public ResponseEntity<DefaultResponse> modifyReadingStatus(Long memberId, String isbn, int readingStatus) {
+    public ResponseEntity<DefaultResponse> modifyReadingStatus(Long memberId, String isbn,
+                                                               ModifyReadingStatusRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -273,8 +274,45 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
-        // 변경 후 저장
-        bookRecord.setReadingStatus(readingStatus);
+        // ** 이전 값 확인 & 상황에 따른 추가 로직 수행 **
+        int beforeStatus = bookRecord.getReadingStatus();
+        int afterStatus = request.readingStatus();
+
+        // 읽는 중 -> 다 읽음 전환 시
+        if (beforeStatus == READING && afterStatus == FINISH_READ) {
+            // 1. 마지막 읽은 날짜 수정
+            bookRecord.setRecentDate(LocalDate.now());
+
+            // 2. 독서 진행률 100%로 수정
+            bookRecord.setMarkPage(book.getTotalPage());
+
+            // 3. 100% 책갈피 하나 추가 + BOOK_RECORD_DATE 변경
+            // 만일 uuid 값이 없다면
+            if (request.uuid() == null) {
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.BAD_REQUEST, "uuid 값이 없습니다."),
+                        HttpStatus.BAD_REQUEST);
+            }
+            bookmarkRepository.save(Bookmark.create(
+                    bookRecord,
+                    request.uuid(),
+                    book.getTotalPage(),
+                    null,
+                    LocalDate.now()
+            ));
+
+            BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+            bookRecordDate.setLastDate(LocalDateTime.now());
+            bookRecordDateRepository.save(bookRecordDate);
+        }
+        // 다 읽음 -> 읽는 중 전환 시
+        else if (beforeStatus == FINISH_READ && afterStatus == READING) {
+            // 읽은 페이지 0으로 변경
+            bookRecord.setMarkPage(0);
+        }
+
+        // 독서상태 값 변경 후 저장
+        bookRecord.setReadingStatus(afterStatus);
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
@@ -647,7 +685,7 @@ public class BookService {
                     bookReviewReviewer.setReactionCode(request.commentReaction());
                     // 새 반응 카운트 하나 올리기
                     bookReviewReaction.setReactionCountUp(request.commentReaction());
-                    
+
                     // 반응 수정하기
                     bookReviewReviewerRepository.save(bookReviewReviewer);
                     bookReviewReactionRepository.save(bookReviewReaction);
@@ -1893,7 +1931,7 @@ public class BookService {
         int size = records.size();
         BookRecord bookRecord;
         Bookmark bookmark;
-        
+
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
             if ((orderNumber + 1) * 20 >= size) isEnd.setValue(true);
@@ -1909,7 +1947,7 @@ public class BookService {
             int readPage;
             long locationId;
             String placeName;
-            
+
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
                 if (bookmark.getLocationInfo() == null) break;
