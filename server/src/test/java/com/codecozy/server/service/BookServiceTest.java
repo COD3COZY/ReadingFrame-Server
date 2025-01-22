@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.dto.request.BookmarkRequest;
 import com.codecozy.server.dto.request.MemoRequest;
 import com.codecozy.server.dto.request.ModifyReadingStatusRequest;
@@ -167,7 +168,7 @@ class BookServiceTest {
             ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
 
             // then
-            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+            assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
 
             GetReadingNoteResponse dto = getJsonData(response, GetReadingNoteResponse.class);
             assertThat(dto.firstReviewDate()).isEqualTo("2025.01.16");
@@ -180,7 +181,7 @@ class BookServiceTest {
             ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
 
             // then
-            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+            assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
 
             GetReadingNoteResponse dto = getJsonData(response, GetReadingNoteResponse.class);
             assertThat(dto.firstReviewDate()).isNull();
@@ -213,7 +214,7 @@ class BookServiceTest {
             // then
             // http 응답 확인
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+            assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
 
             // 데이터 확인
             BookRecord found = getCapturedBookRecord();
@@ -235,7 +236,7 @@ class BookServiceTest {
             // then
             // http 응답 확인
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-            assertThat(response.getBody().getMessage()).isEqualTo("uuid 값이 없습니다.");
+            assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.MISSING_UUID.get());
             // save 메소드가 호출되지 않았음을 검증
             verify(bookRecordRepository, never()).save(any(BookRecord.class));
         }
@@ -254,7 +255,7 @@ class BookServiceTest {
             // then
             // http 응답 확인
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+            assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
 
             // 독서노트 데이터 확인
             BookRecord found = getCapturedBookRecord();
@@ -279,7 +280,7 @@ class BookServiceTest {
                 request);
 
         // then
-        assertThat(response.getBody().getMessage()).isEqualTo("성공");
+        assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
         verifyCapturedBookmark("3b7d", 110, LocalDate.of(2024, 12, 17));
     }
 
@@ -297,7 +298,7 @@ class BookServiceTest {
         ResponseEntity<DefaultResponse> response = bookService.addMemo(member.getMemberId(), book.getIsbn(), request);
 
         // then
-        assertThat(response.getBody().getMessage()).isEqualTo("성공");
+        assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
         verifyCapturedMemo("6a1b", 50, "라이언 첫 등장", LocalDate.of(2024, 12, 29));
     }
 
@@ -316,7 +317,7 @@ class BookServiceTest {
                 request);
 
         // then
-        assertThat(response.getBody().getMessage()).isEqualTo("성공");
+        assertThat(response.getBody().getMessage()).isEqualTo(ResponseMessages.SUCCESS.get());
         verifyCapturedMemo("5c8i", 60, "라이언 두 마리 등장", LocalDate.of(2025, 1, 1));
     }
 }

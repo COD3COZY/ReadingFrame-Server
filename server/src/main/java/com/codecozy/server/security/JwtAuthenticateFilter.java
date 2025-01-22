@@ -1,5 +1,6 @@
 package com.codecozy.server.security;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,26 +49,26 @@ public class JwtAuthenticateFilter extends OncePerRequestFilter {
 
             // 상태 코드 및 에러 메시지 세팅 (401)
             statusCode = StatusCode.UNAUTHORIZED;
-            exceptionMessage = "토큰이 만료되었습니다";
+            exceptionMessage = ResponseMessages.EXPIRED_TOKEN.get();
         } catch (IllegalArgumentException e) {
             log.info("요청 uri : " + request.getRequestURI());
             log.error("토큰이 없음");
 
             // 상태 코드 및 에러 메시지 세팅 (400)
             statusCode = StatusCode.BAD_REQUEST;
-            exceptionMessage = "토큰이 존재하지 않습니다.";
+            exceptionMessage = ResponseMessages.NOT_FOUND_TOKEN.get();
         } catch (MalformedJwtException e) {
             log.error("토큰의 값이 유효하지 않음");
 
             // 상태 코드 및 에러 메시지 세팅 (400)
             statusCode = StatusCode.BAD_REQUEST;
-            exceptionMessage = "토큰의 값이 유효하지 않습니다.";
+            exceptionMessage = ResponseMessages.INVALID_TOKEN_VALUE.get();
         } catch (io.jsonwebtoken.SignatureException e) {
             log.error("토큰의 서명이 올바르지 않음");
 
             // 상태 코드 및 에러 메시지 세팅 (401)
             statusCode = StatusCode.UNAUTHORIZED;
-            exceptionMessage = "토큰의 서명이 올바르지 않습니다.";
+            exceptionMessage = ResponseMessages.INVALID_TOKEN_SIGNATURE.get();
         } catch (UsernameNotFoundException e) {
             log.error("해당 유저 없음");
 

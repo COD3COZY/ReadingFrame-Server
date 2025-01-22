@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.FinishReadResponse;
@@ -231,7 +232,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공",
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
                         new GetMainResponse(booksList, wantToReadCount,
                                 readingCount)),
                 HttpStatus.OK);
@@ -323,7 +324,7 @@ public class HomeService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", response),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
                 HttpStatus.OK);
     }
 
@@ -353,7 +354,7 @@ public class HomeService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", wantToReadBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), wantToReadBooks),
                 HttpStatus.OK);
     }
 
@@ -415,7 +416,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", readingBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), readingBooks),
                 HttpStatus.OK);
     }
 
@@ -452,7 +453,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", finishReadBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), finishReadBooks),
                 HttpStatus.OK);
     }
 
@@ -471,7 +472,7 @@ public class HomeService {
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 

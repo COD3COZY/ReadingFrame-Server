@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.AllBookshelfResponse;
@@ -179,7 +180,8 @@ public class BookshelfService {
             }
         }
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", bookshelfResponseList), HttpStatus.OK);
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), bookshelfResponseList),
+                HttpStatus.OK);
     }
 
     // 책장 리스트용 조회
@@ -275,7 +277,7 @@ public class BookshelfService {
             }
         }
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", detailBookshelfResponseList),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), detailBookshelfResponseList),
                 HttpStatus.OK);
     }
 }

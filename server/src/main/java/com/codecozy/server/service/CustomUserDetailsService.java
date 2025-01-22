@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.dto.CustomUserDetails;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.MemberRepository;
@@ -20,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = memberRepository.findByMemberId(memberId);
 
         if (member == null) {
-            throw new UsernameNotFoundException("(토큰 오류) 해당 유저가 존재하지 않습니다.");
+            throw new UsernameNotFoundException(ResponseMessages.INVALID_USER.get());
         }
 
         return new CustomUserDetails(username);
