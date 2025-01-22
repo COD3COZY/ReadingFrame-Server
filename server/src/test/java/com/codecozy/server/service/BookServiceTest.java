@@ -192,10 +192,10 @@ class BookServiceTest {
     @DisplayName("독서상태 변경 테스트")
     class ModifyReadingStatus {
         // 독서상태 값 모음
-//        final int UNREGISTERED = -1;    // 미등록
-//        final int WANT_TO_READ = 0;     // 읽고 싶은
-        final int READING = 1;          // 읽는 중
-        final int FINISH_READ = 2;      // 다 읽음
+//        static final int UNREGISTERED = -1;    // 미등록
+//        static final int WANT_TO_READ = 0;     // 읽고 싶은
+        static final int READING = 1;          // 읽는 중
+        static final int FINISH_READ = 2;      // 다 읽음
 
         @Test
         @DisplayName("succeed: 읽는중 -> 다읽음 전환하기")
@@ -218,6 +218,7 @@ class BookServiceTest {
 
             // 데이터 확인
             BookRecord found = getCapturedBookRecord();
+            assertThat(found.getReadingStatus()).isEqualTo(FINISH_READ);
             assertThat(found.getRecentDate()).isEqualTo(nowDate);
             verifyCapturedBookmark("TEST-UUID", book.getTotalPage(), nowDate);
         }

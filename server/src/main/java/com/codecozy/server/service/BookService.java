@@ -52,10 +52,10 @@ public class BookService {
     private final ConverterService converterService;
 
     // 독서상태 값 모음
-    private final int UNREGISTERED = -1;    // 미등록
-    private final int WANT_TO_READ = 0;     // 읽고 싶은
-    private final int READING = 1;          // 읽는 중
-    private final int FINISH_READ = 2;      // 다 읽음
+    private static final int UNREGISTERED = -1;    // 미등록
+    private static final int WANT_TO_READ = 0;     // 읽고 싶은
+    private static final int READING = 1;          // 읽는 중
+    private static final int FINISH_READ = 2;      // 다 읽음
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {

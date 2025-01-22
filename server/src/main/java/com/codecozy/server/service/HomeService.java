@@ -58,10 +58,10 @@ public class HomeService {
     private final SelectReviewRepository selectReviewRepository;
 
     // 독서 상태 상수 값
-    private final int UNREGISTERED = -1;    // 미등록
-    private final int WANT_TO_READ = 0;     // 읽고 싶은
-    private final int READING = 1;          // 읽는 중
-    private final int FINISH_READ = 2;      // 다 읽음
+    private static final int UNREGISTERED = -1;    // 미등록
+    private static final int WANT_TO_READ = 0;     // 읽고 싶은
+    private static final int READING = 1;          // 읽는 중
+    private static final int FINISH_READ = 2;      // 다 읽음
 
     // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
     private SearchResponse parsingData(String jsonStr) {
