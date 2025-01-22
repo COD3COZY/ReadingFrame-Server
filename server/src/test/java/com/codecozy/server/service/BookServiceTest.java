@@ -2,6 +2,7 @@ package com.codecozy.server.service;
 
 import com.codecozy.server.dto.request.BookmarkRequest;
 import com.codecozy.server.dto.request.MemoRequest;
+import com.codecozy.server.dto.request.ModifyReadingStatusRequest;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.GetReadingNoteResponse;
 import com.codecozy.server.entity.*;
@@ -18,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.format.DateTimeFormatter;
@@ -96,7 +98,8 @@ class BookServiceTest {
 
     /** 검증 메소드 **/
     // 북마크 검증
-    private void verifyCapturedBookmark(ArgumentCaptor<Bookmark> captor, String uuid, int page, LocalDate date) {
+    private void verifyCapturedBookmark(String uuid, int page, LocalDate date) {
+        ArgumentCaptor<Bookmark> captor = ArgumentCaptor.forClass(Bookmark.class);
         verify(bookmarkRepository).save(captor.capture());
         Bookmark capturedBookmark = captor.getValue();
 
@@ -106,7 +109,8 @@ class BookServiceTest {
     }
 
     // 메모 검증
-    private void verifyCapturedMemo(ArgumentCaptor<Memo> captor, String uuid, int page, String text, LocalDate date) {
+    private void verifyCapturedMemo(String uuid, int page, String text, LocalDate date) {
+        ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
         verify(memoRepository).save(captor.capture());
         Memo capturedMemo = captor.getValue();
 
@@ -114,6 +118,13 @@ class BookServiceTest {
         assertThat(capturedMemo.getMarkPage()).isEqualTo(page);
         assertThat(capturedMemo.getMemoText()).isEqualTo(text);
         assertThat(capturedMemo.getBookRecord().getRecentDate()).isEqualTo(date);
+    }
+
+    // save된 독서노트 가져오기
+    private BookRecord getCapturedBookRecord() {
+        ArgumentCaptor<BookRecord> captor = ArgumentCaptor.forClass(BookRecord.class);
+        verify(bookRecordRepository).save(captor.capture());
+        return captor.getValue();
     }
 
     /** 기타 유틸리티 메소드 **/
@@ -147,8 +158,8 @@ class BookServiceTest {
     @DisplayName("독서노트 조회 시 리뷰 최초 등록일 조회 테스트")
     class GetReadingNoteTests {
         @Test
-        @DisplayName("성공 케이스1 - 리뷰가 등록된 상태일 경우")
-        void success1() throws JsonProcessingException {
+        @DisplayName("succeed: 리뷰가 등록된 상태일 경우")
+        void succeed1() throws JsonProcessingException {
             // given
             bookRecord.setFirstReviewDate(LocalDate.of(2025, 1, 16));
 
@@ -163,8 +174,8 @@ class BookServiceTest {
         }
 
         @Test
-        @DisplayName("성공 케이스2 - 리뷰를 아직 등록하지 않은 상태일 경우")
-        void success2() throws JsonProcessingException {
+        @DisplayName("succeed: 리뷰를 아직 등록하지 않은 상태일 경우")
+        void succeed2() throws JsonProcessingException {
             // when
             ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
 
@@ -173,6 +184,82 @@ class BookServiceTest {
 
             GetReadingNoteResponse dto = getJsonData(response, GetReadingNoteResponse.class);
             assertThat(dto.firstReviewDate()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("독서상태 변경 테스트")
+    class ModifyReadingStatus {
+        // 독서상태 값 모음
+//        final int UNREGISTERED = -1;    // 미등록
+//        final int WANT_TO_READ = 0;     // 읽고 싶은
+        final int READING = 1;          // 읽는 중
+        final int FINISH_READ = 2;      // 다 읽음
+
+        @Test
+        @DisplayName("succeed: 읽는중 -> 다읽음 전환하기")
+        void succeed1() {
+            // given
+            bookRecord.setReadingStatus(READING);
+            LocalDate nowDate = LocalDate.now();
+            ModifyReadingStatusRequest request = new ModifyReadingStatusRequest(FINISH_READ, "TEST-UUID");
+            // bookRecordDate Repository 스터빙
+            setupBookRecordDate();
+
+            // when
+            ResponseEntity<DefaultResponse> response = bookService.modifyReadingStatus(member.getMemberId(),
+                    book.getIsbn(), request);
+
+            // then
+            // http 응답 확인
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+
+            // 데이터 확인
+            BookRecord found = getCapturedBookRecord();
+            assertThat(found.getRecentDate()).isEqualTo(nowDate);
+            verifyCapturedBookmark("TEST-UUID", book.getTotalPage(), nowDate);
+        }
+
+        @Test
+        @DisplayName("fail: uuid 없이 읽는중->다읽음 전환 시도")
+        void fail() {
+            // given
+            bookRecord.setReadingStatus(READING);
+            ModifyReadingStatusRequest request = new ModifyReadingStatusRequest(FINISH_READ, null);
+
+            // when
+            ResponseEntity<DefaultResponse> response = bookService.modifyReadingStatus(member.getMemberId(),
+                    book.getIsbn(), request);
+
+            // then
+            // http 응답 확인
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(response.getBody().getMessage()).isEqualTo("uuid 값이 없습니다.");
+            // save 메소드가 호출되지 않았음을 검증
+            verify(bookRecordRepository, never()).save(any(BookRecord.class));
+        }
+
+        @Test
+        @DisplayName("succeed: 다읽음 -> 읽는중 전환하기")
+        void succeed2() {
+            // given
+            bookRecord.setReadingStatus(FINISH_READ);
+            ModifyReadingStatusRequest request = new ModifyReadingStatusRequest(READING, null);
+
+            // when
+            ResponseEntity<DefaultResponse> response = bookService.modifyReadingStatus(member.getMemberId(),
+                    book.getIsbn(), request);
+
+            // then
+            // http 응답 확인
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody().getMessage()).isEqualTo("성공");
+
+            // 독서노트 데이터 확인
+            BookRecord found = getCapturedBookRecord();
+            assertThat(found.getReadingStatus()).isEqualTo(READING);
+            assertThat(found.getMarkPage()).isEqualTo(0);
         }
     }
 
@@ -185,7 +272,7 @@ class BookServiceTest {
         setupBookRecordDate();
 
         BookmarkRequest request = new BookmarkRequest("2024.12.17", 110, null, "3b7d");
-        ArgumentCaptor<Bookmark> captor = ArgumentCaptor.forClass(Bookmark.class);
+
 
         // when
         ResponseEntity<DefaultResponse> response = bookService.modifyBookmark(member.getMemberId(), book.getIsbn(),
@@ -193,7 +280,7 @@ class BookServiceTest {
 
         // then
         assertThat(response.getBody().getMessage()).isEqualTo("성공");
-        verifyCapturedBookmark(captor, "3b7d", 110, LocalDate.of(2024, 12, 17));
+        verifyCapturedBookmark("3b7d", 110, LocalDate.of(2024, 12, 17));
     }
 
     @Test
@@ -205,14 +292,13 @@ class BookServiceTest {
         setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("6a1b", "2024.12.29", 50, "라이언 첫 등장");
-        ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
 
         // when
         ResponseEntity<DefaultResponse> response = bookService.addMemo(member.getMemberId(), book.getIsbn(), request);
 
         // then
         assertThat(response.getBody().getMessage()).isEqualTo("성공");
-        verifyCapturedMemo(captor, "6a1b", 50, "라이언 첫 등장", LocalDate.of(2024, 12, 29));
+        verifyCapturedMemo("6a1b", 50, "라이언 첫 등장", LocalDate.of(2024, 12, 29));
     }
 
     @Test
@@ -224,7 +310,6 @@ class BookServiceTest {
         setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("5c8i", "2025.01.01", 60, "라이언 두 마리 등장");
-        ArgumentCaptor<Memo> captor = ArgumentCaptor.forClass(Memo.class);
 
         // when
         ResponseEntity<DefaultResponse> response = bookService.modifyMemo(member.getMemberId(), book.getIsbn(),
@@ -232,6 +317,6 @@ class BookServiceTest {
 
         // then
         assertThat(response.getBody().getMessage()).isEqualTo("성공");
-        verifyCapturedMemo(captor, "5c8i", 60, "라이언 두 마리 등장", LocalDate.of(2025, 1, 1));
+        verifyCapturedMemo("5c8i", 60, "라이언 두 마리 등장", LocalDate.of(2025, 1, 1));
     }
 }
