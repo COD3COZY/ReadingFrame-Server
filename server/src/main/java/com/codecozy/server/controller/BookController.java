@@ -46,10 +46,10 @@ public class BookController {
     @PatchMapping("/readingStatus/{isbn}")
     public ResponseEntity modifyReadingStatus(@RequestHeader("xAuthToken") String token,
                                               @PathVariable("isbn") String isbn,
-                                              @RequestBody Map<String, Integer> readingStatusMap) {
+                                              @RequestBody ModifyReadingStatusRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
-        return bookService.modifyReadingStatus(memberId, isbn, readingStatusMap.get("readingStatus"));
+        return bookService.modifyReadingStatus(memberId, isbn, request);
     }
 
     // 소장여부 변경 API

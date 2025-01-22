@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.SignInAppleRequest;
 import com.codecozy.server.dto.request.SignUpAppleRequest;
@@ -20,7 +21,6 @@ import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.NonUniqueResultException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -41,10 +41,10 @@ public class MemberService {
         Member member = memberRepository.findByNickname(nickname);
 
         if (member != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "사용 불가능한 닉네임입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_NICKNAME.get()),
                     HttpStatus.CONFLICT);
         }
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "사용 가능한 닉네임입니다."),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.OK_NICKNAME.get()),
                 HttpStatus.OK);
     }
 
@@ -63,7 +63,8 @@ public class MemberService {
         Long memberId = member.getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
+                new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
 
@@ -75,7 +76,7 @@ public class MemberService {
         // 기가입 유저 X
         if (memberKakao == null) {
             // 실패 응답
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 사용자가 존재하지 않습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_USER.get()),
                     HttpStatus.NOT_FOUND);
        }
         // 기가입 유저 O
@@ -83,7 +84,8 @@ public class MemberService {
         Long memberId = memberKakao.getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
+                new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
 
@@ -91,14 +93,14 @@ public class MemberService {
     public ResponseEntity<DefaultResponse> signUpApple(SignUpAppleRequest request) throws Exception {
         // idToken 유효성 검증(JWK 확인, Claim 확인)
         if (!appleTokenService.isValid(request.idToken())) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "ID 토큰이 유효하지 않습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.INVALID_ID_TOKEN.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         // 이미 가입한 유저인지 확인
         MemberApple signedUpUser = memberAppleRepository.findByUserIdentifier(request.userIdentifier());
         if (signedUpUser != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 가입한 회원입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_USER.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -115,7 +117,8 @@ public class MemberService {
         Long memberId = member.getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
+                new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
 
@@ -123,7 +126,7 @@ public class MemberService {
     public ResponseEntity<DefaultResponse> signInApple(SignInAppleRequest request) {
         // idToken 유효성 검증
         if (!appleTokenService.isValid(request.idToken())) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "ID 토큰이 유효하지 않습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.INVALID_ID_TOKEN.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -131,7 +134,7 @@ public class MemberService {
         MemberApple memberApple = memberAppleRepository.findByUserIdentifier(request.userIdentifier());
 
         if (memberApple == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 사용자가 존재하지 않습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_USER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -139,7 +142,8 @@ public class MemberService {
         Long memberId = memberApple.getMember().getMemberId();
         String accessToken = tokenProvider.createAccessToken(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", new SignUpKakaoResponse(accessToken)),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
+                new SignUpKakaoResponse(accessToken)),
                 HttpStatus.OK);
     }
 
@@ -150,7 +154,7 @@ public class MemberService {
 
         // 해당 닉네임이 이미 있다면
         if (memberRepository.findByNickname(nickname) != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "사용 불가능한 닉네임입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_NICKNAME.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -158,7 +162,7 @@ public class MemberService {
         member.modifyNickname(nickname);
         memberRepository.save(member);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -170,7 +174,7 @@ public class MemberService {
         member.modifyProfileImg(profileImgCode);
         memberRepository.save(member);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -179,7 +183,7 @@ public class MemberService {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         memberRepository.deleteById(memberId);
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공"),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -194,7 +198,7 @@ public class MemberService {
         int badgeCount = badgeList.size();
         String profileImgCode = member.getProfile();
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공",
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
                 new ProfileResponse(nickname, badgeCount, profileImgCode)),
                 HttpStatus.OK);
     }
@@ -244,7 +248,7 @@ public class MemberService {
             }
         }
 
-        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, "성공", badgeResponseList),
+        return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), badgeResponseList),
                 HttpStatus.OK);
     }
 }

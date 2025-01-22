@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
 import com.codecozy.server.dto.response.FinishReadResponse;
@@ -57,10 +58,10 @@ public class HomeService {
     private final SelectReviewRepository selectReviewRepository;
 
     // 독서 상태 상수 값
-    private final int UNREGISTERED = -1;    // 미등록
-    private final int WANT_TO_READ = 0;     // 읽고 싶은
-    private final int READING = 1;          // 읽는 중
-    private final int FINISH_READ = 2;      // 다 읽음
+    private static final int UNREGISTERED = -1;    // 미등록
+    private static final int WANT_TO_READ = 0;     // 읽고 싶은
+    private static final int READING = 1;          // 읽는 중
+    private static final int FINISH_READ = 2;      // 다 읽음
 
     // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
     private SearchResponse parsingData(String jsonStr) {
@@ -231,7 +232,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공",
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
                         new GetMainResponse(booksList, wantToReadCount,
                                 readingCount)),
                 HttpStatus.OK);
@@ -323,7 +324,7 @@ public class HomeService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", response),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
                 HttpStatus.OK);
     }
 
@@ -353,7 +354,7 @@ public class HomeService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", wantToReadBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), wantToReadBooks),
                 HttpStatus.OK);
     }
 
@@ -415,7 +416,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", readingBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), readingBooks),
                 HttpStatus.OK);
     }
 
@@ -452,7 +453,7 @@ public class HomeService {
 
         // 응답 보내기
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", finishReadBooks),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), finishReadBooks),
                 HttpStatus.OK);
     }
 
@@ -471,7 +472,7 @@ public class HomeService {
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 

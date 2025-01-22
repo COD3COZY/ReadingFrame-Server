@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
@@ -50,6 +51,12 @@ public class BookService {
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
 
+    // 독서상태 값 모음
+    private static final int UNREGISTERED = -1;    // 미등록
+    private static final int WANT_TO_READ = 0;     // 읽고 싶은
+    private static final int READING = 1;          // 읽는 중
+    private static final int FINISH_READ = 2;      // 다 읽음
+
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
         // 사용자 받아오기
@@ -64,8 +71,8 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != -1) { // -1: reading_status가 '읽고싶은'(0)인 경우
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 독서 노트입니다."),
+        if (bookRecord != null && bookRecord.getBookType() != UNREGISTERED) { // -1: reading_status가 '읽고싶은'(0)인 경우
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -108,7 +115,7 @@ public class BookService {
         bookRecordDateRepository.save(BookRecordDate.create(bookRecord));
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -125,7 +132,7 @@ public class BookService {
         bookRecordRepository.delete(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -234,7 +241,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", new GetReadingNoteResponse(
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), new GetReadingNoteResponse(
                         cover,
                         title,
                         author,
@@ -259,7 +266,8 @@ public class BookService {
     }
 
     // 독서상태 변경
-    public ResponseEntity<DefaultResponse> modifyReadingStatus(Long memberId, String isbn, int readingStatus) {
+    public ResponseEntity<DefaultResponse> modifyReadingStatus(Long memberId, String isbn,
+                                                               ModifyReadingStatusRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -267,12 +275,49 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
-        // 변경 후 저장
-        bookRecord.setReadingStatus(readingStatus);
+        // ** 이전 값 확인 & 상황에 따른 추가 로직 수행 **
+        int beforeStatus = bookRecord.getReadingStatus();
+        int afterStatus = request.readingStatus();
+
+        // 읽는 중 -> 다 읽음 전환 시
+        if (beforeStatus == READING && afterStatus == FINISH_READ) {
+            // 1. 마지막 읽은 날짜 수정
+            bookRecord.setRecentDate(LocalDate.now());
+
+            // 2. 독서 진행률 100%로 수정
+            bookRecord.setMarkPage(book.getTotalPage());
+
+            // 3. 100% 책갈피 하나 추가 + BOOK_RECORD_DATE 변경
+            // 만일 uuid 값이 없다면
+            if (request.uuid() == null) {
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.BAD_REQUEST, ResponseMessages.MISSING_UUID.get()),
+                        HttpStatus.BAD_REQUEST);
+            }
+            bookmarkRepository.save(Bookmark.create(
+                    bookRecord,
+                    request.uuid(),
+                    book.getTotalPage(),
+                    null,
+                    LocalDate.now()
+            ));
+
+            BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+            bookRecordDate.setLastDate(LocalDateTime.now());
+            bookRecordDateRepository.save(bookRecordDate);
+        }
+        // 다 읽음 -> 읽는 중 전환 시
+        else if (beforeStatus == FINISH_READ && afterStatus == READING) {
+            // 읽은 페이지 0으로 변경
+            bookRecord.setMarkPage(0);
+        }
+
+        // 독서상태 값 변경 후 저장
+        bookRecord.setReadingStatus(afterStatus);
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -290,7 +335,7 @@ public class BookService {
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -308,7 +353,7 @@ public class BookService {
         bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -329,7 +374,7 @@ public class BookService {
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
 
         // readingStatus 검색
-        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): -1);
+        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): UNREGISTERED);
 
         // commentCount 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
@@ -344,7 +389,7 @@ public class BookService {
                 response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", response),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
                 HttpStatus.OK);
     }
 
@@ -364,7 +409,8 @@ public class BookService {
             List<BookReview> bookReviews = bookReviewRepository.findAllByBookRecordBook(book);
 
             if (bookReviews.size() <= 0) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록된 한줄평이 없습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                        ResponseMessages.NOT_FOUND_REGISTERED_COMMENT.get()),
                         HttpStatus.NOT_FOUND);
             }
 
@@ -432,7 +478,8 @@ public class BookService {
             List<BookReview> bookReviews = bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book);
 
             if (bookReviews.size() <= 0) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록된 한줄평이 없습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                        ResponseMessages.NOT_FOUND_REGISTERED_COMMENT.get()),
                         HttpStatus.NOT_FOUND);
             }
 
@@ -472,7 +519,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", response),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
                 HttpStatus.OK);
     }
 
@@ -492,7 +539,7 @@ public class BookService {
         BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -522,12 +569,12 @@ public class BookService {
         }
         // 이미 신고했던 경우
         else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 신고한 리뷰입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_REPORT.get()),
                     HttpStatus.CONFLICT);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -547,14 +594,14 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.CONFLICT, "독서 노트에 등록한 도서는 읽고 싶은 도서로 등록할 수 없습니다."),
+                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CANNOT_REGISTER_BOOK_AS_WANT_TO_READ.get()),
                     HttpStatus.CONFLICT);
         }
         // 읽고싶은 책 등록 시에는 독서노트 생성 전이므로 member, book, reading_status 외에는 임시 데이터로 book_record 레코드 생성 후 저장
         bookRecordRepository.save(BookRecord.create(member, book));
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -575,7 +622,7 @@ public class BookService {
         BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -606,7 +653,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -641,25 +688,27 @@ public class BookService {
                     bookReviewReviewer.setReactionCode(request.commentReaction());
                     // 새 반응 카운트 하나 올리기
                     bookReviewReaction.setReactionCountUp(request.commentReaction());
-                    
+
                     // 반응 수정하기
                     bookReviewReviewerRepository.save(bookReviewReviewer);
                     bookReviewReactionRepository.save(bookReviewReaction);
                 } else {
-                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                            ResponseMessages.NOT_FOUND_COMMENT_REACTION.get()),
                             HttpStatus.NOT_FOUND);
                 }
             } else {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                        ResponseMessages.NOT_FOUND_COMMENT_REACTION.get()),
                         HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -707,20 +756,22 @@ public class BookService {
                         bookReviewReviewerRepository.delete(bookReviewReviewer);
                     }
                 } else {
-                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                    return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                            ResponseMessages.NOT_FOUND_COMMENT_REACTION.get()),
                             HttpStatus.NOT_FOUND);
                 }
             } else {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평에 남긴 반응이 없습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND,
+                        ResponseMessages.NOT_FOUND_COMMENT_REACTION.get()),
                         HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -744,7 +795,7 @@ public class BookService {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
             SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
             if (selectReview != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 리뷰입니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_SELECT_REVIEW.get()),
                         HttpStatus.CONFLICT);
             }
 
@@ -762,7 +813,7 @@ public class BookService {
             // 이미 등록한 한줄평이면 CONFLICT 응답
             BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
             if (bookReview != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 한줄평입니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_COMMENT.get()),
                         HttpStatus.CONFLICT);
             }
 
@@ -793,7 +844,7 @@ public class BookService {
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -807,7 +858,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         if (bookRecord == null) { // 독서 노트가 없으면 충돌 메세지
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "독서 노트가 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -886,7 +937,7 @@ public class BookService {
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -906,7 +957,7 @@ public class BookService {
             bookRecord.setKeyWord(null);
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -936,7 +987,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -969,12 +1020,12 @@ public class BookService {
             // 한줄평 지우기
             bookReviewRepository.delete(bookReview);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 한줄평이 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -994,12 +1045,12 @@ public class BookService {
             bookRecord.setStartDate(converterService.stringToDate(startDate));
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1019,12 +1070,12 @@ public class BookService {
             bookRecord.setRecentDate(converterService.stringToDate(recentDate));
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1052,7 +1103,7 @@ public class BookService {
         if (bookRecord != null) {
             // 대표 위치가 이미 있으면 CONFLICT 응답
             if (bookRecord.getLocationInfo() != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "대표 위치가 이미 있습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_MAIN_LOCATION.get()),
                         HttpStatus.CONFLICT);
             } else { // 대표 위치가 없으면 대표위치 등록
                 bookRecord.setLocationInfo(locationInfo);
@@ -1068,7 +1119,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1112,7 +1163,7 @@ public class BookService {
             }
         } else {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서 노트가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1125,7 +1176,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1146,7 +1197,7 @@ public class BookService {
 
             // 삭제하려는 위치 객체가 없으면
             if (preLocation == null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트의 대표 위치가 없습니다."),
+                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MAIN_LOCATION.get()),
                         HttpStatus.NOT_FOUND);
             }
 
@@ -1163,12 +1214,12 @@ public class BookService {
                 locationInfoRepository.delete(preLocation);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "해당 독서노트가 없습니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1190,7 +1241,7 @@ public class BookService {
 
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 인물입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_CHARACTER.get()),
                     HttpStatus.CONFLICT);
         } else {
             // 인물사전에 등록
@@ -1200,7 +1251,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1227,12 +1278,12 @@ public class BookService {
                     Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 인물입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_CHARACTER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1256,12 +1307,12 @@ public class BookService {
             personalDictionaryRepository.delete(personalDictionary);
         } else {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 인물이 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_CHARACTER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
 
     }
@@ -1293,7 +1344,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", personalDictionaryList),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), personalDictionaryList),
                 HttpStatus.OK);
     }
 
@@ -1310,7 +1361,7 @@ public class BookService {
 
         Memo memo = memoRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (memo != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 메모입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_MEMO.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -1333,7 +1384,7 @@ public class BookService {
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1359,7 +1410,7 @@ public class BookService {
             memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 메모입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_MEMO.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1369,7 +1420,7 @@ public class BookService {
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1391,12 +1442,12 @@ public class BookService {
             memoRepository.delete(memo);
         } else {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 메모가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MEMO.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1432,7 +1483,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", memoList),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), memoList),
                 HttpStatus.OK);
     }
 
@@ -1449,7 +1500,7 @@ public class BookService {
 
         Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, "이미 등록한 책갈피입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOKMARK.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -1479,17 +1530,17 @@ public class BookService {
         bookRecord.setMarkPage(request.markPage());
         if (bookRecord.getBookType() == 0) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
-                bookRecord.setReadingStatus(2); // 다읽음으로 수정
+                bookRecord.setReadingStatus(FINISH_READ); // 다읽음으로 수정
             }
             else {
-                bookRecord.setReadingStatus(1);
+                bookRecord.setReadingStatus(READING);
             }
         } else { // 전자책, 오디오북인 경우
             if (request.markPage() >= 100) { // 100% 이상이면
-                bookRecord.setReadingStatus(2);
+                bookRecord.setReadingStatus(FINISH_READ);
             }
             else {
-                bookRecord.setReadingStatus(1);
+                bookRecord.setReadingStatus(READING);
             }
         }
 
@@ -1516,7 +1567,7 @@ public class BookService {
         bookRecordDateRepository.save(bookRecordDate);
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1589,12 +1640,12 @@ public class BookService {
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, "등록하지 않은 책갈피입니다."),
+            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_BOOKMARK.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1633,12 +1684,12 @@ public class BookService {
             bookmarkRepository.delete(bookmark);
         } else {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "해당 책갈피가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOKMARK.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1683,7 +1734,7 @@ public class BookService {
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", bookmarkList),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), bookmarkList),
                 HttpStatus.OK);
     }
 
@@ -1706,14 +1757,14 @@ public class BookService {
 
         if (locationInfo.isEmpty()) {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_LOCATION.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()));
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", allLocationResponse),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), allLocationResponse),
                 HttpStatus.OK);
     }
 
@@ -1737,12 +1788,12 @@ public class BookService {
 
         if (location.isEmpty()) {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 위치가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_LOCATION.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", location),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), location),
                 HttpStatus.OK);
     }
 
@@ -1770,17 +1821,17 @@ public class BookService {
                 }
             } else {
                 return new ResponseEntity<>(
-                        DefaultResponse.from(StatusCode.NOT_FOUND, "최근 등록된 위치가 아닙니다."),
+                        DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_LATEST_LOCATION.get()),
                         HttpStatus.NOT_FOUND);
             }
         } else {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "등록되지 않은 위치입니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_LOCATION.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공"),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
 
@@ -1808,12 +1859,12 @@ public class BookService {
 
         if (allMarkers.isEmpty()) { // 조회할 마크가 하나도 없는 경우
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "조회할 마크가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MARKER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", allMarkers),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), allMarkers),
                 HttpStatus.OK);
     }
 
@@ -1843,12 +1894,13 @@ public class BookService {
 
         if (locationInfoList.isEmpty()) { // 세부 조회할 마크가 하나도 없는 경우
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.NOT_FOUND, "세부 조회할 마크가 없습니다."),
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MARKER_TO_DETAIL.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         return new ResponseEntity<>(
-                DefaultResponse.from(StatusCode.OK, "성공", new AllLocationResponse(locationInfoList, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
+                DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
+                        new AllLocationResponse(locationInfoList, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
                 HttpStatus.OK);
     }
 
@@ -1887,7 +1939,7 @@ public class BookService {
         int size = records.size();
         BookRecord bookRecord;
         Bookmark bookmark;
-        
+
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
             if ((orderNumber + 1) * 20 >= size) isEnd.setValue(true);
@@ -1903,7 +1955,7 @@ public class BookService {
             int readPage;
             long locationId;
             String placeName;
-            
+
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
                 if (bookmark.getLocationInfo() == null) break;
@@ -2076,7 +2128,8 @@ public class BookService {
             return new SearchBookResponse(jsonResult.get("cover").toString(),
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
-                    jsonResult.get("categoryName").toString(), -1,
+                    jsonResult.get("categoryName").toString(),
+                    UNREGISTERED,
                     jsonResult.get("publisher").toString(),
                     jsonResult.get("pubDate").toString(),
                     Integer.parseInt(jsonResultSub.get("itemPage").toString()),
