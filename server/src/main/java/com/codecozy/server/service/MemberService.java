@@ -32,7 +32,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberKakaoRepository memberKakaoRepository;
     private final MemberAppleRepository memberAppleRepository;
-    private final BadgeRepository badgeRepository;
     private final ConverterService converterService;
     private final AppleTokenService appleTokenService;
 
@@ -52,8 +51,7 @@ public class MemberService {
     public ResponseEntity<DefaultResponse> signUpKakao(SignUpKakaoRequest request) {
         // 유저 생성 및 저장
         Member member = Member.create(request.nickname(), request.profileImageCode());
-        memberRepository.save(member);
-        member = memberRepository.findByNickname(request.nickname());
+        member = memberRepository.save(member);
 
         // 카카오 유저 등록
         MemberKakao memberKakao = MemberKakao.create(member, request.email());
@@ -106,8 +104,7 @@ public class MemberService {
 
         // 유저 생성 및 저장
         Member member = Member.create(request.nickname(), request.profile());
-        memberRepository.save(member);
-        member = memberRepository.findByNickname(request.nickname());
+        member = memberRepository.save(member);
 
         // 애플 유저 등록
         MemberApple memberApple = MemberApple.create(member, request.userIdentifier(), request.idToken());
@@ -134,7 +131,8 @@ public class MemberService {
         MemberApple memberApple = memberAppleRepository.findByUserIdentifier(request.userIdentifier());
 
         if (memberApple == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_USER.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_USER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -149,9 +147,6 @@ public class MemberService {
 
     // 닉네임 변경
     public ResponseEntity<DefaultResponse> modifyNickname(String token, String nickname) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-        Member member = memberRepository.findByMemberId(memberId);
-
         // 해당 닉네임이 이미 있다면
         if (memberRepository.findByNickname(nickname) != null) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_NICKNAME.get()),
@@ -159,6 +154,9 @@ public class MemberService {
         }
 
         // 없을 시 그대로 변경 진행
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        Member member = memberRepository.findByMemberId(memberId);
+
         member.modifyNickname(nickname);
         memberRepository.save(member);
 
@@ -191,7 +189,7 @@ public class MemberService {
     public ResponseEntity<DefaultResponse> getProfile(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
-        List<Badge> badgeList = badgeRepository.findAllByMember(member);
+        List<Badge> badgeList = member.getBadges();
 
         // 보낼 데이터
         String nickname = member.getNickname();
@@ -207,7 +205,7 @@ public class MemberService {
     public ResponseEntity<DefaultResponse> getBadgeList(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         Member member = memberRepository.findByMemberId(memberId);
-        List<Badge> badgeList = badgeRepository.findAllByMember(member);
+        List<Badge> badgeList = member.getBadges();
 
         // 배지 목록 세팅
         List<BadgeResponse> badgeResponseList = new ArrayList<>();
