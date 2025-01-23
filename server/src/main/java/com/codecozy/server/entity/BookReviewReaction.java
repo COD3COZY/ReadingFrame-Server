@@ -15,7 +15,7 @@ public class BookReviewReaction {
     private Long commentId;
 
     @MapsId
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", referencedColumnName = "comment_id")
     private BookReview bookReview;
 

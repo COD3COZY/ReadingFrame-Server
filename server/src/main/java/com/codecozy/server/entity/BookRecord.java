@@ -20,12 +20,12 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "BOOK_RECORD")
 public class BookRecord {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "isbn", referencedColumnName = "isbn")
     private Book book;
 
@@ -35,7 +35,7 @@ public class BookRecord {
     @Column(nullable = false)
     private int bookType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
     private LocationInfo locationInfo;
 
@@ -64,13 +64,13 @@ public class BookRecord {
     @Column(name = "key_word", length = 15)
     private String keyWord;
 
-    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookRecord", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private BookRecordDate bookRecordDate;
 
-    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookRecord", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private BookReview bookReview;
 
-    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookRecord", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private SelectReview selectReview;
 
     @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)

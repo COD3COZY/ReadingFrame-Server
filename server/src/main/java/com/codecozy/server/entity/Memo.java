@@ -14,7 +14,7 @@ import lombok.*;
 @Table(name = "MEMO")
 public class Memo {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "isbn", referencedColumnName = "isbn")

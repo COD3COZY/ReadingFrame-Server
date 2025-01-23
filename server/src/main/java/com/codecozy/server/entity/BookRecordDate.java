@@ -3,6 +3,7 @@ package com.codecozy.server.entity;
 import com.codecozy.server.composite_key.BookRecordDateKey;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "BOOK_RECORD_DATE")
 public class BookRecordDate {
     @Id
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "isbn", referencedColumnName = "isbn")

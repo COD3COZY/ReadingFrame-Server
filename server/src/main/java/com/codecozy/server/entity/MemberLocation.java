@@ -17,12 +17,12 @@ import lombok.NoArgsConstructor;
 @Table(name = "MEMBER_LOCATION")
 public class MemberLocation {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
     private LocationInfo locationInfo;
 

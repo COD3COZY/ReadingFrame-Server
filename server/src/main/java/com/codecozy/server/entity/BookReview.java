@@ -21,7 +21,7 @@ public class BookReview {
     @Column(name = "comment_id")
     private Long commentId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "isbn", referencedColumnName = "isbn")
@@ -34,7 +34,7 @@ public class BookReview {
     @Column(name = "review_date", nullable = false)
     private LocalDate reviewDate;
 
-    @OneToOne(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookReview", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private BookReviewReaction bookReviewReaction;
 
     @OneToMany(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
