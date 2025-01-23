@@ -18,8 +18,6 @@ import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.BookRecordDateRepository;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
-import com.codecozy.server.repository.BookReviewRepository;
-import com.codecozy.server.repository.SelectReviewRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -54,8 +52,6 @@ public class HomeService {
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
     private final BookRecordDateRepository bookRecordDateRepository;
-    private final BookReviewRepository bookReviewRepository;
-    private final SelectReviewRepository selectReviewRepository;
 
     // 독서 상태 상수 값
     private static final int UNREGISTERED = -1;    // 미등록
@@ -124,8 +120,7 @@ public class HomeService {
         List<MainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member,
-                READING);
+        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member, READING);
 
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {
@@ -140,9 +135,9 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
-            BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview commentReview = bookRecord.getBookReview();
             // 리뷰들 중 하나라도 있으면 true
             if (!(keywordReview == null) || !(selectReview == null) || !(commentReview == null)) {
                 isWriteReview = true;
@@ -197,9 +192,9 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
-            BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview commentReview = bookRecord.getBookReview();
             // 리뷰들 중 하나라도 있으면 true
             if (!(keywordReview == null) || !(selectReview == null) || !(commentReview == null)) {
                 isWriteReview = true;
@@ -369,7 +364,7 @@ public class HomeService {
         int readingPercent = converterService.pageToPercent(readPage, totalPage);
 
         // 리뷰의 유무 가져오기
-        Boolean isWriteReview = bookReviewRepository.findByBookRecord(bookRecord) != null;
+        Boolean isWriteReview = bookRecord.getBookReview() != null;
 
         return new ReadingResponse(
                 book.getIsbn(),
@@ -436,7 +431,7 @@ public class HomeService {
             Book book = bookRecord.getBook();
 
             // 리뷰의 유무 가져오기
-            Boolean isWriteReview = bookReviewRepository.findByBookRecord(bookRecord) != null;
+            Boolean isWriteReview = bookRecord.getBookReview() != null;
 
             // dto 정보 추가
             finishReadBooks.add(new FinishReadResponse(
@@ -458,8 +453,7 @@ public class HomeService {
     }
 
     // 읽고 있는 책 숨기기 & 꺼내기
-    public ResponseEntity<DefaultResponse> modifyHidden(Long memberId, String isbn,
-            boolean isHidden) {
+    public ResponseEntity<DefaultResponse> modifyHidden(Long memberId, String isbn, boolean isHidden) {
         // 해당 유저 가져오기
         Member member = memberRepository.findByMemberId(memberId);
 

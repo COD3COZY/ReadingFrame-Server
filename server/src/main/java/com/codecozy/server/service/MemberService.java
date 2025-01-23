@@ -13,7 +13,6 @@ import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.entity.MemberApple;
 import com.codecozy.server.entity.MemberKakao;
-import com.codecozy.server.repository.BadgeRepository;
 import com.codecozy.server.repository.MemberAppleRepository;
 import com.codecozy.server.repository.MemberKakaoRepository;
 import com.codecozy.server.repository.MemberRepository;
