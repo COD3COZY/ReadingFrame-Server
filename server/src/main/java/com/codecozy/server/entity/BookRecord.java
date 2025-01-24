@@ -58,7 +58,7 @@ public class BookRecord {
     private LocalDate firstReviewDate;
 
     @Column(name = "last_review_date")
-    private LocalDateTime lastReviewDate;
+    private LocalDateTime lastEditDate;
 
     @ColumnDefault("0")
     @Column(name = "mark_page", nullable = false)
@@ -102,7 +102,7 @@ public class BookRecord {
 
     public void setFirstReviewDate(LocalDate firstReviewDate) { this.firstReviewDate = firstReviewDate; }
 
-    public void setLastReviewDate(LocalDateTime lastReviewDate) { this.lastReviewDate = lastReviewDate; }
+    public void setLastEditDate(LocalDateTime lastEditDate) { this.lastEditDate = lastEditDate; }
 
     public void deleteLocationInfo() { this.locationInfo = null; }
 

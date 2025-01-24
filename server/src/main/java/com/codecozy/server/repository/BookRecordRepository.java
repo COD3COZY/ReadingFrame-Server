@@ -33,7 +33,7 @@ public interface BookRecordRepository extends JpaRepository<BookRecord, BookReco
     // 사용자가 숨기지 않고, 최근에 기록을 작성한 특정 독서상태의 책 리스트 최대 10개 불러오기
     @Query("SELECT br FROM BookRecord br"
             + " WHERE br.member = :member AND br.readingStatus = :readingStatus AND br.isHidden = false"
-            + " ORDER BY br.lastReviewDate DESC LIMIT 10")
+            + " ORDER BY br.lastEditDate DESC LIMIT 10")
     List<BookRecord> getMainReadingBooks(@Param("member") Member member, @Param("readingStatus") int readingStatus);
 
     Long countByLocationInfo(LocationInfo locationInfo);

@@ -110,8 +110,8 @@ public class BookService {
                 locationInfo,
                 request.isMine(), startDate, recentDate);
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -304,8 +304,8 @@ public class BookService {
                     LocalDate.now()
             ));
 
-            // 독서노트에 마지막 리뷰 작성 날짜 저장
-            bookRecord.setLastReviewDate(LocalDateTime.now());
+            // 독서노트에 마지막으로 수정한 날짜 저장
+            bookRecord.setLastEditDate(LocalDateTime.now());
         }
         // 다 읽음 -> 읽는 중 전환 시
         else if (beforeStatus == FINISH_READ && afterStatus == READING) {
@@ -856,8 +856,8 @@ public class BookService {
             }
         }
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -950,8 +950,8 @@ public class BookService {
             }
         }
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -1408,8 +1408,8 @@ public class BookService {
         memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -1446,8 +1446,8 @@ public class BookService {
                     HttpStatus.NOT_FOUND);
         }
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -1594,8 +1594,8 @@ public class BookService {
         bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
         bookmarkRepository.save(bookmark);
 
-        // 독서노트에 마지막 리뷰 작성 날짜 저장
-        bookRecord.setLastReviewDate(LocalDateTime.now());
+        // 독서노트에 마지막으로 수정한 날짜 저장
+        bookRecord.setLastEditDate(LocalDateTime.now());
 
         // 반영
         bookRecordRepository.save(bookRecord);
@@ -1669,8 +1669,8 @@ public class BookService {
             bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
             bookmarkRepository.save(bookmark);
 
-            // 독서노트에 마지막 리뷰 작성 날짜 저장
-            bookRecord.setLastReviewDate(LocalDateTime.now());
+            // 독서노트에 마지막으로 수정한 날짜 저장
+            bookRecord.setLastEditDate(LocalDateTime.now());
 
             // 반영
             bookRecordRepository.save(bookRecord);
