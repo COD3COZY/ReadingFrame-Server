@@ -38,7 +38,6 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
-    private final BookRecordDateRepository bookRecordDateRepository;
     private final MemberRepository memberRepository;
     private final LocationInfoRepository locationInfoRepository;
     private final MemberLocationRepository memberLocationRepository;
@@ -71,7 +70,7 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != UNREGISTERED) { // -1: reading_status가 '읽고싶은'(0)인 경우
+        if (bookRecord != null && bookRecord.getBookType() != -1) { // -1: reading_status가 '읽고싶은'(0)인 경우
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
@@ -110,10 +109,12 @@ public class BookService {
         bookRecord = BookRecord.create(member, book, request.readingStatus(), request.bookType(),
                 locationInfo,
                 request.isMine(), startDate, recentDate);
-        bookRecord = bookRecordRepository.save(bookRecord);
 
-        // 독서노트 날짜 레코드 생성
-        bookRecordDateRepository.save(BookRecordDate.create(bookRecord));
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -303,9 +304,8 @@ public class BookService {
                     LocalDate.now()
             ));
 
-            BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-            bookRecordDate.setLastDate(LocalDateTime.now());
-            bookRecordDateRepository.save(bookRecordDate);
+            // 독서노트에 마지막 리뷰 작성 날짜 저장
+            bookRecord.setLastReviewDate(LocalDateTime.now());
         }
         // 다 읽음 -> 읽는 중 전환 시
         else if (beforeStatus == FINISH_READ && afterStatus == READING) {
@@ -856,14 +856,11 @@ public class BookService {
             }
         }
 
-        // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-        if (bookRecordDate == null) {
-            bookRecordDate = BookRecordDate.create(bookRecord);
-        } else {
-            bookRecordDate.setLastDate(LocalDateTime.now());
-        }
-        bookRecordDateRepository.save(bookRecordDate);
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -953,10 +950,11 @@ public class BookService {
             }
         }
 
-        // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-        bookRecordDate.setLastDate(LocalDateTime.now());
-        bookRecordDateRepository.save(bookRecordDate);
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -1410,10 +1408,11 @@ public class BookService {
         memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
         memoRepository.save(memo);
 
-        // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-        bookRecordDate.setLastDate(LocalDateTime.now());
-        bookRecordDateRepository.save(bookRecordDate);
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -1447,10 +1446,11 @@ public class BookService {
                     HttpStatus.NOT_FOUND);
         }
 
-        // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-        bookRecordDate.setLastDate(LocalDateTime.now());
-        bookRecordDateRepository.save(bookRecordDate);
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -1594,10 +1594,11 @@ public class BookService {
         bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
         bookmarkRepository.save(bookmark);
 
-        // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-        bookRecordDate.setLastDate(LocalDateTime.now());
-        bookRecordDateRepository.save(bookRecordDate);
+        // 독서노트에 마지막 리뷰 작성 날짜 저장
+        bookRecord.setLastReviewDate(LocalDateTime.now());
+
+        // 반영
+        bookRecordRepository.save(bookRecord);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
@@ -1668,10 +1669,11 @@ public class BookService {
             bookmark = Bookmark.create(bookRecord, request.uuid(), request.markPage(), locationInfo, date);
             bookmarkRepository.save(bookmark);
 
-            // 독서노트의 마지막 기록 날짜 업데이트
-            BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
-            bookRecordDate.setLastDate(LocalDateTime.now());
-            bookRecordDateRepository.save(bookRecordDate);
+            // 독서노트에 마지막 리뷰 작성 날짜 저장
+            bookRecord.setLastReviewDate(LocalDateTime.now());
+
+            // 반영
+            bookRecordRepository.save(bookRecord);
         } else {
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_BOOKMARK.get()),

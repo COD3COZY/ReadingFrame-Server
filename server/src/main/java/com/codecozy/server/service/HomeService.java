@@ -15,7 +15,6 @@ import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.BookReview;
 import com.codecozy.server.entity.SelectReview;
 import com.codecozy.server.entity.Member;
-import com.codecozy.server.repository.BookRecordDateRepository;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
 import com.codecozy.server.repository.MemberRepository;
@@ -51,7 +50,6 @@ public class HomeService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
-    private final BookRecordDateRepository bookRecordDateRepository;
 
     // 독서 상태 상수 값
     private static final int UNREGISTERED = -1;    // 미등록
@@ -68,7 +66,7 @@ public class HomeService {
         List<MainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member, READING);
+        List<BookRecord> readingBooks = bookRecordRepository.getMainReadingBooks(member, READING);
 
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {

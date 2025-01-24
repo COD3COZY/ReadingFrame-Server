@@ -42,9 +42,6 @@ class BookServiceTest {
     private BookRecordRepository bookRecordRepository;
 
     @Mock
-    private BookRecordDateRepository bookRecordDateRepository;
-
-    @Mock
     private BookmarkRepository bookmarkRepository;
 
     @Mock
@@ -82,11 +79,6 @@ class BookServiceTest {
     }
 
     /** mock 설정 - 개별 사용 **/
-    private void setupBookRecordDate() {
-        BookRecordDate bookRecordDate = BookRecordDate.create(bookRecord);
-        when(bookRecordDateRepository.findByBookRecord(bookRecord)).thenReturn(bookRecordDate);
-    }
-
     private void setupBookmark(String uuid, int page, LocalDate date) {
         Bookmark bookmark = Bookmark.create(bookRecord, uuid, page, null, date);
         when(bookmarkRepository.findByBookRecordAndUuid(bookRecord, uuid)).thenReturn(bookmark);
@@ -204,8 +196,6 @@ class BookServiceTest {
             bookRecord.setReadingStatus(READING);
             LocalDate nowDate = LocalDate.now();
             ModifyReadingStatusRequest request = new ModifyReadingStatusRequest(FINISH_READ, "TEST-UUID");
-            // bookRecordDate Repository 스터빙
-            setupBookRecordDate();
 
             // when
             ResponseEntity<DefaultResponse> response = bookService.modifyReadingStatus(member.getMemberId(),
@@ -271,7 +261,6 @@ class BookServiceTest {
         // given
         bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         setupBookmark("3b7d", 50, LocalDate.of(2024, 12, 10));
-        setupBookRecordDate();
 
         BookmarkRequest request = new BookmarkRequest("2024.12.17", 110, null, "3b7d");
 
@@ -291,7 +280,6 @@ class BookServiceTest {
         // given
         bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         when(memoRepository.findByBookRecordAndUuid(bookRecord, "6a1b")).thenReturn(null);
-        setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("6a1b", "2024.12.29", 50, "라이언 첫 등장");
 
@@ -309,7 +297,6 @@ class BookServiceTest {
         // given
         bookRecord.setRecentDate(LocalDate.of(2024, 1, 1)); // 기존 recentDate가 있는 상황
         setupMemo("5c8i", 20, LocalDate.of(2024, 12, 31), "춘식이 첫 등장");
-        setupBookRecordDate();
 
         MemoRequest request = new MemoRequest("5c8i", "2025.01.01", 60, "라이언 두 마리 등장");
 
