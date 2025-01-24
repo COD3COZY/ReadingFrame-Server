@@ -1940,10 +1940,23 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    /** 유틸리티 메소드 **/
+    /** 헬퍼 클래스 및 메소드 **/
+
+    // Boolean을 참조 타입으로 전달하기 위한 클래스
+    private class BooleanWrapper {
+        private boolean value;
+
+        public boolean getValue() {
+            return value;
+        }
+
+        public void setValue(boolean value) {
+            this.value = value;
+        }
+    }
 
     // 중복 책 검색 및 등록
-    public Book registerBook(String isbn, BookCreateRequest bookInformation) {
+    private Book registerBook(String isbn, BookCreateRequest bookInformation) {
         LocalDate publicationDate = converterService.stringToDate(bookInformation.publicationDate());
         return bookRepository.save(
                 Book.create(isbn, bookInformation.cover(), bookInformation.title(), bookInformation.author(),
@@ -1952,12 +1965,12 @@ public class BookService {
     }
 
     // 위치 등록 및 반환
-    public LocationInfo registerLocation(String placeName, String address, double latitude, double longitude) {
+    private LocationInfo registerLocation(String placeName, String address, double latitude, double longitude) {
         return locationInfoRepository.save(LocationInfo.create(placeName, address, latitude, longitude));
     }
 
     // 최근 위치 검색 기록 추가(레코드가 5개 초과되면 삭제하는 코드까지)
-    public void registerRecentLocation(Member member, LocationInfo locationInfo) {
+    private void registerRecentLocation(Member member, LocationInfo locationInfo) {
         // 현재 사용자의 최근 위치 검색 레코드가 5개 이상인지 확인하고, 5개 이상이면 날짜 순으로 정렬 후 가장 오래된 레코드를 삭제
         if (memberLocationRepository.countAllByMember(member) >= 5) {
             List<MemberLocation> memberLocationList = memberLocationRepository.findByMemberOrderByDateAsc(member);
@@ -1968,7 +1981,7 @@ public class BookService {
     }
 
     // 전체 위치 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
-    public void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo,
+    private void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo,
                                 BooleanWrapper isEnd) {
         // 정보 받아오기
         List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMember(member) : member.getBookRecords();
@@ -2028,7 +2041,7 @@ public class BookService {
     }
 
     // 마크 세부 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
-    public void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark,
+    private void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark,
                              List<LocationInfoDto> locationInfoList, BooleanWrapper isEnd) {
         // 북마크인지 여부에 따라 필요한 레포지토리 검색
         List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(member, locationInfo)
@@ -2088,32 +2101,19 @@ public class BookService {
         }
     }
 
-    // Boolean을 참조 타입으로 전달하기 위한 클래스
-    public class BooleanWrapper {
-        private boolean value;
-
-        public boolean getValue() {
-            return value;
-        }
-
-        public void setValue(boolean value) {
-            this.value = value;
-        }
-    }
-
     // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
-    public BookReviewReaction registerBookReviewReaction(BookReview bookReview) {
+    private BookReviewReaction registerBookReviewReaction(BookReview bookReview) {
         return bookReviewReactionRepository.save(BookReviewReaction.create(bookReview));
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReviewer)
-    public BookReviewReviewer registerBookReviewReviewer(BookReview bookReview, Member member) {
+    private BookReviewReviewer registerBookReviewReviewer(BookReview bookReview, Member member) {
         // 반응 여부 false, 종류 0인 레코드 생성 및 카운트 수정에 사용할 용도로 반환
         return bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
     }
 
     // 도서정보 호출 API 데이터를 가져오는 메소드
-    public String getBookDate(String isbn) throws IOException {
+    private String getBookDate(String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
         String urlStr = createURL(isbn);
 
@@ -2141,7 +2141,7 @@ public class BookService {
     }
 
     // yaml 파일 읽고 url 작성
-    public String createURL(String isbn) {
+    private String createURL(String isbn) {
         String baseUrl = null;
         String ttbKey = null;
         String output = null;
@@ -2166,7 +2166,7 @@ public class BookService {
     }
 
     // 알라딘 API 데이터 파싱
-    public SearchBookResponse dataParsing(String jsonData) {
+    private SearchBookResponse dataParsing(String jsonData) {
         try {
             JSONObject jsonResult, jsonResultSub;
             JSONParser jsonParser = new JSONParser();
@@ -2199,7 +2199,7 @@ public class BookService {
     }
 
     // 선택 리뷰 리스트 생성 메소드
-    public List<Integer> getSelectedReviewList(List<SelectReview> selectedReviews) {
+    private List<Integer> getSelectedReviewList(List<SelectReview> selectedReviews) {
         if (selectedReviews.isEmpty()) {
             return null;
         }
@@ -2225,7 +2225,7 @@ public class BookService {
     }
 
     // 댓글 최신순 리스트 생성 메소드
-    public List<String> getLatestCommentList(List<BookReview> bookReviews) {
+    private List<String> getLatestCommentList(List<BookReview> bookReviews) {
         if (bookReviews.isEmpty()) {
             return null;
         }

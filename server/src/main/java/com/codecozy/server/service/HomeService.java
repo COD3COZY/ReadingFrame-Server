@@ -59,58 +59,6 @@ public class HomeService {
     private static final int READING = 1;          // 읽는 중
     private static final int FINISH_READ = 2;      // 다 읽음
 
-    // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
-    private SearchResponse parsingData(String jsonStr) {
-        // JSON 데이터 가져오기
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObj = new JSONObject();
-        try {
-            jsonObj = (JSONObject) jsonParser.parse(jsonStr);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        log.info("JSON 데이터 받아오기 성공");
-        log.debug(jsonObj.toJSONString());
-
-        // 검색 결과 리스트 가져오기
-        JSONArray itemList = (JSONArray) jsonObj.get("item");
-
-        // 총 검색 결과 수 가져오기
-        int itemCount = itemList.size();
-
-        // 프론트측에 보낼 응답 DTO 구성
-        List<SearchDto> searchDto = new ArrayList<>();
-        for (int i = 0; i < itemList.size(); i++) {
-            JSONObject item = (JSONObject) itemList.get(i);
-
-            String isbn = item.get("isbn13").toString();
-            String cover = item.get("cover").toString();
-            String title = item.get("title").toString();
-            String author = item.get("author").toString();
-            String publisher = item.get("publisher").toString();
-
-            // 날짜 형식 변환 (yyyy-MM-dd -> yyyy.MM.dd)
-            String tempPublicationDate = item.get("pubDate").toString();
-            LocalDate tempDate = LocalDate.parse(tempPublicationDate,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String publicationDate = converterService.dateToString(tempDate);
-
-            // DTO 정보 넣기
-            searchDto.add(new SearchDto(
-                    isbn,
-                    cover,
-                    title,
-                    author,
-                    publisher,
-                    publicationDate
-            ));
-        }
-
-        // 최종 응답 DTO 구성
-        return new SearchResponse(itemCount, searchDto);
-    }
-
     // 메인 화면 조회
     public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
         // 해당 유저 가져오기
@@ -353,34 +301,6 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
-    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
-    private ReadingResponse getReadingBookInfo(BookRecord bookRecord) {
-        // 책 정보 가져오기
-        Book book = bookRecord.getBook();
-
-        // readingPercent 계산
-        int totalPage = book.getTotalPage();
-        int readPage = bookRecord.getMarkPage();
-        int readingPercent = converterService.pageToPercent(readPage, totalPage);
-
-        // 리뷰의 유무 가져오기
-        Boolean isWriteReview = bookRecord.getBookReview() != null;
-
-        return new ReadingResponse(
-                book.getIsbn(),
-                book.getCover(),
-                book.getTitle(),
-                book.getAuthor(),
-                readingPercent,
-                totalPage,
-                readPage,
-                bookRecord.isHidden(),
-                converterService.categoryNameToCode(book.getCategory()),
-                bookRecord.getBookType(),
-                bookRecord.isMine(),
-                isWriteReview);
-    }
-
     // 읽고 있는 책 조회
     public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
         // 해당 유저 가져오기
@@ -470,8 +390,62 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
-    // yaml 파일 읽고 url 작성
-    public String createURL(String searchText, int i) {
+    /** 헬퍼 메소드 **/
+
+    // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
+    private SearchResponse parsingData(String jsonStr) {
+        // JSON 데이터 가져오기
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObj = new JSONObject();
+        try {
+            jsonObj = (JSONObject) jsonParser.parse(jsonStr);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        log.info("JSON 데이터 받아오기 성공");
+        log.debug(jsonObj.toJSONString());
+
+        // 검색 결과 리스트 가져오기
+        JSONArray itemList = (JSONArray) jsonObj.get("item");
+
+        // 총 검색 결과 수 가져오기
+        int itemCount = itemList.size();
+
+        // 프론트측에 보낼 응답 DTO 구성
+        List<SearchDto> searchDto = new ArrayList<>();
+        for (int i = 0; i < itemList.size(); i++) {
+            JSONObject item = (JSONObject) itemList.get(i);
+
+            String isbn = item.get("isbn13").toString();
+            String cover = item.get("cover").toString();
+            String title = item.get("title").toString();
+            String author = item.get("author").toString();
+            String publisher = item.get("publisher").toString();
+
+            // 날짜 형식 변환 (yyyy-MM-dd -> yyyy.MM.dd)
+            String tempPublicationDate = item.get("pubDate").toString();
+            LocalDate tempDate = LocalDate.parse(tempPublicationDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String publicationDate = converterService.dateToString(tempDate);
+
+            // DTO 정보 넣기
+            searchDto.add(new SearchDto(
+                    isbn,
+                    cover,
+                    title,
+                    author,
+                    publisher,
+                    publicationDate
+            ));
+        }
+
+        // 최종 응답 DTO 구성
+        return new SearchResponse(itemCount, searchDto);
+    }
+
+    // 알라딘 책 검색 url을 작성하는 메소드
+    private String createURL(String searchText, int i) {
         String baseUrl = null;
         String ttbKey = null;
         String output = null;
@@ -490,5 +464,33 @@ public class HomeService {
         }
 
         return String.format("%s?ttbkey=%s&Query=%s&QueryType=Keyword&Start=%d&MaxResults=50&Cover=Big&Output=%s&Version=%s", baseUrl, ttbKey, searchText, i, output, version);
+    }
+
+    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
+    private ReadingResponse getReadingBookInfo(BookRecord bookRecord) {
+        // 책 정보 가져오기
+        Book book = bookRecord.getBook();
+
+        // readingPercent 계산
+        int totalPage = book.getTotalPage();
+        int readPage = bookRecord.getMarkPage();
+        int readingPercent = converterService.pageToPercent(readPage, totalPage);
+
+        // 리뷰의 유무 가져오기
+        Boolean isWriteReview = bookRecord.getBookReview() != null;
+
+        return new ReadingResponse(
+                book.getIsbn(),
+                book.getCover(),
+                book.getTitle(),
+                book.getAuthor(),
+                readingPercent,
+                totalPage,
+                readPage,
+                bookRecord.isHidden(),
+                converterService.categoryNameToCode(book.getCategory()),
+                bookRecord.getBookType(),
+                bookRecord.isMine(),
+                isWriteReview);
     }
 }
