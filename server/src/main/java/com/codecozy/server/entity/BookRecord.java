@@ -67,10 +67,10 @@ public class BookRecord {
     @Column(name = "key_word", length = 15)
     private String keyWord;
 
-    @OneToOne(mappedBy = "bookRecord", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private BookReview bookReview;
 
-    @OneToOne(mappedBy = "bookRecord", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private SelectReview selectReview;
 
     @OneToMany(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
