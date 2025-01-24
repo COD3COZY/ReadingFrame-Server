@@ -72,7 +72,8 @@ public class BookService {
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null && bookRecord.getBookType() != UNREGISTERED) { // -1: reading_status가 '읽고싶은'(0)인 경우
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -158,17 +159,17 @@ public class BookService {
         String keywordReview = bookRecord.getKeyWord();
         String commentReview = null;
         try {
-            commentReview = bookReviewRepository.findByBookRecord(bookRecord).getReviewText();
+            commentReview = bookRecord.getBookReview().getReviewText();
         } catch (NullPointerException e) {
             log.info("해당 책의 한줄평 없음");
         }
 
-        String selectReviewStr = null;
+        String selectReviewStr;
         String[] selectReviewStrList = null;
         List<Integer> selectReview = new ArrayList<>();
         boolean existSelectReview = true;
         try {
-            selectReviewStr = selectReviewRepository.findByBookRecord(bookRecord).getSelectReviewCode();
+            selectReviewStr = bookRecord.getSelectReview().getSelectReviewCode();
             selectReviewStrList = selectReviewStr.split(",");
         } catch (NullPointerException e) {
             log.info("해당 책의 선택 리뷰 없음");
@@ -302,7 +303,7 @@ public class BookService {
                     LocalDate.now()
             ));
 
-            BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+            BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);
         }
@@ -374,7 +375,7 @@ public class BookService {
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
 
         // readingStatus 검색
-        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus(): UNREGISTERED);
+        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : UNREGISTERED);
 
         // commentCount 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
@@ -383,9 +384,11 @@ public class BookService {
         List<Integer> selectedReviewList = getSelectedReviewList(selectReviewRepository.findAllByBookRecordBook(book));
 
         // 해당 책에 대한 한줄평 정보(commentList)를 날짜 내림차순으로 검색해서 실제로 반환하는 commentList(최대 5개) 찾기
-        List<String> commentList = getLatestCommentList(bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
+        List<String> commentList = getLatestCommentList(
+                bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
 
-        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName, readingStatus, response.publisher(), response.publicationDate(),
+        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName,
+                readingStatus, response.publisher(), response.publicationDate(),
                 response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
@@ -418,7 +421,7 @@ public class BookService {
             Map<Long, Integer> reactionMap = new HashMap<>();
             // 한줄평에 대한 반응 검색 후 모든 반응 합산
             for (BookReview bookReview : bookReviews) {
-                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+                BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
 
                 // 반응한 한줄평이 없는 경우
                 if (bookReviewReaction == null) {
@@ -426,9 +429,10 @@ public class BookService {
                     break;
                 }
 
-                reactionMap.put(bookReviewReaction.getBookReview().getCommentId(),
-                        bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount() + bookReviewReaction.getWowCount()
-                        + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount());
+                reactionMap.put(bookReview.getCommentId(),
+                        bookReviewReaction.getHeartCount() + bookReviewReaction.getGoodCount()
+                                + bookReviewReaction.getWowCount()
+                                + bookReviewReaction.getSadCount() + bookReviewReaction.getAngryCount());
             }
 
             // 내림차순으로 반응 수 정렬
@@ -442,10 +446,12 @@ public class BookService {
 
             // 원하는 위치의 한줄평만 반환
             for (int i = request.orderNumber() * 20; i < (request.orderNumber() * 20) + 20; i++) {
-                if (i >= bookReviews.size()) break;
+                if (i >= bookReviews.size()) {
+                    break;
+                }
 
                 BookReview bookReview = bookReviewRepository.findByCommentId(entryList.get(i).getKey());
-                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+                BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
 
                 // 한줄평 리액션 수 리스트
                 List<Integer> reactions = new ArrayList<>();
@@ -456,13 +462,16 @@ public class BookService {
                     reactions.add(bookReviewReaction.getSadCount());
                     reactions.add(bookReviewReaction.getAngryCount());
                 } else {
-                    for (int j = 0; j < 5; j++) reactions.add(0);
+                    for (int j = 0; j < 5; j++) {
+                        reactions.add(0);
+                    }
                 }
 
                 // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
                 boolean isMyReaction = false;
                 int myReactionCode = -1;
-                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(
+                        bookReview, member);
                 if (bookReviewReviewer != null) {
                     isMyReaction = bookReviewReviewer.isReaction();
                     myReactionCode = bookReviewReviewer.getReactionCode();
@@ -485,10 +494,12 @@ public class BookService {
 
             // 원하는 위치의 한줄평만 반환
             for (int i = request.orderNumber() * 20; i < (request.orderNumber() * 20) + 20; i++) {
-                if (i >= bookReviews.size()) break;
+                if (i >= bookReviews.size()) {
+                    break;
+                }
 
                 BookReview bookReview = bookReviews.get(i);
-                BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+                BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
 
                 // 한줄평 리액션 수 리스트
                 List<Integer> reactions = new ArrayList<>();
@@ -499,13 +510,16 @@ public class BookService {
                     reactions.add(bookReviewReaction.getSadCount());
                     reactions.add(bookReviewReaction.getAngryCount());
                 } else {
-                    for (int j = 0; j < 5; j++) reactions.add(0);
+                    for (int j = 0; j < 5; j++) {
+                        reactions.add(0);
+                    }
                 }
 
                 // 현재 사용자가 리뷰를 남긴 적이 있으면 리뷰 작성 여부와 종류 받아오기
                 boolean isMyReaction = false;
                 int myReactionCode = -1;
-                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+                BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(
+                        bookReview, member);
                 if (bookReviewReviewer != null) {
                     isMyReaction = bookReviewReviewer.isReaction();
                     myReactionCode = bookReviewReviewer.getReactionCode();
@@ -536,15 +550,16 @@ public class BookService {
 
         // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(commentMember, book);
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
-        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
             bookReviewReaction = registerBookReviewReaction(bookReview);
@@ -569,7 +584,8 @@ public class BookService {
         }
         // 이미 신고했던 경우
         else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_REPORT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_REPORT.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -594,7 +610,8 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
         if (bookRecord != null) {
             return new ResponseEntity<>(
-                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CANNOT_REGISTER_BOOK_AS_WANT_TO_READ.get()),
+                    DefaultResponse.from(StatusCode.CONFLICT,
+                            ResponseMessages.CANNOT_REGISTER_BOOK_AS_WANT_TO_READ.get()),
                     HttpStatus.CONFLICT);
         }
         // 읽고싶은 책 등록 시에는 독서노트 생성 전이므로 member, book, reading_status 외에는 임시 데이터로 book_record 레코드 생성 후 저장
@@ -619,15 +636,16 @@ public class BookService {
 
         // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(commentMember, book);
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
 
         if (bookReview == null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 레코드 검색
-        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
         // 해당 한줄평에 대한 반응 레코드가 없으면 새로 생성
         if (bookReviewReaction == null) {
             bookReviewReaction = registerBookReviewReaction(bookReview);
@@ -670,11 +688,11 @@ public class BookService {
 
         // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(commentMember, book);
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
 
         if (bookReview != null) {
             // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
-            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
             // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
             BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
                     member);
@@ -703,7 +721,8 @@ public class BookService {
                         HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -725,11 +744,11 @@ public class BookService {
 
         // 한줄평 남긴 사용자와 책을 이용한 검색으로 bookReview 테이블에서 한줄평 찾기
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(commentMember, book);
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
 
         if (bookReview != null) {
             // 한줄평 객체를 이용한 검색으로 bookReviewReaction 테이블에서 한줄평에 대한 반응 카운트 레코드 검색
-            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
             // 한줄평에 대한 반응 여부와 종류를 담은 레코드 검색
             BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReviewAndMember(bookReview,
                     member);
@@ -766,7 +785,8 @@ public class BookService {
                         HttpStatus.NOT_FOUND);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -793,9 +813,10 @@ public class BookService {
         // 선택 리뷰가 있으면 레코드 추가
         if (request.select() != null) {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             if (selectReview != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_SELECT_REVIEW.get()),
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_SELECT_REVIEW.get()),
                         HttpStatus.CONFLICT);
             }
 
@@ -811,9 +832,10 @@ public class BookService {
         // 한줄평이 있으면 레코드 추가
         if (request.comment() != null) {
             // 이미 등록한 한줄평이면 CONFLICT 응답
-            BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview bookReview = bookRecord.getBookReview();
             if (bookReview != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_COMMENT.get()),
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_COMMENT.get()),
                         HttpStatus.CONFLICT);
             }
 
@@ -835,7 +857,7 @@ public class BookService {
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
         if (bookRecordDate == null) {
             bookRecordDate = BookRecordDate.create(bookRecord);
         } else {
@@ -858,7 +880,8 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         if (bookRecord == null) { // 독서 노트가 없으면 충돌 메세지
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -875,7 +898,7 @@ public class BookService {
         // 선택 리뷰가 있으면 레코드 수정
         if (request.select() != null) {
             // 이미 등록한 선택 리뷰면 CONFLICT 응답
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
 
             String selected = "";
             for (int id = 0; id < request.select().size(); id++) {
@@ -893,7 +916,7 @@ public class BookService {
                 selectReviewRepository.save(selectReview);
             }
         } else { // 선택 리뷰가 없으면 선택 키워드 리뷰 레코드 삭제
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             if (selectReview != null) {
                 selectReviewRepository.delete(selectReview);
             }
@@ -901,7 +924,7 @@ public class BookService {
 
         // 한줄평이 있으면 레코드 수정
         if (request.comment() != null) {
-            BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview bookReview = bookRecord.getBookReview();
             if (bookReview != null) {
                 // 한줄평 수정
                 bookReview.setReviewText(request.comment());
@@ -912,15 +935,15 @@ public class BookService {
                 bookReviewRepository.save(bookReview);
             }
         } else { // 없으면 한줄평 레코드 삭제
-            BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview bookReview = bookRecord.getBookReview();
 
             // 한줄평 반응 종류 찾고 삭제
-            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
             if (bookReviewReaction != null) {
                 bookReviewReactionRepository.delete(bookReviewReaction);
             }
             // 한줄평 반응 여부 모두 찾고 삭제
-            List<BookReviewReviewer> bookReviewReviewers = bookReviewReviewerRepository.findAllByBookReview(bookReview);
+            List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
             for (int i = 0; i < bookReviewReviewers.size(); i++) {
                 bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
             }
@@ -931,8 +954,7 @@ public class BookService {
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
 
@@ -957,26 +979,27 @@ public class BookService {
             bookRecord.setKeyWord(null);
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         // 선택리뷰 찾고 삭제
-        SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+        SelectReview selectReview = bookRecord.getSelectReview();
         if (selectReview != null) {
             selectReviewRepository.delete(selectReview);
         }
 
         // 한줄평 찾기
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
 
         // 한줄평 반응 종류 찾고 삭제
-        BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
+        BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
         if (bookReviewReaction != null) {
             bookReviewReactionRepository.delete(bookReviewReaction);
         }
         // 한줄평 반응 여부 모두 찾고 삭제
-        List<BookReviewReviewer> bookReviewReviewers = bookReviewReviewerRepository.findAllByBookReview(bookReview);
+        List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
         for (int i = 0; i < bookReviewReviewers.size(); i++) {
             bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
         }
@@ -1001,26 +1024,29 @@ public class BookService {
 
         // 한줄평 찾기
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        BookReview bookReview = bookReviewRepository.findByBookRecord(bookRecord);
+        BookReview bookReview = bookRecord.getBookReview();
         // 한줄평이 있으면
         if (bookReview != null) {
             // 한줄평에 대한 반응 종류, 여부 레코드(하나라도 있는지) 찾기
-            BookReviewReaction bookReviewReaction = bookReviewReactionRepository.findByBookReview(bookReview);
-            BookReviewReviewer bookReviewReviewer = bookReviewReviewerRepository.findByBookReview(bookReview);
+            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
+            List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
 
             // 해당 한줄평에 대한 반응 종류 레코드 지우기
             if (bookReviewReaction != null) {
                 bookReviewReactionRepository.delete(bookReviewReaction);
             }
             // 해당 한줄평에 대한 반응 여부 레코드 지우기
-            if (bookReviewReviewer != null) {
-                bookReviewReviewerRepository.deleteAllByBookReview(bookReview);
+            if (!bookReviewReviewers.isEmpty()) {
+                for (BookReviewReviewer reviewer : bookReviewReviewers) {
+                    bookReviewReviewerRepository.delete(reviewer);
+                }
             }
 
             // 한줄평 지우기
             bookReviewRepository.delete(bookReview);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_COMMENT.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1045,7 +1071,8 @@ public class BookService {
             bookRecord.setStartDate(converterService.stringToDate(startDate));
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1070,7 +1097,8 @@ public class BookService {
             bookRecord.setRecentDate(converterService.stringToDate(recentDate));
             bookRecordRepository.save(bookRecord);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1103,7 +1131,8 @@ public class BookService {
         if (bookRecord != null) {
             // 대표 위치가 이미 있으면 CONFLICT 응답
             if (bookRecord.getLocationInfo() != null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_MAIN_LOCATION.get()),
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_MAIN_LOCATION.get()),
                         HttpStatus.CONFLICT);
             } else { // 대표 위치가 없으면 대표위치 등록
                 bookRecord.setLocationInfo(locationInfo);
@@ -1197,7 +1226,8 @@ public class BookService {
 
             // 삭제하려는 위치 객체가 없으면
             if (preLocation == null) {
-                return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MAIN_LOCATION.get()),
+                return new ResponseEntity<>(
+                        DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_MAIN_LOCATION.get()),
                         HttpStatus.NOT_FOUND);
             }
 
@@ -1214,7 +1244,8 @@ public class BookService {
                 locationInfoRepository.delete(preLocation);
             }
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.NOT_FOUND_BOOK_RECORD.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1241,7 +1272,8 @@ public class BookService {
 
         // 중복된 인물이면 (이름이 중복됐으면)
         if (personalDictionary != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_CHARACTER.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_CHARACTER.get()),
                     HttpStatus.CONFLICT);
         } else {
             // 인물사전에 등록
@@ -1278,7 +1310,8 @@ public class BookService {
                     Integer.parseInt(request.emoji()), request.preview(), request.description());
             personalDictionaryRepository.save(personalDictionary);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_CHARACTER.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_CHARACTER.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1332,8 +1365,7 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 한 유저의 한 책에 대한 인물사전 전체 검색
-        List<PersonalDictionary> personalDictionaries =
-                personalDictionaryRepository.findAllByBookRecord(bookRecord);
+        List<PersonalDictionary> personalDictionaries = bookRecord.getPersonalDictionaries();
         for (int i = 0; i < personalDictionaries.size(); i++) {
             PersonalDictionary personalDictionary = personalDictionaries.get(i);
 
@@ -1379,7 +1411,7 @@ public class BookService {
         memoRepository.save(memo);
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
 
@@ -1410,12 +1442,13 @@ public class BookService {
             memo = Memo.create(bookRecord, request.uuid(), request.markPage(), date, request.memoText());
             memoRepository.save(memo);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_MEMO.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_MEMO.get()),
                     HttpStatus.NOT_FOUND);
         }
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
 
@@ -1467,14 +1500,15 @@ public class BookService {
 
         // 한 유저의 한 책에 대한 메모 전체 검색
         List<Memo> memos = memoRepository.findAllByBookRecord(bookRecord);
-        for(Memo memo : memos) {
+        for (Memo memo : memos) {
             String dateStr = converterService.dateToString(memo.getDate());
 
             // 종이책이면 페이지 -> 퍼센트 계산
             if (bookRecord.getBookType() == 0) {
                 int percent = converterService.pageToPercent(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
-                memoList.add(new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
+                memoList.add(
+                        new MemoResponse(dateStr, memo.getMarkPage(), percent, memo.getMemoText(), memo.getUuid()));
             } else { // 전자책, 오디오북이면 퍼센트 -> 페이지 계산
                 int page = converterService.percentToPage(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
@@ -1500,7 +1534,8 @@ public class BookService {
 
         Bookmark bookmark = bookmarkRepository.findByBookRecordAndUuid(bookRecord, request.uuid());
         if (bookmark != null) {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOKMARK.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOKMARK.get()),
                     HttpStatus.CONFLICT);
         }
 
@@ -1531,15 +1566,13 @@ public class BookService {
         if (bookRecord.getBookType() == 0) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
                 bookRecord.setReadingStatus(FINISH_READ); // 다읽음으로 수정
-            }
-            else {
+            } else {
                 bookRecord.setReadingStatus(READING);
             }
         } else { // 전자책, 오디오북인 경우
             if (request.markPage() >= 100) { // 100% 이상이면
                 bookRecord.setReadingStatus(FINISH_READ);
-            }
-            else {
+            } else {
                 bookRecord.setReadingStatus(READING);
             }
         }
@@ -1562,7 +1595,7 @@ public class BookService {
         bookmarkRepository.save(bookmark);
 
         // 독서노트의 마지막 기록 날짜 업데이트
-        BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+        BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
         bookRecordDate.setLastDate(LocalDateTime.now());
         bookRecordDateRepository.save(bookRecordDate);
 
@@ -1636,11 +1669,12 @@ public class BookService {
             bookmarkRepository.save(bookmark);
 
             // 독서노트의 마지막 기록 날짜 업데이트
-            BookRecordDate bookRecordDate = bookRecordDateRepository.findByBookRecord(bookRecord);
+            BookRecordDate bookRecordDate = bookRecord.getBookRecordDate();
             bookRecordDate.setLastDate(LocalDateTime.now());
             bookRecordDateRepository.save(bookRecordDate);
         } else {
-            return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_BOOKMARK.get()),
+            return new ResponseEntity<>(
+                    DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.UNREGISTERED_BOOKMARK.get()),
                     HttpStatus.NOT_FOUND);
         }
 
@@ -1666,7 +1700,7 @@ public class BookService {
             // 위치 정보를 포함하고 있으면
             if (bookmark.getLocationInfo() != null) {
                 // 참조하고 있는 위치 받아오기
-                LocationInfo deleteLocation = locationInfoRepository.findByLocationId(bookmark.getLocationInfo().getLocationId());
+                LocationInfo deleteLocation = bookmark.getLocationInfo();
 
                 // 다른 곳에서 사용중이 아닌 위치면 삭제
                 if (deleteLocation != null) {
@@ -1708,8 +1742,8 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // 한 유저의 한 책에 대한 메모 전체 검색
-        List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecord(bookRecord);
-        for(Bookmark bookmark : bookmarks) {
+        List<Bookmark> bookmarks = bookRecord.getBookmarks();
+        for (Bookmark bookmark : bookmarks) {
             // 위치 List 저장
             List<String> location = new ArrayList<>();
             location.add(bookmark.getLocationInfo().getPlaceName());
@@ -1761,7 +1795,8 @@ public class BookService {
                     HttpStatus.NOT_FOUND);
         }
 
-        AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()));
+        AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo,
+                (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()));
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), allLocationResponse),
@@ -1777,7 +1812,7 @@ public class BookService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자별 등록 위치 받아오기
-        List<MemberLocation> memberLocationList = memberLocationRepository.findAllByMember(member);
+        List<MemberLocation> memberLocationList = member.getMemberLocations();
         for (MemberLocation value : memberLocationList) {
             LocationInfo memberLocation = value.getLocationInfo();
 
@@ -1842,7 +1877,7 @@ public class BookService {
 
         // 독서노트의 대표위치, 책갈피의 위치를 가져와 리스트 생성
         List<AllMarkerResponse> allMarkers = Stream.concat(
-                bookRecordRepository.findAllByMember(member).stream()
+                member.getBookRecords().stream()
                         .map(bookRecord -> new AllMarkerResponse(
                                 bookRecord.getLocationInfo().getLocationId(),
                                 bookRecord.getLocationInfo().getLatitude(),
@@ -1900,24 +1935,25 @@ public class BookService {
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
-                        new AllLocationResponse(locationInfoList, (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
+                        new AllLocationResponse(locationInfoList,
+                                (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
                 HttpStatus.OK);
     }
+
+    /** 유틸리티 메소드 **/
 
     // 중복 책 검색 및 등록
     public Book registerBook(String isbn, BookCreateRequest bookInformation) {
         LocalDate publicationDate = converterService.stringToDate(bookInformation.publicationDate());
-        bookRepository.save(
+        return bookRepository.save(
                 Book.create(isbn, bookInformation.cover(), bookInformation.title(), bookInformation.author(),
                         bookInformation.categoryName(), bookInformation.totalPage(),
                         bookInformation.publisher(), publicationDate));
-        return bookRepository.findByIsbn(isbn);
     }
 
     // 위치 등록 및 반환
     public LocationInfo registerLocation(String placeName, String address, double latitude, double longitude) {
-        locationInfoRepository.save(LocationInfo.create(placeName, address, latitude, longitude));
-        return locationInfoRepository.findByPlaceName(placeName);
+        return locationInfoRepository.save(LocationInfo.create(placeName, address, latitude, longitude));
     }
 
     // 최근 위치 검색 기록 추가(레코드가 5개 초과되면 삭제하는 코드까지)
@@ -1932,9 +1968,10 @@ public class BookService {
     }
 
     // 전체 위치 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
-    public void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo, BooleanWrapper isEnd) {
+    public void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo,
+                                BooleanWrapper isEnd) {
         // 정보 받아오기
-        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMember(member) : bookRecordRepository.findAllByMember(member);
+        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMember(member) : member.getBookRecords();
 
         int size = records.size();
         BookRecord bookRecord;
@@ -1942,7 +1979,9 @@ public class BookService {
 
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
-            if ((orderNumber + 1) * 20 >= size) isEnd.setValue(true);
+            if ((orderNumber + 1) * 20 >= size) {
+                isEnd.setValue(true);
+            }
 
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
             if (i >= size) {
@@ -1958,7 +1997,9 @@ public class BookService {
 
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
-                if (bookmark.getLocationInfo() == null) break;
+                if (bookmark.getLocationInfo() == null) {
+                    break;
+                }
 
                 // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
@@ -1969,7 +2010,9 @@ public class BookService {
 
             } else { // 독서노트면
                 bookRecord = (BookRecord) records.get(i);
-                if (bookRecord.getLocationInfo() == null) break;
+                if (bookRecord.getLocationInfo() == null) {
+                    break;
+                }
 
                 // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
@@ -1985,9 +2028,11 @@ public class BookService {
     }
 
     // 마크 세부 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
-    public void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfoList, BooleanWrapper isEnd) {
+    public void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark,
+                             List<LocationInfoDto> locationInfoList, BooleanWrapper isEnd) {
         // 북마크인지 여부에 따라 필요한 레포지토리 검색
-        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(member, locationInfo) : bookRecordRepository.findAllByMemberAndLocationInfo(member, locationInfo);
+        List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(member, locationInfo)
+                : bookRecordRepository.findAllByMemberAndLocationInfo(member, locationInfo);
 
         int size = records.size();
         BookRecord bookRecord;
@@ -1995,7 +2040,9 @@ public class BookService {
 
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
-            if ((orderNumber + 1) * 20 >= size) isEnd.setValue(true);
+            if ((orderNumber + 1) * 20 >= size) {
+                isEnd.setValue(true);
+            }
 
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
             if (i >= size) {
@@ -2011,7 +2058,9 @@ public class BookService {
 
             if (isBookmark) { // 책갈피면
                 bookmark = (Bookmark) records.get(i);
-                if (bookmark.getLocationInfo() == null) break;
+                if (bookmark.getLocationInfo() == null) {
+                    break;
+                }
 
                 // 책갈피에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookmark.getDate());
@@ -2022,7 +2071,9 @@ public class BookService {
 
             } else { // 독서노트면
                 bookRecord = (BookRecord) records.get(i);
-                if (bookRecord.getLocationInfo() == null) break;
+                if (bookRecord.getLocationInfo() == null) {
+                    break;
+                }
 
                 // 독서노트에서 날짜, 제목, 읽은 페이지, 위치 아이디, 장소명을 받아오기
                 date = converterService.dateToString(bookRecord.getStartDate());
@@ -2040,22 +2091,25 @@ public class BookService {
     // Boolean을 참조 타입으로 전달하기 위한 클래스
     public class BooleanWrapper {
         private boolean value;
-        public boolean getValue() { return value; }
-        public void setValue(boolean value) { this.value = value; }
+
+        public boolean getValue() {
+            return value;
+        }
+
+        public void setValue(boolean value) {
+            this.value = value;
+        }
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
     public BookReviewReaction registerBookReviewReaction(BookReview bookReview) {
-        bookReviewReactionRepository.save(BookReviewReaction.create(bookReview));
-        return bookReviewReactionRepository.findByBookReview(bookReview);
+        return bookReviewReactionRepository.save(BookReviewReaction.create(bookReview));
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReviewer)
     public BookReviewReviewer registerBookReviewReviewer(BookReview bookReview, Member member) {
-        // 반응 여부 false, 종류 0인 레코드 생성
-        bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
-        // 카운트 수정에 사용할 용도로 반환
-        return bookReviewReviewerRepository.findByBookReviewAndMember(bookReview, member);
+        // 반응 여부 false, 종류 0인 레코드 생성 및 카운트 수정에 사용할 용도로 반환
+        return bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
     }
 
     // 도서정보 호출 API 데이터를 가져오는 메소드
@@ -2070,7 +2124,8 @@ public class BookService {
 
         // 응답 데이터를 받아올 버퍼 생성
         // try-with-resources (버퍼를 명시적으로 close 하지 않고, 간결하게 처리하기 위함)
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
             String returnLine;
 
             // 응답 데이터 한 줄씩 기록
@@ -2106,7 +2161,8 @@ public class BookService {
             itemIdType = (String) aladinApi.get("item_id_type");
         }
 
-        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType, isbn, output, version);
+        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
+                isbn, output, version);
     }
 
     // 알라딘 API 데이터 파싱
@@ -2144,7 +2200,9 @@ public class BookService {
 
     // 선택 리뷰 리스트 생성 메소드
     public List<Integer> getSelectedReviewList(List<SelectReview> selectedReviews) {
-        if (selectedReviews.isEmpty()) return null;
+        if (selectedReviews.isEmpty()) {
+            return null;
+        }
 
         // max 값 위치를 체크하기 위한 리스트
         int[] integerArray = new int[31];
@@ -2168,7 +2226,9 @@ public class BookService {
 
     // 댓글 최신순 리스트 생성 메소드
     public List<String> getLatestCommentList(List<BookReview> bookReviews) {
-        if (bookReviews.isEmpty()) return null;
+        if (bookReviews.isEmpty()) {
+            return null;
+        }
 
         // BookReview 스트림을 생성해 최대 5개까지 comment 받아오기
         return bookReviews.stream()
