@@ -57,7 +57,7 @@ public class BookRecord {
     @Column(name = "first_review_date")
     private LocalDate firstReviewDate;
 
-    @Column(name = "last_review_date")
+    @Column(name = "last_edit_date")
     private LocalDateTime lastEditDate;
 
     @ColumnDefault("0")
