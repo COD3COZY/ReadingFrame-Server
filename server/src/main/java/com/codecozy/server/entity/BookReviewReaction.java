@@ -11,13 +11,9 @@ import lombok.*;
 @Table(name = "BOOK_REVIEW_REACTION")
 public class BookReviewReaction {
     @Id
-    @Column(name = "comment_id")
-    private Long commentId;
-
-    @MapsId
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comment_id", referencedColumnName = "comment_id")
-    private BookReview bookReview;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "reaction_id")
+    private Long reactionId;
 
     @Column(name = "heart_count", nullable = false)
     private int heartCount;
@@ -61,9 +57,8 @@ public class BookReviewReaction {
         else if (reactionCode == 4) angryCount -= 1;
     }
 
-    public static BookReviewReaction create(BookReview bookReview) {
+    public static BookReviewReaction create() {
         return BookReviewReaction.builder()
-                .bookReview(bookReview)
                 .heartCount(0)
                 .goodCount(0)
                 .wowCount(0)

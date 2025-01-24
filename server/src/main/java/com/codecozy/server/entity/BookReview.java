@@ -34,13 +34,18 @@ public class BookReview {
     @Column(name = "review_date", nullable = false)
     private LocalDate reviewDate;
 
-    @OneToOne(mappedBy = "bookReview", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "reaction_id", referencedColumnName = "reaction_id")
     private BookReviewReaction bookReviewReaction;
 
     @OneToMany(mappedBy = "bookReview", cascade = CascadeType.REMOVE)
     private List<BookReviewReviewer> bookReviewReviewers;
 
     public void setReviewText(String reviewText) { this.reviewText = reviewText; }
+
+    public void setBookReviewReaction(BookReviewReaction bookReviewReaction) {
+        this.bookReviewReaction = bookReviewReaction;
+    }
 
     public static BookReview create(BookRecord bookRecord, String reviewText) {
         return BookReview.builder()

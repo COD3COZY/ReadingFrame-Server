@@ -18,6 +18,7 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.BufferedReader;
@@ -765,6 +766,8 @@ public class BookService {
                             + bookReviewReaction.getReportHatefulCount()
                             + bookReviewReaction.getReportSpamCount();
                     if (cnt <= 0) {
+                        bookReview.setBookReviewReaction(null);
+                        bookReviewRepository.save(bookReview);
                         bookReviewReactionRepository.delete(bookReviewReaction);
                     }
 
@@ -868,6 +871,7 @@ public class BookService {
     }
 
     // 리뷰 전체 수정 (키워드, 선택 리뷰, 한줄평)
+    @Transactional
     public ResponseEntity<DefaultResponse> modifyReview(Long memberId, String isbn, ReviewCreateRequest request) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -934,17 +938,6 @@ public class BookService {
         } else { // 없으면 한줄평 레코드 삭제
             BookReview bookReview = bookRecord.getBookReview();
 
-            // 한줄평 반응 종류 찾고 삭제
-            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
-            if (bookReviewReaction != null) {
-                bookReviewReactionRepository.delete(bookReviewReaction);
-            }
-            // 한줄평 반응 여부 모두 찾고 삭제
-            List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
-            for (int i = 0; i < bookReviewReviewers.size(); i++) {
-                bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
-            }
-
             if (bookReview != null) {
                 bookReviewRepository.delete(bookReview);
             }
@@ -962,6 +955,7 @@ public class BookService {
     }
 
     // 리뷰 전체 삭제 (키워드, 선택 리뷰, 한줄평)
+    @Transactional
     public ResponseEntity<DefaultResponse> deleteReview(Long memberId, String isbn) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -991,17 +985,6 @@ public class BookService {
         // 한줄평 찾기
         BookReview bookReview = bookRecord.getBookReview();
 
-        // 한줄평 반응 종류 찾고 삭제
-        BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
-        if (bookReviewReaction != null) {
-            bookReviewReactionRepository.delete(bookReviewReaction);
-        }
-        // 한줄평 반응 여부 모두 찾고 삭제
-        List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
-        for (int i = 0; i < bookReviewReviewers.size(); i++) {
-            bookReviewReviewerRepository.delete(bookReviewReviewers.get(i));
-        }
-
         // 한줄평 삭제
         if (bookReview != null) {
             bookReviewRepository.delete(bookReview);
@@ -1025,21 +1008,6 @@ public class BookService {
         BookReview bookReview = bookRecord.getBookReview();
         // 한줄평이 있으면
         if (bookReview != null) {
-            // 한줄평에 대한 반응 종류, 여부 레코드(하나라도 있는지) 찾기
-            BookReviewReaction bookReviewReaction = bookReview.getBookReviewReaction();
-            List<BookReviewReviewer> bookReviewReviewers = bookReview.getBookReviewReviewers();
-
-            // 해당 한줄평에 대한 반응 종류 레코드 지우기
-            if (bookReviewReaction != null) {
-                bookReviewReactionRepository.delete(bookReviewReaction);
-            }
-            // 해당 한줄평에 대한 반응 여부 레코드 지우기
-            if (!bookReviewReviewers.isEmpty()) {
-                for (BookReviewReviewer reviewer : bookReviewReviewers) {
-                    bookReviewReviewerRepository.delete(reviewer);
-                }
-            }
-
             // 한줄평 지우기
             bookReviewRepository.delete(bookReview);
         } else {
@@ -2105,7 +2073,14 @@ public class BookService {
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReaction)
     private BookReviewReaction registerBookReviewReaction(BookReview bookReview) {
-        return bookReviewReactionRepository.save(BookReviewReaction.create(bookReview));
+        // 반응 레코드 등록
+        BookReviewReaction reaction = bookReviewReactionRepository.save(BookReviewReaction.create());
+
+        // FK 설정
+        bookReview.setBookReviewReaction(reaction);
+        bookReviewRepository.save(bookReview);
+
+        return reaction;
     }
 
     // 한줄평에 대한 반응 레코드 등록(BookReviewReviewer)
