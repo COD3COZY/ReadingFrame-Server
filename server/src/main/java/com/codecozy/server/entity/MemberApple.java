@@ -17,7 +17,7 @@ public class MemberApple {
 
     // 1:1 관계에서 member_id를 그대로 PK로 사용
     @MapsId
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 

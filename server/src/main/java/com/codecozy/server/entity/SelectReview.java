@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "SELECT_REVIEW")
 public class SelectReview {
     @Id
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "isbn", referencedColumnName = "isbn")

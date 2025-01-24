@@ -3,6 +3,7 @@ package com.codecozy.server.entity;
 import com.codecozy.server.composite_key.BookReviewReviewerKey;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
@@ -22,12 +23,12 @@ import lombok.NoArgsConstructor;
 @Table(name = "BOOK_REVIEW_REVIEWER")
 public class BookReviewReviewer {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", referencedColumnName = "comment_id")
     private BookReview bookReview;
 
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", referencedColumnName = "member_id")
     private Member member;
 

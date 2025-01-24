@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "BOOKMARK")
 public class Bookmark {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "member_id", referencedColumnName = "member_id"),
             @JoinColumn(name = "isbn", referencedColumnName = "isbn")
@@ -31,7 +31,7 @@ public class Bookmark {
     @Column(name = "mark_page", nullable = false)
     private int markPage;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
     private LocationInfo locationInfo;
 

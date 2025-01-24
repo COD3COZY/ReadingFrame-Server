@@ -8,7 +8,6 @@ import com.codecozy.server.dto.response.DetailBookshelfResponse;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.Member;
-import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 public class BookshelfService {
     private final ConverterService converterService;
     private final MemberRepository memberRepository;
-    private final BookRecordRepository bookRecordRepository;
 
     // 책장 초기 조회
     public ResponseEntity<DefaultResponse> getAllBookshelf(Long memberId, int bookshelfType) {
@@ -32,7 +30,7 @@ public class BookshelfService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
-        List<BookRecord> bookRecordList = bookRecordRepository.findAllByMember(member);
+        List<BookRecord> bookRecordList = member.getBookRecords();
 
         // 응답 dto
         List<AllBookshelfResponse> bookshelfResponseList = new ArrayList<>();
@@ -190,7 +188,7 @@ public class BookshelfService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
-        List<BookRecord> bookRecordList = bookRecordRepository.findAllByMember(member);
+        List<BookRecord> bookRecordList = member.getBookRecords();
 
         // 응답 dto
         List<DetailBookshelfResponse> detailBookshelfResponseList = new ArrayList<>();

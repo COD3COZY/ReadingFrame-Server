@@ -2,6 +2,7 @@ package com.codecozy.server.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
@@ -29,7 +30,7 @@ public class MemberKakao {
 
     // FK로 들고 온 것을 그대로 PK로 설정하기 위함
     @MapsId
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
