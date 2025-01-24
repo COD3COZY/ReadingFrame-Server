@@ -1,6 +1,5 @@
 package com.codecozy.server.entity;
 
-
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,13 +25,6 @@ public class Member {
 
     @Column(length = 2, nullable = false)
     private String profile;
-
-    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private MemberKakao memberKakao;
-
-    @OneToOne(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    @PrimaryKeyJoinColumn(name = "member_apple")
-    private MemberApple memberApple;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     private List<Badge> badges;

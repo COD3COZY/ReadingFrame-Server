@@ -178,6 +178,12 @@ public class MemberService {
     // 회원 탈퇴
     public ResponseEntity<DefaultResponse> deleteMember(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
+
+        // 소셜 정보 우선 삭제
+        memberKakaoRepository.deleteById(memberId);
+        memberAppleRepository.deleteById(memberId);
+
+        // 사용자 정보 삭제
         memberRepository.deleteById(memberId);
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
