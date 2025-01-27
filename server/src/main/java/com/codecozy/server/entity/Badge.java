@@ -11,7 +11,7 @@ import lombok.Getter;
 @Table(name = "BADGE")
 public class Badge {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 

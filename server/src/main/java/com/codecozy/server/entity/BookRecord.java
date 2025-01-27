@@ -20,12 +20,12 @@ import org.hibernate.annotations.ColumnDefault;
 @Table(name = "BOOK_RECORD")
 public class BookRecord {
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id")
     private Member member;
 
     @Id
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "isbn", referencedColumnName = "isbn")
     private Book book;
 
@@ -35,7 +35,7 @@ public class BookRecord {
     @Column(nullable = false)
     private int bookType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", referencedColumnName = "location_id")
     private LocationInfo locationInfo;
 
@@ -57,15 +57,15 @@ public class BookRecord {
     @Column(name = "first_review_date")
     private LocalDate firstReviewDate;
 
+    @Column(name = "last_edit_date")
+    private LocalDateTime lastEditDate;
+
     @ColumnDefault("0")
     @Column(name = "mark_page", nullable = false)
     private int markPage;
 
     @Column(name = "key_word", length = 15)
     private String keyWord;
-
-    @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
-    private BookRecordDate bookRecordDate;
 
     @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private BookReview bookReview;
@@ -102,6 +102,8 @@ public class BookRecord {
 
     public void setFirstReviewDate(LocalDate firstReviewDate) { this.firstReviewDate = firstReviewDate; }
 
+    public void setLastEditDate(LocalDateTime lastEditDate) { this.lastEditDate = lastEditDate; }
+
     public void deleteLocationInfo() { this.locationInfo = null; }
 
     // 읽고 싶은 책 등록 시 사용하는 create 메소드
@@ -111,13 +113,9 @@ public class BookRecord {
                 .book(book)
                 .readingStatus(0)
                 .bookType(-1)
-                .locationInfo(null)
                 .isMine(false)
                 .isHidden(false)
                 .createDate(LocalDateTime.now())
-                .startDate(null)
-                .recentDate(null)
-                .keyWord(null)
                 .build();
     }
 
@@ -133,7 +131,6 @@ public class BookRecord {
                 .createDate(LocalDateTime.now())
                 .startDate(startDate)
                 .recentDate(recentDate)
-                .keyWord(null)
                 .build();
     }
 }

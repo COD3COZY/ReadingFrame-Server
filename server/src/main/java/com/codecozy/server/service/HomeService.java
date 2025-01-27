@@ -15,11 +15,8 @@ import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.BookReview;
 import com.codecozy.server.entity.SelectReview;
 import com.codecozy.server.entity.Member;
-import com.codecozy.server.repository.BookRecordDateRepository;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
-import com.codecozy.server.repository.BookReviewRepository;
-import com.codecozy.server.repository.SelectReviewRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,67 +50,12 @@ public class HomeService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
-    private final BookRecordDateRepository bookRecordDateRepository;
-    private final BookReviewRepository bookReviewRepository;
-    private final SelectReviewRepository selectReviewRepository;
 
     // 독서 상태 상수 값
     private static final int UNREGISTERED = -1;    // 미등록
     private static final int WANT_TO_READ = 0;     // 읽고 싶은
     private static final int READING = 1;          // 읽는 중
     private static final int FINISH_READ = 2;      // 다 읽음
-
-    // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
-    private SearchResponse parsingData(String jsonStr) {
-        // JSON 데이터 가져오기
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObj = new JSONObject();
-        try {
-            jsonObj = (JSONObject) jsonParser.parse(jsonStr);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        log.info("JSON 데이터 받아오기 성공");
-        log.debug(jsonObj.toJSONString());
-
-        // 검색 결과 리스트 가져오기
-        JSONArray itemList = (JSONArray) jsonObj.get("item");
-
-        // 총 검색 결과 수 가져오기
-        int itemCount = itemList.size();
-
-        // 프론트측에 보낼 응답 DTO 구성
-        List<SearchDto> searchDto = new ArrayList<>();
-        for (int i = 0; i < itemList.size(); i++) {
-            JSONObject item = (JSONObject) itemList.get(i);
-
-            String isbn = item.get("isbn13").toString();
-            String cover = item.get("cover").toString();
-            String title = item.get("title").toString();
-            String author = item.get("author").toString();
-            String publisher = item.get("publisher").toString();
-
-            // 날짜 형식 변환 (yyyy-MM-dd -> yyyy.MM.dd)
-            String tempPublicationDate = item.get("pubDate").toString();
-            LocalDate tempDate = LocalDate.parse(tempPublicationDate,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String publicationDate = converterService.dateToString(tempDate);
-
-            // DTO 정보 넣기
-            searchDto.add(new SearchDto(
-                    isbn,
-                    cover,
-                    title,
-                    author,
-                    publisher,
-                    publicationDate
-            ));
-        }
-
-        // 최종 응답 DTO 구성
-        return new SearchResponse(itemCount, searchDto);
-    }
 
     // 메인 화면 조회
     public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
@@ -124,8 +66,7 @@ public class HomeService {
         List<MainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordDateRepository.getMainReadingBooks(member,
-                READING);
+        List<BookRecord> readingBooks = bookRecordRepository.getMainReadingBooks(member, READING);
 
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {
@@ -140,9 +81,9 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
-            BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview commentReview = bookRecord.getBookReview();
             // 리뷰들 중 하나라도 있으면 true
             if (!(keywordReview == null) || !(selectReview == null) || !(commentReview == null)) {
                 isWriteReview = true;
@@ -197,9 +138,9 @@ public class HomeService {
             // 1. 한 단어 리뷰
             String keywordReview = bookRecord.getKeyWord();
             // 2. 선택 키워드 리뷰
-            SelectReview selectReview = selectReviewRepository.findByBookRecord(bookRecord);
+            SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
-            BookReview commentReview = bookReviewRepository.findByBookRecord(bookRecord);
+            BookReview commentReview = bookRecord.getBookReview();
             // 리뷰들 중 하나라도 있으면 true
             if (!(keywordReview == null) || !(selectReview == null) || !(commentReview == null)) {
                 isWriteReview = true;
@@ -358,34 +299,6 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
-    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
-    private ReadingResponse getReadingBookInfo(BookRecord bookRecord) {
-        // 책 정보 가져오기
-        Book book = bookRecord.getBook();
-
-        // readingPercent 계산
-        int totalPage = book.getTotalPage();
-        int readPage = bookRecord.getMarkPage();
-        int readingPercent = converterService.pageToPercent(readPage, totalPage);
-
-        // 리뷰의 유무 가져오기
-        Boolean isWriteReview = bookReviewRepository.findByBookRecord(bookRecord) != null;
-
-        return new ReadingResponse(
-                book.getIsbn(),
-                book.getCover(),
-                book.getTitle(),
-                book.getAuthor(),
-                readingPercent,
-                totalPage,
-                readPage,
-                bookRecord.isHidden(),
-                converterService.categoryNameToCode(book.getCategory()),
-                bookRecord.getBookType(),
-                bookRecord.isMine(),
-                isWriteReview);
-    }
-
     // 읽고 있는 책 조회
     public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
         // 해당 유저 가져오기
@@ -436,7 +349,7 @@ public class HomeService {
             Book book = bookRecord.getBook();
 
             // 리뷰의 유무 가져오기
-            Boolean isWriteReview = bookReviewRepository.findByBookRecord(bookRecord) != null;
+            Boolean isWriteReview = bookRecord.getBookReview() != null;
 
             // dto 정보 추가
             finishReadBooks.add(new FinishReadResponse(
@@ -458,8 +371,7 @@ public class HomeService {
     }
 
     // 읽고 있는 책 숨기기 & 꺼내기
-    public ResponseEntity<DefaultResponse> modifyHidden(Long memberId, String isbn,
-            boolean isHidden) {
+    public ResponseEntity<DefaultResponse> modifyHidden(Long memberId, String isbn, boolean isHidden) {
         // 해당 유저 가져오기
         Member member = memberRepository.findByMemberId(memberId);
 
@@ -476,8 +388,62 @@ public class HomeService {
                 HttpStatus.OK);
     }
 
-    // yaml 파일 읽고 url 작성
-    public String createURL(String searchText, int i) {
+    /** 헬퍼 메소드 **/
+
+    // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
+    private SearchResponse parsingData(String jsonStr) {
+        // JSON 데이터 가져오기
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObj = new JSONObject();
+        try {
+            jsonObj = (JSONObject) jsonParser.parse(jsonStr);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        log.info("JSON 데이터 받아오기 성공");
+        log.debug(jsonObj.toJSONString());
+
+        // 검색 결과 리스트 가져오기
+        JSONArray itemList = (JSONArray) jsonObj.get("item");
+
+        // 총 검색 결과 수 가져오기
+        int itemCount = itemList.size();
+
+        // 프론트측에 보낼 응답 DTO 구성
+        List<SearchDto> searchDto = new ArrayList<>();
+        for (int i = 0; i < itemList.size(); i++) {
+            JSONObject item = (JSONObject) itemList.get(i);
+
+            String isbn = item.get("isbn13").toString();
+            String cover = item.get("cover").toString();
+            String title = item.get("title").toString();
+            String author = item.get("author").toString();
+            String publisher = item.get("publisher").toString();
+
+            // 날짜 형식 변환 (yyyy-MM-dd -> yyyy.MM.dd)
+            String tempPublicationDate = item.get("pubDate").toString();
+            LocalDate tempDate = LocalDate.parse(tempPublicationDate,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String publicationDate = converterService.dateToString(tempDate);
+
+            // DTO 정보 넣기
+            searchDto.add(new SearchDto(
+                    isbn,
+                    cover,
+                    title,
+                    author,
+                    publisher,
+                    publicationDate
+            ));
+        }
+
+        // 최종 응답 DTO 구성
+        return new SearchResponse(itemCount, searchDto);
+    }
+
+    // 알라딘 책 검색 url을 작성하는 메소드
+    private String createURL(String searchText, int i) {
         String baseUrl = null;
         String ttbKey = null;
         String output = null;
@@ -496,5 +462,33 @@ public class HomeService {
         }
 
         return String.format("%s?ttbkey=%s&Query=%s&QueryType=Keyword&Start=%d&MaxResults=50&Cover=Big&Output=%s&Version=%s", baseUrl, ttbKey, searchText, i, output, version);
+    }
+
+    // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
+    private ReadingResponse getReadingBookInfo(BookRecord bookRecord) {
+        // 책 정보 가져오기
+        Book book = bookRecord.getBook();
+
+        // readingPercent 계산
+        int totalPage = book.getTotalPage();
+        int readPage = bookRecord.getMarkPage();
+        int readingPercent = converterService.pageToPercent(readPage, totalPage);
+
+        // 리뷰의 유무 가져오기
+        Boolean isWriteReview = bookRecord.getBookReview() != null;
+
+        return new ReadingResponse(
+                book.getIsbn(),
+                book.getCover(),
+                book.getTitle(),
+                book.getAuthor(),
+                readingPercent,
+                totalPage,
+                readPage,
+                bookRecord.isHidden(),
+                converterService.categoryNameToCode(book.getCategory()),
+                bookRecord.getBookType(),
+                bookRecord.isMine(),
+                isWriteReview);
     }
 }
