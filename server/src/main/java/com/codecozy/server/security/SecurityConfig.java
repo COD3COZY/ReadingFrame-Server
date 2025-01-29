@@ -15,9 +15,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     @Autowired
     private TokenProvider tokenProvider;
-    private final String[] allowedUrls = {"/", "/nickname/**", "/sign-up/**", "/sign-in/**"};
+    private final String[] allowedUrls = {"/member/nickname/validation/*",
+            "/member/sign-up/*", "/member/sign-in/*"};
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
