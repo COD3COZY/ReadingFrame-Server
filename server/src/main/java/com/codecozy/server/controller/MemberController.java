@@ -14,15 +14,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/member")
 @RequiredArgsConstructor
 public class MemberController {
     private final MemberService memberService;
 
     // 닉네임 중복검사
-    @GetMapping("/nickname/{nickname}")
+    @GetMapping("/nickname/validation/{nickname}")
     public ResponseEntity validateNickname(@PathVariable("nickname") String nickname) {
         return memberService.validateNickname(nickname);
     }
@@ -52,21 +54,21 @@ public class MemberController {
     }
 
     // 닉네임 변경
-    @PatchMapping("/nickname-modify")
+    @PatchMapping("/nickname")
     public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token,
                                          @RequestBody Map<String, String> nicknameMap) {
         return memberService.modifyNickname(token, nicknameMap.get("nickname"));
     }
 
     // 프로필 이미지 변경
-    @PatchMapping("/profileImageCode")
+    @PatchMapping("/profile/image")
     public ResponseEntity modifyProfileImg(@RequestHeader("xAuthToken") String token,
                                            @RequestBody Map<String, String> profileCodeMap) {
         return memberService.modifyProfileImg(token, profileCodeMap.get("profileImageCode"));
     }
 
     // 회원 탈퇴
-    @DeleteMapping("/deleteAccount")
+    @DeleteMapping("")
     public ResponseEntity deleteMember(@RequestHeader("xAuthToken") String token) {
         return memberService.deleteMember(token);
     }
@@ -78,7 +80,7 @@ public class MemberController {
     }
 
     // 얻은 배지 조회
-    @GetMapping("/badge")
+    @GetMapping("/profile/badge")
     public ResponseEntity getBadgeList(@RequestHeader("xAuthToken") String token) {
         return memberService.getBadgeList(token);
     }

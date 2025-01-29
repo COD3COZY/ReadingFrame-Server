@@ -18,7 +18,7 @@ public class BookController {
     private final BookService bookService;
 
     // 책 등록 API
-    @PostMapping("/create/{isbn}")
+    @PostMapping("/{isbn}")
     public ResponseEntity createBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                      @RequestBody ReadingBookCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -27,7 +27,7 @@ public class BookController {
     }
 
     // 책 삭제 API
-    @DeleteMapping("/delete/{isbn}")
+    @DeleteMapping("/{isbn}")
     public ResponseEntity deleteBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -35,7 +35,7 @@ public class BookController {
     }
 
     // 책별 독서노트 조회 API
-    @GetMapping("/readingNote/{isbn}")
+    @GetMapping("/{isbn}")
     public ResponseEntity getReadingNote(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -43,7 +43,7 @@ public class BookController {
     }
 
     // 독서상태 변경 API
-    @PatchMapping("/readingStatus/{isbn}")
+    @PatchMapping("/reading-status/{isbn}")
     public ResponseEntity modifyReadingStatus(@RequestHeader("xAuthToken") String token,
                                               @PathVariable("isbn") String isbn,
                                               @RequestBody ModifyReadingStatusRequest request) {
@@ -53,7 +53,7 @@ public class BookController {
     }
 
     // 소장여부 변경 API
-    @PatchMapping("/isMine/{isbn}")
+    @PatchMapping("/is-mine/{isbn}")
     public ResponseEntity modifyIsMine(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                        @RequestBody Map<String, Boolean> isMineMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -62,7 +62,7 @@ public class BookController {
     }
 
     // 책 유형 변경 API
-    @PatchMapping("/bookType/{isbn}")
+    @PatchMapping("/book-type/{isbn}")
     public ResponseEntity modifyBookType(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody Map<String, Integer> bookTypeMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -71,7 +71,7 @@ public class BookController {
     }
 
     // 도서정보 초기 조회 API
-    @GetMapping("/bookDetail/{isbn}")
+    @GetMapping("/info/{isbn}")
     public ResponseEntity searchBookDetail(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) throws IOException {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -79,7 +79,7 @@ public class BookController {
     }
 
     // 한줄평 추가 조회 API
-    @GetMapping("/commentDetail")
+    @GetMapping("/comment/more")
     public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
                                         @RequestParam("isbn") String isbn,
                                         @RequestParam("orderNumber") Integer orderNumber,
@@ -100,7 +100,7 @@ public class BookController {
     }
 
     // 리뷰 전체 수정 API
-    @PatchMapping("/modifyReview/{isbn}")
+    @PatchMapping("/review/{isbn}")
     public ResponseEntity modifyReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                        @RequestBody ReviewCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -109,7 +109,7 @@ public class BookController {
     }
 
     // 리뷰 전체 삭제 API
-    @DeleteMapping("/deleteReview/{isbn}")
+    @DeleteMapping("/review/{isbn}")
     public ResponseEntity deleteReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -117,7 +117,7 @@ public class BookController {
     }
 
     // 한줄평 삭제 API
-    @DeleteMapping("/deleteComment/{isbn}")
+    @DeleteMapping("/comment/{isbn}")
     public ResponseEntity deleteComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -125,7 +125,7 @@ public class BookController {
     }
 
     // 한줄평 반응 추가 API
-    @PostMapping("/reaction/{isbn}")
+    @PostMapping("/comment/reaction/{isbn}")
     public ResponseEntity reactionComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                           @RequestBody CommentReactionRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -134,7 +134,7 @@ public class BookController {
     }
 
     // 한줄평 반응 수정 API
-    @PatchMapping("/modifyReaction/{isbn}")
+    @PatchMapping("/comment/reaction/{isbn}")
     public ResponseEntity modifyReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody CommentReactionRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -143,7 +143,7 @@ public class BookController {
     }
 
     // 한줄평 반응 삭제 API
-    @DeleteMapping("/deleteReaction/{isbn}")
+    @DeleteMapping("/comment/reaction/{isbn}")
     public ResponseEntity deleteReaction(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody DeleteReactionRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -152,7 +152,7 @@ public class BookController {
     }
 
     // 신고하기 API
-    @PostMapping("/report/{isbn}")
+    @PostMapping("/comment/report/{isbn}")
     public ResponseEntity reportComment(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                         @RequestBody ReportCommentRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -161,7 +161,7 @@ public class BookController {
     }
 
     // 읽고싶은 책 등록 API
-    @PostMapping("/wantToRead/{isbn}")
+    @PostMapping("/want-to-read/{isbn}")
     public ResponseEntity wantToRead(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                      @RequestBody BookCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -170,7 +170,7 @@ public class BookController {
     }
 
     // 읽기 시작한 날짜 변경 API
-    @PatchMapping("/modifyStartDate/{isbn}")
+    @PatchMapping("/start-date/{isbn}")
     public ResponseEntity modifyStartDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                           @RequestBody Map<String, String> startDateMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -179,7 +179,7 @@ public class BookController {
     }
 
     // 마지막 읽은 날짜 변경 API
-    @PatchMapping("/modifyRecentDate/{isbn}")
+    @PatchMapping("/recent-date/{isbn}")
     public ResponseEntity modifyRecentDate(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                            @RequestBody Map<String, String> recentDateMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -188,7 +188,7 @@ public class BookController {
     }
 
     // 책별 대표 위치 등록 API
-    @PostMapping("/mainLocation/{isbn}")
+    @PostMapping("/main-location/{isbn}")
     public ResponseEntity addMainLocation(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                           @RequestBody LocationRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -197,7 +197,7 @@ public class BookController {
     }
 
     // 책별 대표 위치 변경 API
-    @PatchMapping("/patchMainLocation/{isbn}")
+    @PatchMapping("/main-location/{isbn}")
     public ResponseEntity modifyMainLocation(@RequestHeader("xAuthToken") String token,
                                              @PathVariable("isbn") String isbn, @RequestBody LocationRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -206,7 +206,7 @@ public class BookController {
     }
 
     // 책별 대표 위치 삭제 API
-    @DeleteMapping("/deleteMainLocation/{isbn}")
+    @DeleteMapping("/main-location/{isbn}")
     public ResponseEntity deleteMainLocation(@RequestHeader("xAuthToken") String token,
                                              @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -215,8 +215,8 @@ public class BookController {
     }
 
     // 인물사전 등록 API
-    @PostMapping("/personalDictionary/{isbn}")
-    public ResponseEntity addpersonalDictionary(@RequestHeader("xAuthToken") String token,
+    @PostMapping("/character-dictionary/{isbn}")
+    public ResponseEntity addPersonalDictionary(@RequestHeader("xAuthToken") String token,
                                                 @PathVariable("isbn") String isbn,
                                                 @RequestBody PersonalDictionaryRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -225,7 +225,7 @@ public class BookController {
     }
 
     // 인물사전 수정 API
-    @PatchMapping("/modifyPersonalDictionary/{isbn}")
+    @PatchMapping("/character-dictionary/{isbn}")
     public ResponseEntity modifyPersonalDictionary(@RequestHeader("xAuthToken") String token,
                                                    @PathVariable("isbn") String isbn,
                                                    @RequestBody PersonalDictionaryRequest request) {
@@ -235,7 +235,7 @@ public class BookController {
     }
 
     // 인물사전 삭제 API
-    @DeleteMapping("/deletePersonalDictionary/{isbn}")
+    @DeleteMapping("/character-dictionary/{isbn}")
     public ResponseEntity deletePersonalDictionary(@RequestHeader("xAuthToken") String token,
                                                    @PathVariable("isbn") String isbn,
                                                    @RequestBody DeletePersonalDictionaryRequest request) {
@@ -245,7 +245,7 @@ public class BookController {
     }
 
     // 인물사전 전체조회 API
-    @GetMapping("/getPersonalDictionary/{isbn}")
+    @GetMapping("/character-dictionary/{isbn}")
     public ResponseEntity getPersonalDictionary(@RequestHeader("xAuthToken") String token,
                                                 @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -263,7 +263,7 @@ public class BookController {
     }
 
     // 메모 수정 API
-    @PatchMapping("/modifyMemo/{isbn}")
+    @PatchMapping("/memo/{isbn}")
     public ResponseEntity modifyMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                      @RequestBody MemoRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -272,7 +272,7 @@ public class BookController {
     }
 
     // 메모 삭제 API
-    @DeleteMapping("/deleteMemo/{isbn}")
+    @DeleteMapping("/memo/{isbn}")
     public ResponseEntity deleteMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                      @RequestBody DeleteUuidRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -281,7 +281,7 @@ public class BookController {
     }
 
     // 메모 전체조회 API
-    @GetMapping("/getMemo/{isbn}")
+    @GetMapping("/memo/{isbn}")
     public ResponseEntity getMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -298,7 +298,7 @@ public class BookController {
     }
 
     // 책갈피 수정 API
-    @PatchMapping("/modifyBookmark/{isbn}")
+    @PatchMapping("/bookmark/{isbn}")
     public ResponseEntity modifyBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody BookmarkRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -307,7 +307,7 @@ public class BookController {
     }
 
     // 책갈피 삭제 API
-    @DeleteMapping("/deleteBookmark/{isbn}")
+    @DeleteMapping("/bookmark/{isbn}")
     public ResponseEntity deleteBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody DeleteUuidRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -316,7 +316,7 @@ public class BookController {
     }
 
     // 책갈피 전체조회 API
-    @GetMapping("/getBookmark/{isbn}")
+    @GetMapping("/bookmark/{isbn}")
     public ResponseEntity getBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -324,7 +324,7 @@ public class BookController {
     }
 
     // 전체 위치 조회 API
-    @GetMapping("/getAllLocation/{orderNumber}")
+    @GetMapping("/map/location/{orderNumber}")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
                                          @PathVariable("orderNumber") Integer orderNumber) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -333,7 +333,7 @@ public class BookController {
     }
 
     // 최근 등록 위치 조회 API
-    @GetMapping("/getRecentLocation")
+    @GetMapping("/recent-location")
     public ResponseEntity getRecentLocation(@RequestHeader("xAuthToken") String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -341,7 +341,7 @@ public class BookController {
     }
 
     // 최근 등록 위치 삭제 API
-    @DeleteMapping("/deleteRecentLocation")
+    @DeleteMapping("/recent-location")
     public ResponseEntity deleteRecentLocation(@RequestHeader("xAuthToken") String token,
                                                @RequestBody DeleteRecentLocationRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -350,7 +350,7 @@ public class BookController {
     }
 
     // 지도 마크 조회 API
-    @GetMapping("/getAllMarker")
+    @GetMapping("/map/marker")
     public ResponseEntity getAllMarker(@RequestHeader("xAuthToken") String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -358,7 +358,7 @@ public class BookController {
     }
 
     // 마크 세부 조회 API
-    @GetMapping("/getMarkDetail")
+    @GetMapping("/map/marker/detail")
     public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
                                         @RequestParam("locationId") Long locationId,
                                         @RequestParam("orderNumber") Integer orderNumber) {
