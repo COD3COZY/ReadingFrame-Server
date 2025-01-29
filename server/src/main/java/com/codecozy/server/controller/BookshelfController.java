@@ -18,18 +18,18 @@ public class BookshelfController {
     private final BookshelfService bookshelfService;
 
     // 책장 초기 조회
-    @GetMapping("/{bookshelfType}")
+    @GetMapping("/{type}")
     public ResponseEntity getAllBookshelf(@RequestHeader("xAuthToken") String token,
-                                          @PathVariable("bookshelfType") int bookshelfType) {
+                                          @PathVariable("type") int bookshelfType) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookshelfService.getAllBookshelf(memberId, bookshelfType);
     }
 
     // 책장 리스트용 조회
-    @GetMapping("/detail/{bookshelfCode}")
+    @GetMapping("/{code}/detail")
     public ResponseEntity getDetailBookshelf(@RequestHeader("xAuthToken") String token,
-                                             @PathVariable("bookshelfCode") String bookshelfCode) {
+                                             @PathVariable("code") String bookshelfCode) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookshelfService.getDetailBookshelf(memberId, bookshelfCode);

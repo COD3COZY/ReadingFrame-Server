@@ -30,9 +30,9 @@ public class HomeController {
     }
 
     // 검색
-    @GetMapping("/search/{searchText}")
+    @GetMapping("/search/{text}")
     public ResponseEntity getSearchList(@RequestHeader("xAuthToken") String token,
-            @PathVariable("searchText") String searchText) throws IOException {
+            @PathVariable("text") String searchText) throws IOException {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return homeService.getSearchList(memberId, searchText);
@@ -63,7 +63,7 @@ public class HomeController {
     }
 
     // 읽고 있는 책 숨기기 & 꺼내기
-    @PatchMapping("/hidden/{isbn}")
+    @PatchMapping("/{isbn}/hidden")
     public ResponseEntity modifyHidden(@RequestHeader("xAuthToken") String token,
             @PathVariable("isbn") String isbn, @RequestBody Map<String, Boolean> isHiddenMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);

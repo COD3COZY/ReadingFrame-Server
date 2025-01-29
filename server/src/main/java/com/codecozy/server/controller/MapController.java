@@ -21,9 +21,9 @@ public class MapController {
     private final MapService mapService;
 
     // 전체 위치 조회 API
-    @GetMapping("/location/{orderNumber}")
+    @GetMapping("/location")
     public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
-            @PathVariable("orderNumber") Integer orderNumber) {
+            @RequestParam("orderNumber") Integer orderNumber) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return mapService.getAllLocation(memberId, orderNumber);
@@ -38,9 +38,9 @@ public class MapController {
     }
 
     // 마크 세부 조회 API
-    @GetMapping("/marker/detail")
+    @GetMapping("/marker/{id}/detail")
     public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
-            @RequestParam("locationId") Long locationId,
+            @PathVariable("id") Long locationId,
             @RequestParam("orderNumber") Integer orderNumber) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
         MarkDetailRequest request = new MarkDetailRequest(locationId, orderNumber);

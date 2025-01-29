@@ -1771,12 +1771,12 @@ public class BookService {
     }
 
     // 최근 등록 위치 삭제
-    public ResponseEntity<DefaultResponse> deleteRecentLocation(Long memberId, DeleteRecentLocationRequest request) {
+    public ResponseEntity<DefaultResponse> deleteRecentLocation(Long memberId, Long locationId) {
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
 
         // 전체 위치에서 검색
-        LocationInfo locationInfo = locationInfoRepository.findByLocationId(request.locationId());
+        LocationInfo locationInfo = locationInfoRepository.findByLocationId(locationId);
         if (locationInfo != null) {
             // 최근 등록 위치에서 해당 위치가 있는지 확인하고 삭제
             MemberLocation memberLocation = memberLocationRepository.findByMemberAndLocationInfo(member,

@@ -18,8 +18,8 @@ public class SecurityConfig {
 
     @Autowired
     private TokenProvider tokenProvider;
-    private final String[] allowedUrls = {"/member/nickname/validation/*",
-            "/member/sign-up/*", "/member/sign-in/*"};
+    private final String[] allowedUrls = {"/member/sign-up/*", "/member/sign-in/*",
+            "/member/nickname/check"};
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
