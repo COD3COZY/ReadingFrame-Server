@@ -14,6 +14,7 @@ import java.util.Map;
 @RequestMapping("/book")
 @RequiredArgsConstructor
 public class BookController {
+    
     private final TokenProvider tokenProvider;
     private final BookService bookService;
 
@@ -78,18 +79,6 @@ public class BookController {
         return bookService.searchBookDetail(memberId, isbn);
     }
 
-    // 한줄평 추가 조회 API
-    @GetMapping("/comment/more")
-    public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
-                                        @RequestParam("isbn") String isbn,
-                                        @RequestParam("orderNumber") Integer orderNumber,
-                                        @RequestParam("orderType") Boolean orderType) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-        CommentDetailRequest request = new CommentDetailRequest(orderNumber, orderType);
-
-        return bookService.commentDetail(memberId, isbn, request);
-    }
-
     // 리뷰 작성 API
     @PostMapping("/review/{isbn}")
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
@@ -114,6 +103,18 @@ public class BookController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookService.deleteReview(memberId, isbn);
+    }
+
+    // 한줄평 추가 조회 API
+    @GetMapping("/comment/more")
+    public ResponseEntity commentDetail(@RequestHeader("xAuthToken") String token,
+            @RequestParam("isbn") String isbn,
+            @RequestParam("orderNumber") Integer orderNumber,
+            @RequestParam("orderType") Boolean orderType) {
+        Long memberId = tokenProvider.getMemberIdFromToken(token);
+        CommentDetailRequest request = new CommentDetailRequest(orderNumber, orderType);
+
+        return bookService.commentDetail(memberId, isbn, request);
     }
 
     // 한줄평 삭제 API
@@ -323,15 +324,6 @@ public class BookController {
         return bookService.getBookmark(memberId, isbn);
     }
 
-    // 전체 위치 조회 API
-    @GetMapping("/map/location/{orderNumber}")
-    public ResponseEntity getAllLocation(@RequestHeader("xAuthToken") String token,
-                                         @PathVariable("orderNumber") Integer orderNumber) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-
-        return bookService.getAllLocation(memberId, orderNumber);
-    }
-
     // 최근 등록 위치 조회 API
     @GetMapping("/recent-location")
     public ResponseEntity getRecentLocation(@RequestHeader("xAuthToken") String token) {
@@ -347,24 +339,5 @@ public class BookController {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return bookService.deleteRecentLocation(memberId, request);
-    }
-
-    // 지도 마크 조회 API
-    @GetMapping("/map/marker")
-    public ResponseEntity getAllMarker(@RequestHeader("xAuthToken") String token) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-
-        return bookService.getAllMarker(memberId);
-    }
-
-    // 마크 세부 조회 API
-    @GetMapping("/map/marker/detail")
-    public ResponseEntity getMarkDetail(@RequestHeader("xAuthToken") String token,
-                                        @RequestParam("locationId") Long locationId,
-                                        @RequestParam("orderNumber") Integer orderNumber) {
-        Long memberId = tokenProvider.getMemberIdFromToken(token);
-        MarkDetailRequest request = new MarkDetailRequest(locationId, orderNumber);
-
-        return bookService.getMarkDetail(memberId, request);
     }
 }
