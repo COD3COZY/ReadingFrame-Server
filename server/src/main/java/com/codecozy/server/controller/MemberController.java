@@ -10,22 +10,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/member")
 @RequiredArgsConstructor
 public class MemberController {
-    private final MemberService memberService;
 
-    // 닉네임 중복검사
-    @GetMapping("/nickname/{nickname}")
-    public ResponseEntity validateNickname(@PathVariable("nickname") String nickname) {
-        return memberService.validateNickname(nickname);
-    }
+    private final MemberService memberService;
 
     // 카카오 회원가입
     @PostMapping("/sign-up/kakao")
@@ -51,24 +48,23 @@ public class MemberController {
         return memberService.signInApple(request);
     }
 
+    // 회원 탈퇴
+    @DeleteMapping("")
+    public ResponseEntity deleteMember(@RequestHeader("xAuthToken") String token) {
+        return memberService.deleteMember(token);
+    }
+
+    // 닉네임 중복검사
+    @GetMapping("/nickname/check")
+    public ResponseEntity validateNickname(@RequestParam("nickname") String nickname) {
+        return memberService.validateNickname(nickname);
+    }
+
     // 닉네임 변경
-    @PatchMapping("/nickname-modify")
+    @PatchMapping("/nickname")
     public ResponseEntity modifyNickname(@RequestHeader("xAuthToken") String token,
                                          @RequestBody Map<String, String> nicknameMap) {
         return memberService.modifyNickname(token, nicknameMap.get("nickname"));
-    }
-
-    // 프로필 이미지 변경
-    @PatchMapping("/profileImageCode")
-    public ResponseEntity modifyProfileImg(@RequestHeader("xAuthToken") String token,
-                                           @RequestBody Map<String, String> profileCodeMap) {
-        return memberService.modifyProfileImg(token, profileCodeMap.get("profileImageCode"));
-    }
-
-    // 회원 탈퇴
-    @DeleteMapping("/deleteAccount")
-    public ResponseEntity deleteMember(@RequestHeader("xAuthToken") String token) {
-        return memberService.deleteMember(token);
     }
 
     // 마이페이지 조회
@@ -77,8 +73,15 @@ public class MemberController {
         return memberService.getProfile(token);
     }
 
+    // 프로필 이미지 변경
+    @PatchMapping("/profile/image")
+    public ResponseEntity modifyProfileImg(@RequestHeader("xAuthToken") String token,
+                                           @RequestBody Map<String, String> profileCodeMap) {
+        return memberService.modifyProfileImg(token, profileCodeMap.get("profileImageCode"));
+    }
+
     // 얻은 배지 조회
-    @GetMapping("/badge")
+    @GetMapping("/profile/badge")
     public ResponseEntity getBadgeList(@RequestHeader("xAuthToken") String token) {
         return memberService.getBadgeList(token);
     }

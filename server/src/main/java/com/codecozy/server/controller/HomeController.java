@@ -30,16 +30,16 @@ public class HomeController {
     }
 
     // 검색
-    @GetMapping("/search/{searchText}")
+    @GetMapping("/search/{text}")
     public ResponseEntity getSearchList(@RequestHeader("xAuthToken") String token,
-            @PathVariable("searchText") String searchText) throws IOException {
+            @PathVariable("text") String searchText) throws IOException {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return homeService.getSearchList(memberId, searchText);
     }
 
     // 읽고 싶은 책 조회
-    @GetMapping("/wantToRead")
+    @GetMapping("/want-to-read")
     public ResponseEntity getWantToReadBooks(@RequestHeader("xAuthToken") String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -55,7 +55,7 @@ public class HomeController {
     }
 
     // 다 읽은 책 조회
-    @GetMapping("/finishRead")
+    @GetMapping("/finish-read")
     public ResponseEntity getFinishReadBooks(@RequestHeader("xAuthToken") String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -63,9 +63,9 @@ public class HomeController {
     }
 
     // 읽고 있는 책 숨기기 & 꺼내기
-    @PatchMapping("/hidden/{ISBN}")
+    @PatchMapping("/{isbn}/hidden")
     public ResponseEntity modifyHidden(@RequestHeader("xAuthToken") String token,
-            @PathVariable("ISBN") String isbn, @RequestBody Map<String, Boolean> isHiddenMap) {
+            @PathVariable("isbn") String isbn, @RequestBody Map<String, Boolean> isHiddenMap) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
         return homeService.modifyHidden(memberId, isbn, isHiddenMap.get("isHidden"));
