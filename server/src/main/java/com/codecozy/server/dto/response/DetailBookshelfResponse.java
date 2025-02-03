@@ -4,6 +4,7 @@ public record DetailBookshelfResponse(
         String ISBN,
         String cover,
         String title,
+        String author,
         Integer bookType,
         int category,
         boolean isMine,
