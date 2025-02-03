@@ -49,6 +49,10 @@ dependencies {
 
 	// JSON 데이터 처리 라이브러리
 	implementation group: 'org.json', name: 'json', version: '20230618'
+	
+	// 캐시 처리 라이브러리
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6'
 }
 
 tasks.named('test') {

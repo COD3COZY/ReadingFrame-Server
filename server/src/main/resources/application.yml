@@ -26,6 +26,12 @@ spring:
     ansi:
       enabled: always
 
+  # 캐시 구현체 Caffeine 설정
+  cache:
+    type: caffeine
+    caffeine:
+      spec: "expireAfterWrite=10m,maximumSize=100"
+
 # 로그 레벨 설정
 logging:
   level:
