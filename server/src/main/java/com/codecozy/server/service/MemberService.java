@@ -20,7 +20,7 @@ import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -177,7 +177,6 @@ public class MemberService {
     }
 
     // 회원 탈퇴
-    @CacheEvict(value = "member", key = "#memberId") // 캐시된 데이터 삭제
     public ResponseEntity<DefaultResponse> deleteMember(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
 
@@ -255,5 +254,10 @@ public class MemberService {
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), badgeResponseList),
                 HttpStatus.OK);
+    }
+
+    @Cacheable(value = "member", key = "#memberId")
+    private Member getMemberById(Long memberId) {
+        return memberRepository.findByMemberId(memberId);
     }
 }

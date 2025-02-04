@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -144,7 +143,7 @@ public class BookService {
     // 독서노트 조회
     public ResponseEntity<DefaultResponse> getReadingNote(Long memberId, String isbn) {
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -368,7 +367,7 @@ public class BookService {
         SearchBookResponse response = dataParsing(jsonResponse);
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -402,7 +401,7 @@ public class BookService {
     // 한줄평 추가조회
     public ResponseEntity<DefaultResponse> commentDetail(Long memberId, String isbn, CommentDetailRequest request) {
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -1324,7 +1323,7 @@ public class BookService {
         List<PersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1460,7 +1459,7 @@ public class BookService {
         List<MemoResponse> memoList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1705,7 +1704,7 @@ public class BookService {
         List<BookmarkResponse> bookmarkList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1750,7 +1749,7 @@ public class BookService {
         List<RecentLocationResponse> location = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자별 등록 위치 받아오기
         List<MemberLocation> memberLocationList = member.getMemberLocations();
@@ -1981,7 +1980,6 @@ public class BookService {
                 .collect(Collectors.toList());
     }
 
-    private final CacheManager cacheManager;
     @Cacheable(value = "member", key = "#memberId")
     private Member getMemberById(Long memberId) {
         return memberRepository.findByMemberId(memberId);
