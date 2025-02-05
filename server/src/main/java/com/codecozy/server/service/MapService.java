@@ -17,6 +17,7 @@ import com.codecozy.server.repository.LocationInfoRepository;
 import com.codecozy.server.repository.MemberRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
@@ -43,10 +44,8 @@ public class MapService {
         Member member = memberRepository.findByMemberId(memberId);
 
         // 조회할 위치가 더 있는지에 대한 flag
-        BooleanWrapper isBookRecordEnd = new BooleanWrapper();
-        isBookRecordEnd.setValue(false);
-        BooleanWrapper isBookmarkEnd = new BooleanWrapper();
-        isBookmarkEnd.setValue(false);
+        AtomicBoolean isBookRecordEnd = new AtomicBoolean(false);
+        AtomicBoolean isBookmarkEnd = new AtomicBoolean(false);
 
         addLocationsAll(member, orderNumber, false, locationInfo, isBookRecordEnd);
         addLocationsAll(member, orderNumber, true, locationInfo, isBookmarkEnd);
@@ -58,7 +57,7 @@ public class MapService {
         }
 
         AllLocationResponse allLocationResponse = new AllLocationResponse(locationInfo,
-                (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()));
+                (isBookRecordEnd.get() && isBookmarkEnd.get()));
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), allLocationResponse),
@@ -110,10 +109,8 @@ public class MapService {
         long locationId = request.locationId();
 
         // 조회할 위치가 더 있는지에 대한 flag
-        BooleanWrapper isBookRecordEnd = new BooleanWrapper();
-        isBookRecordEnd.setValue(false);
-        BooleanWrapper isBookmarkEnd = new BooleanWrapper();
-        isBookmarkEnd.setValue(false);
+        AtomicBoolean isBookRecordEnd = new AtomicBoolean(false);
+        AtomicBoolean isBookmarkEnd = new AtomicBoolean(false);
 
         // locationId로 위치 정보 검색
         LocationInfo locationInfo = locationInfoRepository.findByLocationId(locationId);
@@ -131,28 +128,15 @@ public class MapService {
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(),
                         new AllLocationResponse(locationInfoList,
-                                (isBookRecordEnd.getValue() && isBookmarkEnd.getValue()))),
+                                (isBookRecordEnd.get() && isBookmarkEnd.get()))),
                 HttpStatus.OK);
     }
 
     /** 헬퍼 클래스 및 메소드 **/
 
-    // Boolean을 참조 타입으로 전달하기 위한 클래스
-    private class BooleanWrapper {
-        private boolean value;
-
-        public boolean getValue() {
-            return value;
-        }
-
-        public void setValue(boolean value) {
-            this.value = value;
-        }
-    }
-
     // 전체 위치 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
     private void addLocationsAll(Member member, int orderNumber, boolean isBookmark, List<LocationInfoDto> locationInfo,
-            BooleanWrapper isEnd) {
+            AtomicBoolean isEnd) {
         // 정보 받아오기
         List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMember(member) : member.getBookRecords();
 
@@ -163,7 +147,7 @@ public class MapService {
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
             if ((orderNumber + 1) * 20 >= size) {
-                isEnd.setValue(true);
+                isEnd.set(true);
             }
 
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break
@@ -212,7 +196,7 @@ public class MapService {
 
     // 마크 세부 조회를 위한 독서노트, 책갈피에서의 위치 정보 조회
     private void addLocations(Member member, LocationInfo locationInfo, int orderNumber, boolean isBookmark,
-            List<LocationInfoDto> locationInfoList, BooleanWrapper isEnd) {
+            List<LocationInfoDto> locationInfoList, AtomicBoolean isEnd) {
         // 북마크인지 여부에 따라 필요한 레포지토리 검색
         List<?> records = isBookmark ? bookmarkRepository.findAllByBookRecordMemberAndLocationInfo(member, locationInfo)
                 : bookRecordRepository.findAllByMemberAndLocationInfo(member, locationInfo);
@@ -224,7 +208,7 @@ public class MapService {
         for (int i = (orderNumber * 20); i < 20 + (orderNumber * 20); i++) {
             // 이번이 마지막 조회면 (전체 개수와 이번 orderNumber를 사용하여 비교)
             if ((orderNumber + 1) * 20 >= size) {
-                isEnd.setValue(true);
+                isEnd.set(true);
             }
 
             // 현재 조회하는 컬럼이 받아온 컬럼들의 사이즈보다 같거나 크면 break

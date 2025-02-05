@@ -20,6 +20,7 @@ import com.codecozy.server.security.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -253,5 +254,10 @@ public class MemberService {
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), badgeResponseList),
                 HttpStatus.OK);
+    }
+
+    @Cacheable(value = "member", key = "#memberId")
+    private Member getMemberById(Long memberId) {
+        return memberRepository.findByMemberId(memberId);
     }
 }

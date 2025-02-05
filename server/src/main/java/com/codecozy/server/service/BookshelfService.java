@@ -209,6 +209,7 @@ public class BookshelfService {
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
+                            bookRecord.getBook().getTitle(),
                             bookRecord.getBook().getAuthor(),
                             null,
                             converterService.categoryNameToCode(bookRecord.getBook().getCategory()),
@@ -236,6 +237,7 @@ public class BookshelfService {
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
+                            bookRecord.getBook().getTitle(),
                             bookRecord.getBook().getAuthor(),
                             bookRecord.getBookType(),
                             converterService.categoryNameToCode(bookRecord.getBook().getCategory()),
@@ -263,6 +265,7 @@ public class BookshelfService {
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
                             bookRecord.getBook().getIsbn(),
                             bookRecord.getBook().getCover(),
+                            bookRecord.getBook().getTitle(),
                             bookRecord.getBook().getAuthor(),
                             bookRecord.getBookType(),
                             converterService.categoryNameToCode(bookRecord.getBook().getCategory()),

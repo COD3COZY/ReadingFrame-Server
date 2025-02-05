@@ -10,11 +10,13 @@ import com.codecozy.server.repository.*;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -70,7 +72,7 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != -1) { // -1: reading_status가 '읽고싶은'(0)인 경우
+        if (bookRecord != null && bookRecord.getBookType() != -1) { // reading_status가 '읽고싶은'(0)인 경우, bookType이 -1로 생성됨
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
@@ -1976,5 +1978,10 @@ public class BookService {
                 .map(BookReview::getReviewText)
                 .limit(5)
                 .collect(Collectors.toList());
+    }
+
+    @Cacheable(value = "member", key = "#memberId")
+    private Member getMemberById(Long memberId) {
+        return memberRepository.findByMemberId(memberId);
     }
 }
