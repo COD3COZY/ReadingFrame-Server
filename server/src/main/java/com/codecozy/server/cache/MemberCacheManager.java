@@ -3,9 +3,11 @@ package com.codecozy.server.cache;
 import com.codecozy.server.entity.Member;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+@Component
 public class MemberCacheManager {
     private final Cache<Long, Member> memberCache;
 
