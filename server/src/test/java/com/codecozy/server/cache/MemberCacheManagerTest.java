@@ -4,10 +4,17 @@ import com.codecozy.server.entity.Member;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.annotation.EnableCaching;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
+@EnableCaching
 class MemberCacheManagerTest {
 
+    @Autowired
     private MemberCacheManager memberCacheManager;
 
     private Member member;
@@ -17,7 +24,7 @@ class MemberCacheManagerTest {
     void setup() {
         memberCacheManager = new MemberCacheManager();
 
-        member = Member.create("다은", "10");
+        member = Member.create("강아지", "10");
         memberId = member.getMemberId();
     }
 
@@ -31,7 +38,7 @@ class MemberCacheManagerTest {
         // then
         assertThat(cachedMember).isNotNull();
         assertThat(cachedMember.getMemberId()).isEqualTo(memberId);
-        assertThat(cachedMember.getNickname()).isEqualTo("다은");
+        assertThat(cachedMember.getNickname()).isEqualTo("강아지");
         assertThat(cachedMember.getProfile()).isEqualTo("10");
     }
 
@@ -63,8 +70,6 @@ class MemberCacheManagerTest {
     @DisplayName("캐시 전체 비우기 테스트")
     void cacheClearTest() {
         // given
-        Member member = Member.create("강아지", "23");
-        Long memberId = member.getMemberId();
         Member member2 = Member.create("고양이", "32");
         Long member2Id = member2.getMemberId();
 
