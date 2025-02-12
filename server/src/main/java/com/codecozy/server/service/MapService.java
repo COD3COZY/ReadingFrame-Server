@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.cache.MemberCacheManager;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.MarkDetailRequest;
@@ -35,13 +36,15 @@ public class MapService {
     private final BookmarkRepository bookmarkRepository;
     private final LocationInfoRepository locationInfoRepository;
 
+    private final MemberCacheManager cacheManager;
+
     // 전체 위치 조회
     public ResponseEntity<DefaultResponse> getAllLocation(Long memberId, int orderNumber) {
         // 응답으로 보낼 위치 리스트
         List<LocationInfoDto> locationInfo = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 조회할 위치가 더 있는지에 대한 flag
         AtomicBoolean isBookRecordEnd = new AtomicBoolean(false);
@@ -67,7 +70,7 @@ public class MapService {
     // 지도 마크 조회
     public ResponseEntity<DefaultResponse> getAllMarker(Long memberId) {
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 독서노트의 대표위치, 책갈피의 위치를 가져와 리스트 생성
         List<AllMarkerResponse> allMarkers = Stream.concat(
@@ -103,7 +106,7 @@ public class MapService {
         List<LocationInfoDto> locationInfoList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         int orderNumber = request.orderNumber();
         long locationId = request.locationId();
@@ -253,5 +256,17 @@ public class MapService {
             // 받아온 정보로 위치 정보 추가
             locationInfoList.add(new LocationInfoDto(date, isBookmark, title, readPage, locationId, placeName));
         }
+    }
+
+    private Member getMemberById(Long memberId) {
+        Member member = cacheManager.get(memberId);
+        if (member != null){
+            return member;
+        }
+
+        // 캐시에 없으면
+        member = memberRepository.findByMemberId(memberId);
+        cacheManager.put(memberId, member);
+        return member;
     }
 }

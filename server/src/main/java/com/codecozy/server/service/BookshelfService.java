@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.cache.MemberCacheManager;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
@@ -24,10 +25,12 @@ public class BookshelfService {
     private final ConverterService converterService;
     private final MemberRepository memberRepository;
 
+    private final MemberCacheManager cacheManager;
+
     // 책장 초기 조회
     public ResponseEntity<DefaultResponse> getAllBookshelf(Long memberId, int bookshelfType) {
         // 유저 정보 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
         List<BookRecord> bookRecordList = member.getBookRecords();
@@ -185,7 +188,7 @@ public class BookshelfService {
     // 책장 리스트용 조회
     public ResponseEntity<DefaultResponse> getDetailBookshelf(Long memberId, String bookshelfCode) {
         // 유저 정보 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 해당 유저의 독서노트 모두 가져오기
         List<BookRecord> bookRecordList = member.getBookRecords();
@@ -280,5 +283,17 @@ public class BookshelfService {
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), detailBookshelfResponseList),
                 HttpStatus.OK);
+    }
+
+    private Member getMemberById(Long memberId) {
+        Member member = cacheManager.get(memberId);
+        if (member != null){
+            return member;
+        }
+
+        // 캐시에 없으면
+        member = memberRepository.findByMemberId(memberId);
+        cacheManager.put(memberId, member);
+        return member;
     }
 }

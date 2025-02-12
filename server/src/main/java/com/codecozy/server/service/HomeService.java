@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.cache.MemberCacheManager;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
@@ -51,6 +52,8 @@ public class HomeService {
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
 
+    private final MemberCacheManager cacheManager;
+
     // 독서 상태 상수 값
     private static final int UNREGISTERED = -1;    // 미등록
     private static final int WANT_TO_READ = 0;     // 읽고 싶은
@@ -60,7 +63,7 @@ public class HomeService {
     // 메인 화면 조회
     public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
         // 해당 유저 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         /** 전체 책 리스트 가져오기 **/
         List<MainBooksResponse> booksList = new ArrayList<>();
@@ -272,7 +275,7 @@ public class HomeService {
     // 읽고 싶은 책 조회
     public ResponseEntity<DefaultResponse> getWantToReadBooks(Long memberId) {
         // 해당 유저 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 읽고 싶은 책 목록 가져오기
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndReadingStatus(
@@ -302,7 +305,7 @@ public class HomeService {
     // 읽고 있는 책 조회
     public ResponseEntity<DefaultResponse> getReadingBooks(Long memberId) {
         // 해당 유저 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 1. 읽고 있는 책 중, 숨기지 않은 책들만 먼저 가져오기
         List<BookRecord> notHiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(
@@ -336,7 +339,7 @@ public class HomeService {
     // 다 읽은 책 조회
     public ResponseEntity<DefaultResponse> getFinishReadBooks(Long memberId) {
         // 해당 유저 가져오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 책 정보 가져오기
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndReadingStatus(
@@ -490,5 +493,17 @@ public class HomeService {
                 bookRecord.getBookType(),
                 bookRecord.isMine(),
                 isWriteReview);
+    }
+
+    private Member getMemberById(Long memberId) {
+        Member member = cacheManager.get(memberId);
+        if (member != null){
+            return member;
+        }
+
+        // 캐시에 없으면
+        member = memberRepository.findByMemberId(memberId);
+        cacheManager.put(memberId, member);
+        return member;
     }
 }
