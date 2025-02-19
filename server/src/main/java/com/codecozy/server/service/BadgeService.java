@@ -1,6 +1,7 @@
 package com.codecozy.server.service;
 
 import com.codecozy.server.context.BadgeActionType;
+import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.dto.etc.BadgeEvent;
 import com.codecozy.server.dto.etc.CreateBookAction;
 import com.codecozy.server.dto.etc.NoteWithReview;
@@ -8,7 +9,6 @@ import com.codecozy.server.entity.Badge;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.Bookmark;
 import com.codecozy.server.entity.Member;
-import com.codecozy.server.entity.Memo;
 import com.codecozy.server.entity.PersonalDictionary;
 import com.codecozy.server.repository.BadgeRepository;
 import com.codecozy.server.repository.BookRecordRepository;
@@ -36,12 +36,6 @@ public class BadgeService {
     private final MemoRepository memoRepository;
 
     private final ConverterService converterService;
-
-    // 독서상태 값 모음
-    private static final int UNREGISTERED = -1;    // 미등록
-    private static final int WANT_TO_READ = 0;     // 읽고 싶은
-    private static final int READING = 1;          // 읽는 중
-    private static final int FINISH_READ = 2;      // 다 읽음
 
     // 뱃지 코드 모음
 //    private static final int BOOK_COUNT_CODE = 0;
@@ -74,7 +68,7 @@ public class BadgeService {
                 case CREATE_BOOK -> {
                     log.info("CREATE_BOOK 검사");
                     // 읽는중, 다읽음 상태의 독서노트 모두 가져오기
-                    List<Integer> readingStatusList = List.of(READING, FINISH_READ);
+                    List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<CreateBookAction> nowBookList = bookRecordRepository.findAllByMemberAndReadingStatusIn(
                             member, readingStatusList);
 
@@ -94,7 +88,8 @@ public class BadgeService {
 
                     // 2. '완독가' 뱃지 검사
                     bookCount = nowBookList.stream()
-                                           .filter(bookRecord -> bookRecord.readingStatus() == FINISH_READ)
+                                           .filter(bookRecord ->
+                                                   bookRecord.readingStatus() == ReadingStatus.FINISH_READ)
                                            .toList().size();
                     for (int index = 0; index < FINISHER_COUNT_ARR.length; index++) {
                         if (FINISHER_COUNT_ARR[index] <= bookCount) {
@@ -137,12 +132,13 @@ public class BadgeService {
                 case UPDATE_READING -> {
                     log.info("UPDATE_READING 검사");
                     // 읽는중, 다읽음 상태의 독서노트 모두 가져오기
-                    List<Integer> readingStatusList = List.of(READING, FINISH_READ);
+                    List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<CreateBookAction> nowBookList = bookRecordRepository.findAllByMemberAndReadingStatusIn(
                             member, readingStatusList);
 
                     int bookCount = nowBookList.stream()
-                                               .filter(bookRecord -> bookRecord.readingStatus() == FINISH_READ)
+                                               .filter(bookRecord ->
+                                                       bookRecord.readingStatus() == ReadingStatus.FINISH_READ)
                                                .toList().size();
                     for (int index = 0; index < FINISHER_COUNT_ARR.length; index++) {
                         if (FINISHER_COUNT_ARR[index] <= bookCount) {
@@ -198,7 +194,7 @@ public class BadgeService {
                 case CREATE_REVIEW -> {
                     log.info("CREATE_REVIEW 검사");
                     // 읽는중, 다읽음 상태의 리뷰가 하나라도 존재하는 독서노트 모두 가져오기
-                    List<Integer> readingStatusList = List.of(READING, FINISH_READ);
+                    List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<NoteWithReview> reviewList = bookRecordRepository.getBookRecordWithReviews(member,
                             readingStatusList);
 

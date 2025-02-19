@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
@@ -51,12 +52,6 @@ public class HomeService {
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
 
-    // 독서 상태 상수 값
-    private static final int UNREGISTERED = -1;    // 미등록
-    private static final int WANT_TO_READ = 0;     // 읽고 싶은
-    private static final int READING = 1;          // 읽는 중
-    private static final int FINISH_READ = 2;      // 다 읽음
-
     // 메인 화면 조회
     public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
         // 해당 유저 가져오기
@@ -66,7 +61,7 @@ public class HomeService {
         List<MainBooksResponse> booksList = new ArrayList<>();
 
         // 읽고 있는 책 리스트 가져오기 (최대 10개)
-        List<BookRecord> readingBooks = bookRecordRepository.getMainReadingBooks(member, READING);
+        List<BookRecord> readingBooks = bookRecordRepository.getMainReadingBooks(member, ReadingStatus.READING);
 
         // dto 값 넣기
         for (BookRecord bookRecord : readingBooks) {
@@ -90,7 +85,7 @@ public class HomeService {
             }
 
             booksList.add(new MainBooksResponse(
-                    READING,
+                    ReadingStatus.READING,
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
@@ -105,14 +100,14 @@ public class HomeService {
 
         // 읽고 싶은 책 리스트 가져오기 (최대 10개)
         List<BookRecord> wantToReadBooks = bookRecordRepository.findTop10ByMemberAndReadingStatusOrderByCreateDateDesc(
-                member, WANT_TO_READ);
+                member, ReadingStatus.WANT_TO_READ);
 
         // dto 값 넣기
         for (BookRecord bookRecord : wantToReadBooks) {
             Book book = bookRecord.getBook();
 
             booksList.add(new MainBooksResponse(
-                    WANT_TO_READ,
+                    ReadingStatus.WANT_TO_READ,
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
@@ -127,7 +122,7 @@ public class HomeService {
 
         // 다 읽은 책 리스트 가져오기 (전체)
         List<BookRecord> finishReadBooks = bookRecordRepository.findAllByMemberAndReadingStatus(
-                member, FINISH_READ);
+                member, ReadingStatus.FINISH_READ);
 
         // dto 값 넣기
         for (BookRecord bookRecord : finishReadBooks) {
@@ -147,7 +142,7 @@ public class HomeService {
             }
 
             booksList.add(new MainBooksResponse(
-                    FINISH_READ,
+                    ReadingStatus.FINISH_READ,
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
@@ -163,12 +158,12 @@ public class HomeService {
         // 읽고 싶은 책 개수 계산
         List<BookRecord> tempWantToReadList = bookRecordRepository.findAllByMemberAndReadingStatus(
                 member,
-                WANT_TO_READ);
+                ReadingStatus.WANT_TO_READ);
         int wantToReadCount = tempWantToReadList.size();
 
         // 읽고 있는 책 개수 계산
         List<BookRecord> tempReadingList = bookRecordRepository.findAllByMemberAndReadingStatus(
-                member, READING);
+                member, ReadingStatus.READING);
         int readingCount = tempReadingList.size();
 
         // 응답 보내기
@@ -277,7 +272,7 @@ public class HomeService {
         // 읽고 싶은 책 목록 가져오기
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndReadingStatus(
                 member,
-                WANT_TO_READ);
+                ReadingStatus.WANT_TO_READ);
 
         // 해당 값 dto 정보 담기
         List<WantToReadResponse> wantToReadBooks = new ArrayList<>();
@@ -307,12 +302,12 @@ public class HomeService {
         // 1. 읽고 있는 책 중, 숨기지 않은 책들만 먼저 가져오기
         List<BookRecord> notHiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(
                 member,
-                READING, false);
+                ReadingStatus.READING, false);
 
         // 2. 읽고 있는 책 중, 숨긴 책들도 가져오기
         List<BookRecord> hiddenBooks = bookRecordRepository.findAllByMemberAndReadingStatusAndIsHidden(
                 member,
-                READING, true);
+                ReadingStatus.READING, true);
 
         // dto 정보 넣기
         List<ReadingResponse> readingBooks = new ArrayList<>();
@@ -340,7 +335,7 @@ public class HomeService {
 
         // 책 정보 가져오기
         List<BookRecord> bookRecordList = bookRecordRepository.findAllByMemberAndReadingStatus(
-                member, FINISH_READ);
+                member, ReadingStatus.FINISH_READ);
 
         // dto 정보 넣기
         List<FinishReadResponse> finishReadBooks = new ArrayList<>();

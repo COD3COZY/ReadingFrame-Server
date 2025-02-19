@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.*;
@@ -51,12 +52,6 @@ public class BookService {
     private final MemoRepository memoRepository;
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
-
-    // 독서상태 값 모음
-    private static final int UNREGISTERED = -1;    // 미등록
-    private static final int WANT_TO_READ = 0;     // 읽고 싶은
-    private static final int READING = 1;          // 읽는 중
-    private static final int FINISH_READ = 2;      // 다 읽음
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
@@ -284,7 +279,7 @@ public class BookService {
         int afterStatus = request.readingStatus();
 
         // 읽는 중 -> 다 읽음 전환 시
-        if (beforeStatus == READING && afterStatus == FINISH_READ) {
+        if (beforeStatus == ReadingStatus.READING && afterStatus == ReadingStatus.FINISH_READ) {
             // 1. 마지막 읽은 날짜 수정
             bookRecord.setRecentDate(LocalDate.now());
 
@@ -310,7 +305,7 @@ public class BookService {
             bookRecord.setLastEditDate(LocalDateTime.now());
         }
         // 다 읽음 -> 읽는 중 전환 시
-        else if (beforeStatus == FINISH_READ && afterStatus == READING) {
+        else if (beforeStatus == ReadingStatus.FINISH_READ && afterStatus == ReadingStatus.READING) {
             // 읽은 페이지 0으로 변경
             bookRecord.setMarkPage(0);
         }
@@ -377,7 +372,7 @@ public class BookService {
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
 
         // readingStatus 검색
-        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : UNREGISTERED);
+        int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : ReadingStatus.UNREGISTERED);
 
         // commentCount 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
@@ -1534,15 +1529,15 @@ public class BookService {
         bookRecord.setMarkPage(request.markPage());
         if (bookRecord.getBookType() == 0) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
-                bookRecord.setReadingStatus(FINISH_READ); // 다읽음으로 수정
+                bookRecord.setReadingStatus(ReadingStatus.FINISH_READ); // 다읽음으로 수정
             } else {
-                bookRecord.setReadingStatus(READING);
+                bookRecord.setReadingStatus(ReadingStatus.READING);
             }
         } else { // 전자책, 오디오북인 경우
             if (request.markPage() >= 100) { // 100% 이상이면
-                bookRecord.setReadingStatus(FINISH_READ);
+                bookRecord.setReadingStatus(ReadingStatus.FINISH_READ);
             } else {
-                bookRecord.setReadingStatus(READING);
+                bookRecord.setReadingStatus(ReadingStatus.READING);
             }
         }
 
@@ -1928,7 +1923,7 @@ public class BookService {
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
                     jsonResult.get("categoryName").toString(),
-                    UNREGISTERED,
+                    ReadingStatus.UNREGISTERED,
                     jsonResult.get("publisher").toString(),
                     jsonResult.get("pubDate").toString(),
                     Integer.parseInt(jsonResultSub.get("itemPage").toString()),

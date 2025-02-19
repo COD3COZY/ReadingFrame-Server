@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.response.DefaultResponse;
@@ -46,7 +47,7 @@ public class BookshelfService {
 
             for (BookRecord bookRecord : bookRecordList) {
                 // 읽고싶은 책은 추가X
-                if (bookRecord.getReadingStatus() == 0) {
+                if (bookRecord.getReadingStatus() == ReadingStatus.WANT_TO_READ) {
                     continue;
                 }
 
@@ -91,17 +92,17 @@ public class BookshelfService {
                 int totalPage = book.getTotalPage();
 
                 // 읽고싶은 (코드값 0)
-                if (bookRecord.getReadingStatus() == 0) {
+                if (bookRecord.getReadingStatus() == ReadingStatus.WANT_TO_READ) {
                     code0Count++;
                     code0PageList.add(totalPage);
                 }
                 // 읽는중 (코드값 1)
-                else if (bookRecord.getReadingStatus() == 1) {
+                else if (bookRecord.getReadingStatus() == ReadingStatus.READING) {
                     code1Count++;
                     code1PageList.add(totalPage);
                 }
                 // 다읽은 (코드값 2)
-                else if (bookRecord.getReadingStatus() == 2) {
+                else if (bookRecord.getReadingStatus() == ReadingStatus.FINISH_READ) {
                     code2Count++;
                     code2PageList.add(totalPage);
                 }
