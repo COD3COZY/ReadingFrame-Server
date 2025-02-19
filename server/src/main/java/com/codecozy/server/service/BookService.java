@@ -159,7 +159,7 @@ public class BookService {
         int readingPercent = converterService.pageToPercent(readPage, totalPage);
         String firstReviewDate = bookRecord.getFirstReviewDate() != null ?
                 converterService.dateToString(bookRecord.getFirstReviewDate()) : null;
-        String keywordReview = bookRecord.getKeyWord();
+        String keywordReview = bookRecord.getKeyword();
         String commentReview = null;
         try {
             commentReview = bookRecord.getBookReview().getReviewText();
@@ -810,7 +810,7 @@ public class BookService {
 
         // 키워드 리뷰가 있으면 독서 노트에 수정
         if (request.keyword() != null) {
-            bookRecord.setKeyWord(request.keyword());
+            bookRecord.setKeyword(request.keyword());
             bookRecordRepository.save(bookRecord);
         }
 
@@ -890,10 +890,10 @@ public class BookService {
         // 키워드 리뷰가 있으면 독서 노트에 수정
         if (request.keyword() != null) {
             // 키워드 설정
-            bookRecord.setKeyWord(request.keyword());
+            bookRecord.setKeyword(request.keyword());
             bookRecordRepository.save(bookRecord);
         } else { // 키워드 리뷰가 없으면 null로 설정
-            bookRecord.setKeyWord(null);
+            bookRecord.setKeyword(null);
             bookRecordRepository.save(bookRecord);
         }
 
@@ -969,7 +969,7 @@ public class BookService {
 
         // 독서노트에서 키워드 삭제
         if (bookRecord != null) {
-            bookRecord.setKeyWord(null);
+            bookRecord.setKeyword(null);
             bookRecordRepository.save(bookRecord);
         } else {
             return new ResponseEntity<>(

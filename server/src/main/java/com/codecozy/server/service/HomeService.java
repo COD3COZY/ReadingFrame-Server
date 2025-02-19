@@ -79,7 +79,7 @@ public class HomeService {
             // 리뷰 유무 판단
             Boolean isWriteReview = false;
             // 1. 한 단어 리뷰
-            String keywordReview = bookRecord.getKeyWord();
+            String keywordReview = bookRecord.getKeyword();
             // 2. 선택 키워드 리뷰
             SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
@@ -136,7 +136,7 @@ public class HomeService {
             // 리뷰 유무 판단
             Boolean isWriteReview = false;
             // 1. 한 단어 리뷰
-            String keywordReview = bookRecord.getKeyWord();
+            String keywordReview = bookRecord.getKeyword();
             // 2. 선택 키워드 리뷰
             SelectReview selectReview = bookRecord.getSelectReview();
             // 3. 한줄평 리뷰
