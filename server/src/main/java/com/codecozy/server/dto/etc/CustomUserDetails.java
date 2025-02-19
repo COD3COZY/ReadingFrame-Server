@@ -1,4 +1,4 @@
-package com.codecozy.server.dto;
+package com.codecozy.server.dto.etc;
 
 import java.util.Collection;
 import lombok.AllArgsConstructor;

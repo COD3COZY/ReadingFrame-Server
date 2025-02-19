@@ -244,6 +244,11 @@ public class MemberService {
             BadgeResponse tempBadge = new BadgeResponse(i, false, null);
             badgeResponseList.add(tempBadge);
         }
+        // genre 관련 배지
+        for (int i = 40; i <= 45; i++) {
+            BadgeResponse tempBadge = new BadgeResponse(i, false, null);
+            badgeResponseList.add(tempBadge);
+        }
         // 배지 코드만 빼기
         List<Integer> badgeCodeList = new ArrayList<>();
         for (BadgeResponse badgeResponse : badgeResponseList) {

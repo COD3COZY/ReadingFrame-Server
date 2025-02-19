@@ -64,8 +64,8 @@ public class BookRecord {
     @Column(name = "mark_page", nullable = false)
     private int markPage;
 
-    @Column(name = "key_word", length = 15)
-    private String keyWord;
+    @Column(name = "keyword", length = 15)
+    private String keyword;
 
     @OneToOne(mappedBy = "bookRecord", cascade = CascadeType.REMOVE)
     private BookReview bookReview;
@@ -92,7 +92,7 @@ public class BookRecord {
 
     public void setMarkPage(int markPage) { this.markPage = markPage; }
 
-    public void setKeyWord(String keyWord) { this.keyWord = keyWord; }
+    public void setKeyword(String keyword) { this.keyword = keyword; }
 
     public void setLocationInfo(LocationInfo locationInfo) { this.locationInfo = locationInfo; }
 

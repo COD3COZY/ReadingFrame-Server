@@ -1,7 +1,7 @@
 package com.codecozy.server.service;
 
 import com.codecozy.server.context.ResponseMessages;
-import com.codecozy.server.dto.CustomUserDetails;
+import com.codecozy.server.dto.etc.CustomUserDetails;
 import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
