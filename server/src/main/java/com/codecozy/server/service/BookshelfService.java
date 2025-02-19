@@ -137,40 +137,9 @@ public class BookshelfService {
                 Book book = bookRecord.getBook();
                 int totalPage = book.getTotalPage();
 
-                switch (book.getCategory()) {
-                    case "인문사회" -> {
-                        countList.set(0, countList.get(0) + 1);
-                        pageList.get(0).add(totalPage);
-                    }
-                    case "문학" -> {
-                        countList.set(1, countList.get(1) + 1);
-                        pageList.get(1).add(totalPage);
-                    }
-                    case "에세이" -> {
-                        countList.set(2, countList.get(2) + 1);
-                        pageList.get(2).add(totalPage);
-                    }
-                    case "과학" -> {
-                        countList.set(3, countList.get(3) + 1);
-                        pageList.get(3).add(totalPage);
-                    }
-                    case "자기계발" -> {
-                        countList.set(4, countList.get(4) + 1);
-                        pageList.get(4).add(totalPage);
-                    }
-                    case "예술" -> {
-                        countList.set(5, countList.get(5) + 1);
-                        pageList.get(5).add(totalPage);
-                    }
-                    case "원서" -> {
-                        countList.set(6, countList.get(6) + 1);
-                        pageList.get(6).add(totalPage);
-                    }
-                    case "기타" -> {
-                        countList.set(7, countList.get(7) + 1);
-                        pageList.get(7).add(totalPage);
-                    }
-                }
+                int index = converterService.categoryNameToCode(book.getCategory());
+                countList.set(index, countList.get(index) + 1);
+                pageList.get(index).add(totalPage);
             }
 
             // dto에 정보 담기
