@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.cache.MemberCacheManager;
 import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -52,6 +52,9 @@ public class BookService {
     private final MemoRepository memoRepository;
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
+
+    // 캐시 매니저 설정(의존성 주입)
+    private final MemberCacheManager cacheManager;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
@@ -138,7 +141,7 @@ public class BookService {
     // 독서노트 조회
     public ResponseEntity<DefaultResponse> getReadingNote(Long memberId, String isbn) {
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -362,7 +365,7 @@ public class BookService {
         SearchBookResponse response = dataParsing(jsonResponse);
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -396,7 +399,7 @@ public class BookService {
     // 한줄평 추가조회
     public ResponseEntity<DefaultResponse> commentDetail(Long memberId, String isbn, CommentDetailRequest request) {
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -1318,7 +1321,7 @@ public class BookService {
         List<PersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1454,7 +1457,7 @@ public class BookService {
         List<MemoResponse> memoList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1699,7 +1702,7 @@ public class BookService {
         List<BookmarkResponse> bookmarkList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1744,7 +1747,7 @@ public class BookService {
         List<RecentLocationResponse> location = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = memberRepository.findByMemberId(memberId);
+        Member member = getMemberById(memberId);
 
         // 사용자별 등록 위치 받아오기
         List<MemberLocation> memberLocationList = member.getMemberLocations();
@@ -1975,8 +1978,16 @@ public class BookService {
                 .collect(Collectors.toList());
     }
 
-    @Cacheable(value = "member", key = "#memberId")
+    // 캐시 사용을 위한 메소드
     private Member getMemberById(Long memberId) {
-        return memberRepository.findByMemberId(memberId);
+        Member member = cacheManager.get(memberId);
+        if (member != null){
+            return member;
+        }
+
+        // 캐시에 없으면
+        member = memberRepository.findByMemberId(memberId);
+        cacheManager.put(memberId, member);
+        return member;
     }
 }
