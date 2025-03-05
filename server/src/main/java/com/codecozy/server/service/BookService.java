@@ -373,6 +373,7 @@ public class BookService {
 
         // categoryName 수정
         String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
+        categoryName = extractCategory(categoryName);
 
         // readingStatus 검색
         int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : ReadingStatus.UNREGISTERED);
@@ -1977,6 +1978,22 @@ public class BookService {
                 .limit(5)
                 .collect(Collectors.toList());
     }
+
+    // 카테고리 이름 수정 메소드
+    private String extractCategory(String categoryFullName) {
+        if (categoryFullName.contains("소설")) {
+            return categoryNameList.get(0);
+        }
+
+        for (String category : categoryNameList) {
+            if (categoryFullName.contains(category)) {
+                return category;
+            }
+        }
+
+        return "기타";
+    }
+
 
     // 캐시 사용을 위한 메소드
     private Member getMemberById(Long memberId) {
