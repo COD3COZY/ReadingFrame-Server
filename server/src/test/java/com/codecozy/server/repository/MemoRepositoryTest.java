@@ -120,8 +120,7 @@ class MemoRepositoryTest {
     @DisplayName("특정 독서노트 내에 작성한 최근 3개의 메모를 찾는다")
     void findTop3ByBookRecordOrderByDateDesc() {
         // given
-        bookRecord = testEntityManager.find(BookRecord.class,
-                testEntityManager.getId(bookRecord));
+        bookRecord = testEntityManager.find(BookRecord.class, testEntityManager.getId(bookRecord));
 
         // 메모 2개 추가
         memoRepository.save(Memo.create(
@@ -144,5 +143,15 @@ class MemoRepositoryTest {
         assertThat(findList).hasSize(3);
         assertThat(findList).extracting(Memo::getMarkPage)
                             .containsExactly(100, 50, 10);
+    }
+
+    @Test
+    @DisplayName("특정 사용자가 메모를 작성했다면 true를 반환한다")
+    void existsByBookRecordMember() {
+        // when
+        boolean find = memoRepository.existsByBookRecordMember(member);
+
+        // then
+        assertThat(find).isEqualTo(true);
     }
 }

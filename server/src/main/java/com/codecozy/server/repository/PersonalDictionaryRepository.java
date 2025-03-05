@@ -2,6 +2,7 @@ package com.codecozy.server.repository;
 
 import com.codecozy.server.composite_key.PersonalDictionaryKey;
 import com.codecozy.server.entity.BookRecord;
+import com.codecozy.server.entity.Member;
 import com.codecozy.server.entity.PersonalDictionary;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,4 +17,7 @@ public interface PersonalDictionaryRepository extends JpaRepository<PersonalDict
 
     // 특정 독서노트 내의 이름순 3개 인물사전 가져오기
     List<PersonalDictionary> findTop3ByBookRecordOrderByNameAsc(BookRecord bookRecord);
+
+    // (뱃지 검사용) 특정 유저의 모든 인물사전 가져오기
+    List<PersonalDictionary> findAllByBookRecordMember(Member member);
 }

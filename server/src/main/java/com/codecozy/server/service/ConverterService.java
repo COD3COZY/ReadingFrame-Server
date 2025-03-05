@@ -8,19 +8,19 @@ import org.springframework.stereotype.Service;
 public class ConverterService {
     // 장르 이름 -> 코드로 변경하는 메소드
     public int categoryNameToCode(String name) {
-        if (name.equals("인문사회")) {
+        if (name.equals("문학")) {
             return 0;
-        } else if (name.equals("문학")) {
-            return 1;
         } else if (name.equals("에세이")) {
+            return 1;
+        } else if (name.equals("인문사회")) {
             return 2;
         } else if (name.equals("과학")) {
             return 3;
         } else if (name.equals("자기계발")) {
             return 4;
-        } else if (name.equals("예술")) {
-            return 5;
         } else if (name.equals("원서")) {
+            return 5;
+        } else if (name.equals("예술")) {
             return 6;
         } else {  // 기타
             return 7;
@@ -30,19 +30,19 @@ public class ConverterService {
     // 장르 코드 -> 이름으로 변경하는 메소드
     public String categoryCodeToName(int code) {
         if (code == 0) {
-            return "인문사회";
-        } else if (code == 1) {
             return "문학";
-        } else if (code == 2) {
+        } else if (code == 1) {
             return "에세이";
+        } else if (code == 2) {
+            return "인문사회";
         } else if (code == 3) {
             return "과학";
         } else if (code == 4) {
             return "자기계발";
         } else if (code == 5) {
-            return "예술";
-        } else if (code == 6) {
             return "원서";
+        } else if (code == 6) {
+            return "예술";
         } else {  // 기타
             return "기타";
         }
