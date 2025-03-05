@@ -53,6 +53,9 @@ public class BookService {
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
 
+    // 카테고리 이름 리스트
+    private static final List<String> categoryNameList = List.of("문학", "에세이", "인문사회", "과학", "자기계발", "원서", "예술", "기타");
+
     // 캐시 매니저 설정(의존성 주입)
     private final MemberCacheManager cacheManager;
 
