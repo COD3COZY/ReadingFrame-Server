@@ -1,5 +1,7 @@
 package com.codecozy.server.controller;
 
+import com.codecozy.server.annotation.TrackBadgeActivity;
+import com.codecozy.server.context.BadgeActionType;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.security.TokenProvider;
 import com.codecozy.server.service.BookService;
@@ -20,6 +22,7 @@ public class BookController {
 
     // 책 등록 API
     @PostMapping("/{isbn}")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_BOOK)
     public ResponseEntity createBook(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                      @RequestBody ReadingBookCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -45,6 +48,7 @@ public class BookController {
 
     // 독서상태 변경 API
     @PatchMapping("/{isbn}/reading-status")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_BOOK)
     public ResponseEntity modifyReadingStatus(@RequestHeader("xAuthToken") String token,
                                               @PathVariable("isbn") String isbn,
                                               @RequestBody ModifyReadingStatusRequest request) {
@@ -81,6 +85,7 @@ public class BookController {
 
     // 리뷰 작성 API
     @PostMapping("/{isbn}/review")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_REVIEW)
     public ResponseEntity createReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                        @RequestBody ReviewCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -90,6 +95,7 @@ public class BookController {
 
     // 리뷰 전체 수정 API
     @PatchMapping("/{isbn}/review")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_REVIEW)
     public ResponseEntity modifyReview(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                        @RequestBody ReviewCreateRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -217,6 +223,7 @@ public class BookController {
 
     // 인물사전 등록 API
     @PostMapping("/{isbn}/character-dictionary")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_RECORD)
     public ResponseEntity addPersonalDictionary(@RequestHeader("xAuthToken") String token,
                                                 @PathVariable("isbn") String isbn,
                                                 @RequestBody PersonalDictionaryRequest request) {
@@ -256,6 +263,7 @@ public class BookController {
 
     // 메모 등록 API
     @PostMapping("/{isbn}/memo")
+    @TrackBadgeActivity(actionType = BadgeActionType.CREATE_RECORD)
     public ResponseEntity addMemo(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                   @RequestBody MemoRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -291,6 +299,7 @@ public class BookController {
 
     // 책갈피 등록 API
     @PostMapping("/{isbn}/bookmark")
+    @TrackBadgeActivity(actionType = {BadgeActionType.CREATE_RECORD, BadgeActionType.UPDATE_READING})
     public ResponseEntity addBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                       @RequestBody BookmarkRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
@@ -300,6 +309,7 @@ public class BookController {
 
     // 책갈피 수정 API
     @PatchMapping("/{isbn}/bookmark")
+    @TrackBadgeActivity(actionType = BadgeActionType.UPDATE_READING)
     public ResponseEntity modifyBookmark(@RequestHeader("xAuthToken") String token, @PathVariable("isbn") String isbn,
                                          @RequestBody BookmarkRequest request) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
