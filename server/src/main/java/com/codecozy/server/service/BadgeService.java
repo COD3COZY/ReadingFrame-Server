@@ -19,13 +19,11 @@ import com.codecozy.server.repository.PersonalDictionaryRepository;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class BadgeService {
     private final BadgeRepository badgeRepository;
     private final MemberRepository memberRepository;
@@ -55,8 +53,6 @@ public class BadgeService {
     // 이벤트를 받아 각 액션별 뱃지 획득 조건을 검사하는 메소드
     @Transactional
     public void verifyBadgeActivity(BadgeEvent event) {
-        log.info("---뱃지 획득 조건 검사 시작---");
-        log.info("들어온 이벤트: " + Arrays.toString(event.actionType()));
         Member member = memberRepository.findByMemberId(event.memberId());
         List<Integer> acquiredBadgeList = member.getBadges().stream()
                                                 .map(Badge::getBadgeCode)
@@ -66,7 +62,6 @@ public class BadgeService {
             switch (actionType) {
                 // 서재에 등록한 책, 완독가, 장르 애호가
                 case CREATE_BOOK -> {
-                    log.info("CREATE_BOOK 검사");
                     // 읽는중, 다읽음 상태의 독서노트 모두 가져오기
                     List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<CreateBookAction> nowBookList = bookRecordRepository.findAllByMemberAndReadingStatusIn(
@@ -130,7 +125,6 @@ public class BadgeService {
 
                 // 완독가
                 case UPDATE_READING -> {
-                    log.info("UPDATE_READING 검사");
                     // 읽는중, 다읽음 상태의 독서노트 모두 가져오기
                     List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<CreateBookAction> nowBookList = bookRecordRepository.findAllByMemberAndReadingStatusIn(
@@ -157,7 +151,6 @@ public class BadgeService {
 
                 // 기록 MVP (책갈피, 인물사전, 메모)
                 case CREATE_RECORD -> {
-                    log.info("CREATE_RECORD 검사");
                     // 책갈피, 인물사전, 메모 가져오기
                     List<Bookmark> bookmarks = bookmarkRepository.findAllByBookRecordMember(member);
                     List<PersonalDictionary> personalDictionaries =
@@ -192,7 +185,6 @@ public class BadgeService {
 
                 // 리뷰 마스터 (키워드, 선택, 한줄평)
                 case CREATE_REVIEW -> {
-                    log.info("CREATE_REVIEW 검사");
                     // 읽는중, 다읽음 상태의 리뷰가 하나라도 존재하는 독서노트 모두 가져오기
                     List<Integer> readingStatusList = List.of(ReadingStatus.READING, ReadingStatus.FINISH_READ);
                     List<NoteWithReview> reviewList = bookRecordRepository.getBookRecordWithReviews(member,
@@ -240,7 +232,5 @@ public class BadgeService {
                 }
             }
         }
-
-        log.info("---뱃지 획득 조건 검사 끝---");
     }
 }
