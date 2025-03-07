@@ -144,3 +144,4 @@ replay_pid*
 
 server/src/main/resources/jwt.yml
 server/src/main/resources/aladinConfig.yml
+server/src/main/resources/db-config.yml
