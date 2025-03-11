@@ -90,7 +90,7 @@ public class MemberService {
     }
 
     // 애플 회원가입
-    public ResponseEntity<DefaultResponse> signUpApple(SignUpAppleRequest request) throws Exception {
+    public ResponseEntity<DefaultResponse> signUpApple(SignUpAppleRequest request) {
         // idToken 유효성 검증(JWK 확인, Claim 확인)
         if (!appleTokenService.isValid(request.idToken())) {
             return new ResponseEntity<>(DefaultResponse.from(StatusCode.NOT_FOUND, ResponseMessages.INVALID_ID_TOKEN.get()),
@@ -105,7 +105,7 @@ public class MemberService {
         }
 
         // 유저 생성 및 저장
-        Member member = Member.create(request.nickname(), request.profile());
+        Member member = Member.create(request.nickname(), request.profileImageCode());
         member = memberRepository.save(member);
 
         // 애플 유저 등록
