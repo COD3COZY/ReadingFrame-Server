@@ -4,5 +4,5 @@ public record SignUpAppleRequest(
         String userIdentifier,
         String idToken,
         String nickname,
-        String profile
+        String profileImageCode
 ) {}
