@@ -1,6 +1,5 @@
 package com.codecozy.server.service;
 
-import com.codecozy.server.cache.MemberCacheManager;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
 import com.codecozy.server.dto.request.SignInAppleRequest;
@@ -34,8 +33,6 @@ public class MemberService {
     private final MemberAppleRepository memberAppleRepository;
     private final ConverterService converterService;
     private final AppleTokenService appleTokenService;
-
-    private final MemberCacheManager cacheManager;
 
     // 닉네임 중복 검증
     public ResponseEntity<DefaultResponse> validateNickname(String nickname) {
@@ -162,9 +159,6 @@ public class MemberService {
         member.modifyNickname(nickname);
         memberRepository.save(member);
 
-        cacheManager.remove(memberId);
-        cacheManager.put(memberId, member);
-
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
@@ -177,9 +171,6 @@ public class MemberService {
         member.modifyProfileImg(profileImgCode);
         memberRepository.save(member);
 
-        cacheManager.remove(memberId);
-        cacheManager.put(memberId, member);
-
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get()),
                 HttpStatus.OK);
     }
@@ -187,7 +178,6 @@ public class MemberService {
     // 회원 탈퇴
     public ResponseEntity<DefaultResponse> deleteMember(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
-        cacheManager.remove(memberId);
 
         // 소셜 정보 우선 삭제
         memberKakaoRepository.deleteById(memberId);
@@ -203,7 +193,7 @@ public class MemberService {
     // 마이페이지 조회
     public ResponseEntity<DefaultResponse> getProfile(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
         List<Badge> badgeList = member.getBadges();
 
         // 보낼 데이터
@@ -219,7 +209,7 @@ public class MemberService {
     // 배지 조회
     public ResponseEntity<DefaultResponse> getBadgeList(String token) {
         Long memberId = tokenProvider.getMemberIdFromToken(token);
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
         List<Badge> badgeList = member.getBadges();
 
         // 배지 목록 세팅
@@ -268,17 +258,5 @@ public class MemberService {
 
         return new ResponseEntity<>(DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), badgeResponseList),
                 HttpStatus.OK);
-    }
-
-    private Member getMemberById(Long memberId) {
-        Member member = cacheManager.get(memberId);
-        if (member != null){
-            return member;
-        }
-
-        // 캐시에 없으면
-        member = memberRepository.findByMemberId(memberId);
-        cacheManager.put(memberId, member);
-        return member;
     }
 }
