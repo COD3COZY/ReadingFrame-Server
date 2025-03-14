@@ -10,5 +10,6 @@ public record MainBooksResponse(
         int totalPage,
         int readPage,
         Boolean isMine,
-        Boolean isWriteReview
+        Boolean isWriteReview,
+        int bookType
 ) {}

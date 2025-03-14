@@ -94,7 +94,8 @@ public class HomeService {
                     totalPage,
                     readPage,
                     bookRecord.isMine(),
-                    isWriteReview
+                    isWriteReview,
+                    bookRecord.getBookType()
             ));
         }
 
@@ -116,7 +117,8 @@ public class HomeService {
                     -1,
                     -1,
                     null,
-                    null
+                    null,
+                    bookRecord.getBookType()
             ));
         }
 
@@ -151,7 +153,8 @@ public class HomeService {
                     -1,
                     -1,
                     bookRecord.isMine(),
-                    isWriteReview
+                    isWriteReview,
+                    bookRecord.getBookType()
             ));
         }
 
