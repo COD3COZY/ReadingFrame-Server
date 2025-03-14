@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.BookType;
 import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
@@ -56,17 +57,17 @@ public class BookshelfService {
                 int totalPage = book.getTotalPage();
 
                 // 종이책 (코드값 0)
-                if (bookRecord.getBookType() == 0) {
+                if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                     code0Count++;
                     code0PageList.add(totalPage);
                 }
                 // 전자책 (코드값 1)
-                else if (bookRecord.getBookType() == 1) {
+                else if (bookRecord.getBookType() == BookType.E_BOOK) {
                     code1Count++;
                     code1PageList.add(totalPage);
                 }
                 // 오디오북 (코드값 2)
-                else if (bookRecord.getBookType() == 2) {
+                else if (bookRecord.getBookType() == BookType.AUDIO_BOOK) {
                     code2Count++;
                     code2PageList.add(totalPage);
                 }
