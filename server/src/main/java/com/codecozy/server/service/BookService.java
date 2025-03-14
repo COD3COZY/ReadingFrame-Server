@@ -1,5 +1,6 @@
 package com.codecozy.server.service;
 
+import com.codecozy.server.context.BookType;
 import com.codecozy.server.context.ReadingStatus;
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;
@@ -69,7 +70,7 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != -1) { // reading_status가 '읽고싶은'(0)인 경우, bookType이 -1로 생성됨
+        if (bookRecord != null && bookRecord.getBookType() != BookType.UNKNOWN) { // reading_status가 '읽고싶은'(0)인 경우, bookType이 -1로 생성됨
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
@@ -1471,7 +1472,7 @@ public class BookService {
             String dateStr = converterService.dateToString(memo.getDate());
 
             // 종이책이면 페이지 -> 퍼센트 계산
-            if (bookRecord.getBookType() == 0) {
+            if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                 int percent = converterService.pageToPercent(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
                 memoList.add(
@@ -1530,7 +1531,7 @@ public class BookService {
 
         // 책갈피 페이지에 따른 읽는중, 다읽음 수정
         bookRecord.setMarkPage(request.markPage());
-        if (bookRecord.getBookType() == 0) { // 종이책인 경우
+        if (bookRecord.getBookType() == BookType.PAPER_BOOK) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
                 bookRecord.setReadingStatus(ReadingStatus.FINISH_READ); // 다읽음으로 수정
             } else {
@@ -1725,7 +1726,7 @@ public class BookService {
             String dateStr = converterService.dateToString(bookmark.getDate());
 
             // 종이책이면
-            if (bookRecord.getBookType() == 0) {
+            if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                 // 페이지 -> 퍼센트 계산
                 int percent = converterService.pageToPercent(markPage, book.getTotalPage());
                 bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, location, bookmark.getUuid()));
