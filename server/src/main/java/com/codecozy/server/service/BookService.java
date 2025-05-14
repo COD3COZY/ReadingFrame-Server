@@ -1,9 +1,6 @@
 package com.codecozy.server.service;
 
-import com.codecozy.server.context.BookType;
-import com.codecozy.server.context.ReadingStatus;
-import com.codecozy.server.context.ResponseMessages;
-import com.codecozy.server.context.StatusCode;
+import com.codecozy.server.context.*;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
@@ -361,8 +358,8 @@ public class BookService {
     // 도서 정보 초기 조회 API
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         // URL로 도서 API 데이터 가져오기
-        String jsonResponse = getBookDate(isbn);
-        SearchBookResponse response = dataParsing(jsonResponse);
+        String jsonResponse = getBookData(isbn);
+        SearchBookDataResponse dataResponse = dataParsing(jsonResponse);
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -372,8 +369,10 @@ public class BookService {
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // categoryName 수정
-        String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
+        String categoryName = dataResponse.categoryName().substring(dataResponse.categoryName().lastIndexOf(">") + 1);
+        System.out.println(categoryName);
         categoryName = extractCategory(categoryName);
+        int category = Category.getValueByName(categoryName);
 
         // readingStatus 검색
         int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : ReadingStatus.UNREGISTERED);
@@ -388,9 +387,9 @@ public class BookService {
         List<String> commentList = getLatestCommentList(
                 bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
 
-        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName,
-                readingStatus, response.publisher(), response.publicationDate(),
-                response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
+        SearchBookResponse response = new SearchBookResponse(dataResponse.cover(), dataResponse.title(), dataResponse.author(), category,
+                readingStatus, dataResponse.publisher(), dataResponse.publicationDate(),
+                dataResponse.totalPage(), dataResponse.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
@@ -1855,7 +1854,7 @@ public class BookService {
     }
 
     // 도서정보 호출 API 데이터를 가져오는 메소드
-    private String getBookDate(String isbn) throws IOException {
+    private String getBookData(String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
         String urlStr = createURL(isbn);
 
@@ -1886,6 +1885,7 @@ public class BookService {
     private String createURL(String isbn) {
         String baseUrl = null;
         String ttbKey = null;
+        String cover = null;
         String output = null;
         String version = null;
         String itemIdType = null;
@@ -1898,17 +1898,18 @@ public class BookService {
 
             baseUrl = (String) aladinApi.get("lookup_url");
             ttbKey = (String) aladinApi.get("ttbkey");
+            cover = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("cover");
             output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
             version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
             itemIdType = (String) aladinApi.get("item_id_type");
         }
 
-        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
-                isbn, output, version);
+        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&cover=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
+                isbn, cover, output, version);
     }
 
     // 알라딘 API 데이터 파싱
-    private SearchBookResponse dataParsing(String jsonData) {
+    private SearchBookDataResponse dataParsing(String jsonData) {
         try {
             JSONObject jsonResult, jsonResultSub;
             JSONParser jsonParser = new JSONParser();
@@ -1923,7 +1924,7 @@ public class BookService {
             // subInfo 데이터 받기
             jsonResultSub = (JSONObject) jsonResult.get("subInfo");
 
-            return new SearchBookResponse(jsonResult.get("cover").toString(),
+            return new SearchBookDataResponse(jsonResult.get("cover").toString(),
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
                     jsonResult.get("categoryName").toString(),
@@ -1983,6 +1984,10 @@ public class BookService {
     private String extractCategory(String categoryFullName) {
         if (categoryFullName.contains("소설")) {
             return categoryNameList.get(0);
+        }
+
+        if (categoryFullName.contains("인문")) {
+            return categoryNameList.get(2);
         }
 
         for (String category : categoryNameList) {
