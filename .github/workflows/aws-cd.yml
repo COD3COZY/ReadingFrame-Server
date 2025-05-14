@@ -20,12 +20,13 @@ jobs:
         java-version: '17'
 
     - name: Build with Gradle
+      working-directory: server
       run: ./gradlew clean bootJar
 
     - name: Find built jar
       id: find_jar
       run: |
-        JAR_FILE=$(ls build/libs/*.jar | head -n 1 | xargs -n 1 basename)
+        JAR_FILE=$(ls server/build/libs/*.jar | head -n 1 | xargs -n 1 basename)
         echo "JAR_FILE=${JAR_FILE}" >> $GITHUB_ENV
 
     - name: Deploy to EC2
@@ -45,7 +46,7 @@ jobs:
             echo "8080 포트에서 실행 중인 프로세스가 없습니다."
           fi
           echo "=== 기존 JAR 파일 삭제 ==="
-          rm -f *.jar
+          rm -f /home/ubuntu/*.jar
 
     - name: Copy jar to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -54,8 +55,8 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_KEY }}
         port: ${{ secrets.EC2_PORT }}
-        source: build/libs/${{ env.JAR_FILE }}
-        target: .
+        source: server/build/libs/${{ env.JAR_FILE }}
+        target: /home/ubuntu/
 
     - name: Start Application
       uses: appleboy/ssh-action@v0.1.7
