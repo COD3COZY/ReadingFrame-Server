@@ -2,11 +2,11 @@ package com.codecozy.server.dto.response;
 
 import java.util.List;
 
-public record SearchBookResponse(
+public record SearchBookDataResponse(
         String cover,
         String title,
         String author,
-        int categoryName,
+        String categoryName,
         int readingStatus,
         String publisher,
         String publicationDate,
