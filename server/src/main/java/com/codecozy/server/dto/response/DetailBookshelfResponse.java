@@ -10,5 +10,5 @@ public record DetailBookshelfResponse(
         boolean isMine,
         int totalPage,
         int readPage,
-        float readingPercent
+        int readingPercent
 ) {}

@@ -174,7 +174,7 @@ public class BookshelfService {
                 if (bookRecord.getBookType() == bookType && bookRecord.getReadingStatus() != 0) {
                     // 읽은 퍼센트 계산
                     int readingPage = bookRecord.getMarkPage();
-                    float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
+                    int readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
@@ -202,7 +202,7 @@ public class BookshelfService {
                 if (bookRecord.getReadingStatus() == readingStatus) {
                     // 읽은 퍼센트 계산
                     int readingPage = bookRecord.getMarkPage();
-                    float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
+                    int readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
@@ -230,7 +230,7 @@ public class BookshelfService {
                 if (bookRecord.getBook().getCategory().equals(categoryName) && bookRecord.getReadingStatus() != 0) {
                     // 읽은 퍼센트 계산
                     int readingPage = bookRecord.getMarkPage();
-                    float readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
+                    int readingPercent = converterService.pageToPercent(readingPage, bookRecord.getBook().getTotalPage());
 
                     // 데이터 추가
                     detailBookshelfResponseList.add(new DetailBookshelfResponse(
