@@ -1,9 +1,6 @@
 package com.codecozy.server.service;
 
-import com.codecozy.server.cache.MemberCacheManager;
-import com.codecozy.server.context.ReadingStatus;
-import com.codecozy.server.context.ResponseMessages;
-import com.codecozy.server.context.StatusCode;
+import com.codecozy.server.context.*;
 import com.codecozy.server.dto.request.*;
 import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
@@ -56,9 +53,6 @@ public class BookService {
     // 카테고리 이름 리스트
     private static final List<String> categoryNameList = List.of("문학", "에세이", "인문사회", "과학", "자기계발", "원서", "예술", "기타");
 
-    // 캐시 매니저 설정(의존성 주입)
-    private final MemberCacheManager cacheManager;
-
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
         // 사용자 받아오기
@@ -73,7 +67,7 @@ public class BookService {
 
         // memberId와 isbn을 이용해 사용자별 리뷰 등록 책이 중복되었는지 검사
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
-        if (bookRecord != null && bookRecord.getBookType() != -1) { // reading_status가 '읽고싶은'(0)인 경우, bookType이 -1로 생성됨
+        if (bookRecord != null && bookRecord.getBookType() != BookType.UNKNOWN) { // reading_status가 '읽고싶은'(0)인 경우, bookType이 -1로 생성됨
             return new ResponseEntity<>(
                     DefaultResponse.from(StatusCode.CONFLICT, ResponseMessages.CONFLICT_BOOK_RECORD.get()),
                     HttpStatus.CONFLICT);
@@ -144,7 +138,7 @@ public class BookService {
     // 독서노트 조회
     public ResponseEntity<DefaultResponse> getReadingNote(Long memberId, String isbn) {
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -364,19 +358,21 @@ public class BookService {
     // 도서 정보 초기 조회 API
     public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
         // URL로 도서 API 데이터 가져오기
-        String jsonResponse = getBookDate(isbn);
-        SearchBookResponse response = dataParsing(jsonResponse);
+        String jsonResponse = getBookData(isbn);
+        SearchBookDataResponse dataResponse = dataParsing(jsonResponse);
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
         // categoryName 수정
-        String categoryName = response.categoryName().substring(response.categoryName().lastIndexOf(">") + 1);
+        String categoryName = dataResponse.categoryName().substring(dataResponse.categoryName().lastIndexOf(">") + 1);
+        System.out.println(categoryName);
         categoryName = extractCategory(categoryName);
+        int category = Category.getValueByName(categoryName);
 
         // readingStatus 검색
         int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : ReadingStatus.UNREGISTERED);
@@ -391,9 +387,9 @@ public class BookService {
         List<String> commentList = getLatestCommentList(
                 bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
 
-        response = new SearchBookResponse(response.cover(), response.title(), response.author(), categoryName,
-                readingStatus, response.publisher(), response.publicationDate(),
-                response.totalPage(), response.description(), commentCount, selectedReviewList, commentList);
+        SearchBookResponse response = new SearchBookResponse(dataResponse.cover(), dataResponse.title(), dataResponse.author(), category,
+                readingStatus, dataResponse.publisher(), dataResponse.publicationDate(),
+                dataResponse.totalPage(), dataResponse.description(), commentCount, selectedReviewList, commentList);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
@@ -403,7 +399,7 @@ public class BookService {
     // 한줄평 추가조회
     public ResponseEntity<DefaultResponse> commentDetail(Long memberId, String isbn, CommentDetailRequest request) {
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 해당 책 찾기
         Book book = bookRepository.findByIsbn(isbn);
@@ -1325,7 +1321,7 @@ public class BookService {
         List<PersonalDictionaryResponse> personalDictionaryList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1461,7 +1457,7 @@ public class BookService {
         List<MemoResponse> memoList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1475,7 +1471,7 @@ public class BookService {
             String dateStr = converterService.dateToString(memo.getDate());
 
             // 종이책이면 페이지 -> 퍼센트 계산
-            if (bookRecord.getBookType() == 0) {
+            if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                 int percent = converterService.pageToPercent(memo.getMarkPage(), book.getTotalPage());
                 // 응답으로 보낼 내용에 더하기
                 memoList.add(
@@ -1534,7 +1530,7 @@ public class BookService {
 
         // 책갈피 페이지에 따른 읽는중, 다읽음 수정
         bookRecord.setMarkPage(request.markPage());
-        if (bookRecord.getBookType() == 0) { // 종이책인 경우
+        if (bookRecord.getBookType() == BookType.PAPER_BOOK) { // 종이책인 경우
             if (request.markPage() >= book.getTotalPage()) { // 책갈피 페이지가 전체 페이지보다 같거나 크면
                 bookRecord.setReadingStatus(ReadingStatus.FINISH_READ); // 다읽음으로 수정
             } else {
@@ -1706,7 +1702,7 @@ public class BookService {
         List<BookmarkResponse> bookmarkList = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // isbn으로 책 검색
         Book book = bookRepository.findByIsbn(isbn);
@@ -1729,7 +1725,7 @@ public class BookService {
             String dateStr = converterService.dateToString(bookmark.getDate());
 
             // 종이책이면
-            if (bookRecord.getBookType() == 0) {
+            if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                 // 페이지 -> 퍼센트 계산
                 int percent = converterService.pageToPercent(markPage, book.getTotalPage());
                 bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, location, bookmark.getUuid()));
@@ -1751,7 +1747,7 @@ public class BookService {
         List<RecentLocationResponse> location = new ArrayList<>();
 
         // 사용자 받아오기
-        Member member = getMemberById(memberId);
+        Member member = memberRepository.findByMemberId(memberId);
 
         // 사용자별 등록 위치 받아오기
         List<MemberLocation> memberLocationList = member.getMemberLocations();
@@ -1858,7 +1854,7 @@ public class BookService {
     }
 
     // 도서정보 호출 API 데이터를 가져오는 메소드
-    private String getBookDate(String isbn) throws IOException {
+    private String getBookData(String isbn) throws IOException {
         StringBuilder result = new StringBuilder();
         String urlStr = createURL(isbn);
 
@@ -1889,6 +1885,7 @@ public class BookService {
     private String createURL(String isbn) {
         String baseUrl = null;
         String ttbKey = null;
+        String cover = null;
         String output = null;
         String version = null;
         String itemIdType = null;
@@ -1901,17 +1898,18 @@ public class BookService {
 
             baseUrl = (String) aladinApi.get("lookup_url");
             ttbKey = (String) aladinApi.get("ttbkey");
+            cover = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("cover");
             output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
             version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
             itemIdType = (String) aladinApi.get("item_id_type");
         }
 
-        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
-                isbn, output, version);
+        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&cover=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
+                isbn, cover, output, version);
     }
 
     // 알라딘 API 데이터 파싱
-    private SearchBookResponse dataParsing(String jsonData) {
+    private SearchBookDataResponse dataParsing(String jsonData) {
         try {
             JSONObject jsonResult, jsonResultSub;
             JSONParser jsonParser = new JSONParser();
@@ -1926,7 +1924,7 @@ public class BookService {
             // subInfo 데이터 받기
             jsonResultSub = (JSONObject) jsonResult.get("subInfo");
 
-            return new SearchBookResponse(jsonResult.get("cover").toString(),
+            return new SearchBookDataResponse(jsonResult.get("cover").toString(),
                     jsonResult.get("title").toString(),
                     jsonResult.get("author").toString(),
                     jsonResult.get("categoryName").toString(),
@@ -1988,6 +1986,10 @@ public class BookService {
             return categoryNameList.get(0);
         }
 
+        if (categoryFullName.contains("인문")) {
+            return categoryNameList.get(2);
+        }
+
         for (String category : categoryNameList) {
             if (categoryFullName.contains(category)) {
                 return category;
@@ -1995,19 +1997,5 @@ public class BookService {
         }
 
         return "기타";
-    }
-
-
-    // 캐시 사용을 위한 메소드
-    private Member getMemberById(Long memberId) {
-        Member member = cacheManager.get(memberId);
-        if (member != null){
-            return member;
-        }
-
-        // 캐시에 없으면
-        member = memberRepository.findByMemberId(memberId);
-        cacheManager.put(memberId, member);
-        return member;
     }
 }

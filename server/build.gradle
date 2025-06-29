@@ -1,12 +1,12 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.2.0'
+	id 'org.springframework.boot' version '3.2.1'
 	id 'io.spring.dependency-management' version '1.1.4'
 	id 'war'
 }
 
 group = 'com.codecozy'
-version = '0.0.5-SNAPSHOT'
+version = '0.0.8-SNAPSHOT'
 
 java {
 	sourceCompatibility = '17'
@@ -51,10 +51,6 @@ dependencies {
 
 	// JSON 데이터 처리 라이브러리
 	implementation group: 'org.json', name: 'json', version: '20230618'
-	
-	// 캐시 처리 라이브러리
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
-	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.6'
 }
 
 tasks.named('test') {
