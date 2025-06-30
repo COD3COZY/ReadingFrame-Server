@@ -107,6 +107,11 @@ public class BookService {
                 locationInfo,
                 request.isMine(), startDate, recentDate);
 
+        // 만약 '다 읽음' 책일 경우 모든 페이지를 읽음으로 처리
+        if (request.readingStatus() == ReadingStatus.FINISH_READ) {
+            bookRecord.setMarkPage(book.getTotalPage());
+        }
+
         // 독서노트에 마지막으로 수정한 날짜 저장
         bookRecord.setLastEditDate(LocalDateTime.now());
 
