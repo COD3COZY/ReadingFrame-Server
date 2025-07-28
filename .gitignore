@@ -143,6 +143,6 @@ replay_pid*
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij
 
 server/src/main/resources/jwt.yml
-server/src/main/resources/aladinConfig.yml
+server/src/main/resources/aladin-config.yml
 server/src/main/resources/db-config.yml
 server/src/main/resources/db-test-config.yml
