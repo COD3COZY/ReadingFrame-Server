@@ -1,5 +1,7 @@
-package com.codecozy.server.security;
+package com.codecozy.server.configuration;
 
+import com.codecozy.server.token.JwtAuthenticateFilter;
+import com.codecozy.server.token.TokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

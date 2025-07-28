@@ -1,6 +1,6 @@
 package com.codecozy.server.controller;
 
-import com.codecozy.server.security.TokenProvider;
+import com.codecozy.server.token.TokenProvider;
 import com.codecozy.server.service.BookshelfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

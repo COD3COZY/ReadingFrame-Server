@@ -1,4 +1,4 @@
-package com.codecozy.server.security;
+package com.codecozy.server.token;
 
 import com.codecozy.server.service.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
