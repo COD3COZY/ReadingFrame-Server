@@ -12,14 +12,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 @Component
-@PropertySource("classpath:jwt.yml")
 public class TokenProvider {
     private final String secretKey;
     private final long expirationDays;
@@ -29,9 +27,9 @@ public class TokenProvider {
     private CustomUserDetailsService userDetailsService;
 
     public TokenProvider(
-            @Value("${secret-key}") String secretKey,
-            @Value("${expiration-days}") long expirationDays,
-            @Value("${issuer}") String issuer
+            @Value("${jwt.secret-key}") String secretKey,
+            @Value("${jwt.expiration-days}") long expirationDays,
+            @Value("${jwt.issuer}") String issuer
     ) {
         this.secretKey = secretKey;
         this.expirationDays = expirationDays;

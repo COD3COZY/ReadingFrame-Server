@@ -1,14 +1,24 @@
 spring:
+  profiles:
+    active: local   # default
+    group:
+      local: common # local과 common이 같이 동작
+      prod: common  # prod와 common이 같이 동작
+
+---
+#
+# 공통 프로필
+#
+spring:
   config:
-    import: db-config.yml
+    activate:
+      on-profile: common
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: update
     properties:
       hibernate:
         default_batch_fetch_size: 100
@@ -18,7 +28,60 @@ spring:
     ansi:
       enabled: always
 
+---
+#
+# 로컬 프로필
+#
+spring:
+  config:
+    activate:
+      on-profile: local
+    import:
+      - jwt.yml
+      - db-test-config.yml
+      - aladin-config.yml
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
 # 로그 레벨 설정
 logging:
   level:
     com.codecozy.server: debug
+
+---
+#
+# 운영 서버 프로필
+#
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  # DB 관련
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+# JWT 관련
+jwt:
+  secret-key: ${JWT_KEY}
+  expiration-days: ${JWT_EXPIRATION_DAYS}
+  issuer: ${JWT_ISSUER}
+
+# 알라딘 API 관련
+aladin:
+  lookup-url: ${AL_LOOKUP_URL}
+  search-url: ${AL_SEARCH_URL}
+  ttbkey: ${AL_TTBKEY}
+  default-params:
+    cover: ${AL_COVER}
+    output: ${AL_OUTPUT}
+    version: ${AL_VERSION}
+  item-id-type: ${AL_ITEM_ID_TYPE}
