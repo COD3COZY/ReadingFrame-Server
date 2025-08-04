@@ -1,6 +1,5 @@
 spring:
   profiles:
-    active: local   # default
     group:
       local: common # local과 common이 같이 동작
       prod: common  # prod와 common이 같이 동작
@@ -85,3 +84,18 @@ aladin:
     output: ${AL_OUTPUT}
     version: ${AL_VERSION}
   item-id-type: ${AL_ITEM_ID_TYPE}
+
+---
+#
+# 테스트 코드 전용 프로필
+#
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  # DB 설정
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:test   # in-memory mode
+
