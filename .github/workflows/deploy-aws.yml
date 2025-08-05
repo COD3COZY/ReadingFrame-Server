@@ -48,6 +48,7 @@ jobs:
       - name: Test and build bootJar
         working-directory: ./server
         run: |
+          chmod +x ./gradlew
           ./gradlew clean build -Dspring.profiles.active=prod
 
       - name: 빌드한 파일 이름 저장
