@@ -30,19 +30,19 @@ jobs:
           commitChange: false
           changes: |
             {
-              "[2].spring.datasource.url": "${{ secrets.DB_URL }}",
-              "[2].spring.datasource.username": "${{ secrets.DB_USERNAME }}",
-              "[2].spring.datasource.password": "${{ secrets.DB_PASSWORD }}",
-              "[2].jwt.secret-key": "${{ secrets.JWT_KEY }}",
-              "[2].jwt.expiration-days": "${{ secrets.JWT_EXPIRATION_DAYS }}",
-              "[2].jwt.issuer": "${{ secrets.JWT_ISSUER }}",
-              "[2].aladin.lookup-url": "${{ secrets.AL_LOOKUP_URL }}",
-              "[2].aladin.search-url": "${{ secrets.AL_SEARCH_URL }}",
-              "[2].aladin.ttbkey": "${{ secrets.AL_TTBKEY }}",
-              "[2].aladin.default-params.cover": "${{ secrets.AL_COVER }}",
-              "[2].aladin.default-params.output": "${{ secrets.AL_OUTPUT }}",
-              "[2].aladin.default-params.version": "${{ secrets.AL_VERSION }}",
-              "[2].aladin.item-id-type": "${{ secrets.AL_ITEM_ID_TYPE }}"
+              "[3].spring.datasource.url": "${{ secrets.DB_URL }}",
+              "[3].spring.datasource.username": "${{ secrets.DB_USERNAME }}",
+              "[3].spring.datasource.password": "${{ secrets.DB_PASSWORD }}",
+              "[3].jwt.secret-key": "${{ secrets.JWT_KEY }}",
+              "[3].jwt.expiration-days": "${{ secrets.JWT_EXPIRATION_DAYS }}",
+              "[3].jwt.issuer": "${{ secrets.JWT_ISSUER }}",
+              "[3].aladin.lookup-url": "${{ secrets.AL_LOOKUP_URL }}",
+              "[3].aladin.search-url": "${{ secrets.AL_SEARCH_URL }}",
+              "[3].aladin.ttbkey": "${{ secrets.AL_TTBKEY }}",
+              "[3].aladin.default-params.cover": "${{ secrets.AL_COVER }}",
+              "[3].aladin.default-params.output": "${{ secrets.AL_OUTPUT }}",
+              "[3].aladin.default-params.version": "${{ secrets.AL_VERSION }}",
+              "[3].aladin.item-id-type": "${{ secrets.AL_ITEM_ID_TYPE }}"
             }
 
       - name: Test and build bootJar
