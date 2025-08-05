@@ -42,8 +42,9 @@ jobs:
           aladin.default-params.version: ${{ secrets.AL_VERSION }}
           aladin.item-id-type: ${{ secrets.AL_ITEM_ID_TYPE }}
 
-      - name: build bootJar
-        run: ./gradlew clean build
+      - name: Test and build bootJar
+        run: |
+          ./gradlew clean build -Dspring.profiles.active=prod
 
       - name: 빌드한 파일 이름 저장
         run: |
@@ -84,7 +85,7 @@ jobs:
             sleep 2
 
             echo "=== 새로운 파일 실행 ==="
-            sudo nohup java -jar ${{ env.FILENAME }} &
+            sudo nohup java -jar -Dspring.profiles.active=prod ${{ env.FILENAME }} &
 
             echo "=== 전송한 파일 삭제 ==="
             rm -f ${{ env.FILENAME }}
