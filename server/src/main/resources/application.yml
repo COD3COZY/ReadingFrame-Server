@@ -1,8 +1,9 @@
 spring:
   profiles:
     group:
-      local: common # local과 common이 같이 동작
-      prod: common  # prod와 common이 같이 동작
+      local: common   # local과 common이 같이 동작
+      prod: common
+      test:
 
 ---
 #
@@ -99,3 +100,19 @@ spring:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:test   # in-memory mode
 
+# JWT 관련
+jwt:
+  secret-key: key
+  expiration-days: 1
+  issuer: issuer
+
+# 알라딘 API 관련
+aladin:
+  lookup-url: url
+  search-url: url
+  ttbkey: ttb-key
+  default-params:
+    cover: cover
+    output: output
+    version: version
+  item-id-type: type

@@ -66,3 +66,11 @@ dependencies {
 test {
 	useJUnitPlatform()
 }
+
+
+tasks.withType(Test).configureEach {
+	def profile = System.getProperty("spring.profiles.active")
+	if (profile) {
+		jvmArgs "-Dspring.profiles.active=${profile}"
+	}
+}
