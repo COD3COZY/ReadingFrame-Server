@@ -24,23 +24,26 @@ jobs:
           distribution: 'temurin'
 
       - name: Set yaml file
-        uses: microsoft/variable-substitution@v1
+        uses: fjogeleit/yaml-update-action@main
         with:
-          files: server/src/main/resources/application.yml
-        env:
-          spring.datasource.url: ${{ secrets.DB_URL }}
-          spring.datasource.username: ${{ secrets.DB_USERNAME }}
-          spring.datasource.password: ${{ secrets.DB_PASSWORD }}
-          jwt.secret-key: ${{ secrets.JWT_KEY }}
-          jwt.expiration-days: ${{ secrets.JWT_EXPIRATION_DAYS }}
-          jwt.issuer: ${{ secrets.JWT_ISSUER }}
-          aladin.lookup-url: ${{ secrets.AL_LOOKUP_URL }}
-          aladin.search-url: ${{ secrets.AL_SEARCH_URL }}
-          aladin.ttbkey: ${{ secrets.AL_TTBKEY }}
-          aladin.default-params.cover: ${{ secrets.AL_COVER }}
-          aladin.default-params.output: ${{ secrets.AL_OUTPUT }}
-          aladin.default-params.version: ${{ secrets.AL_VERSION }}
-          aladin.item-id-type: ${{ secrets.AL_ITEM_ID_TYPE }}
+          valueFile: 'server/src/main/resources/application.yml'
+          commitChange: 'false'
+          changes: |
+            {
+              "[3].spring.datasource.url": "${{ secrets.DB_URL }}",
+              "[3].spring.datasource.username": "${{ secrets.DB_USERNAME }}",
+              "[3].spring.datasource.password": "${{ secrets.DB_PASSWORD }}",
+              "[3].jwt.secret-key": "${{ secrets.JWT_KEY }}",
+              "[3].jwt.expiration-days": "${{ secrets.JWT_EXPIRATION_DAYS }}",
+              "[3].jwt.issuer": "${{ secrets.JWT_ISSUER }}",
+              "[3].aladin.lookup-url": "${{ secrets.AL_LOOKUP_URL }}",
+              "[3].aladin.search-url": "${{ secrets.AL_SEARCH_URL }}",
+              "[3].aladin.ttbkey": "${{ secrets.AL_TTBKEY }}",
+              "[3].aladin.default-params.cover": "${{ secrets.AL_COVER }}",
+              "[3].aladin.default-params.output": "${{ secrets.AL_OUTPUT }}",
+              "[3].aladin.default-params.version": "${{ secrets.AL_VERSION }}",
+              "[3].aladin.item-id-type": "${{ secrets.AL_ITEM_ID_TYPE }}"
+            }
 
       - name: Test and build bootJar
         run: |
