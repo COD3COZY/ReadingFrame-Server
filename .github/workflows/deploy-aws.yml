@@ -46,6 +46,7 @@ jobs:
             }
 
       - name: Test and build bootJar
+        working-directory: ./server
         run: |
           ./gradlew clean build -Dspring.profiles.active=prod
 
