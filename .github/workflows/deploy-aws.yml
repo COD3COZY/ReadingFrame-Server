@@ -1,10 +1,13 @@
-name: CD to AWS
+name: CI/CD to AWS
 
 on:
   push:
     branches: [ "release" ]
   pull_request:
     branches: [ "release" ]
+
+permissions:
+  id-token: write
 
 jobs:
   build:
@@ -28,25 +31,38 @@ jobs:
           spring.datasource.url: ${{ secrets.DB_URL }}
           spring.datasource.username: ${{ secrets.DB_USERNAME }}
           spring.datasource.password: ${{ secrets.DB_PASSWORD }}
-          jwt.secret-key: ${{ JWT_KEY }}
-          jwt.expiration-days: ${{ JWT_EXPIRATION_DAYS }}
-          jwt.issuer: ${{ JWT_ISSUER }}
-          aladin.lookup-url: ${{ AL_LOOKUP_URL }}
-          aladin.search-url: ${{ AL_SEARCH_URL }}
-          aladin.ttbkey: ${{ AL_TTBKEY }}
-          aladin.default-params.cover: ${{ AL_COVER }}
-          aladin.default-params.output: ${{ AL_OUTPUT }}
-          aladin.default-params.version: ${{ AL_VERSION }}
-          aladin.item-id-type: ${{ AL_ITEM_ID_TYPE }}
+          jwt.secret-key: ${{ secrets.JWT_KEY }}
+          jwt.expiration-days: ${{ secrets.JWT_EXPIRATION_DAYS }}
+          jwt.issuer: ${{ secrets.JWT_ISSUER }}
+          aladin.lookup-url: ${{ secrets.AL_LOOKUP_URL }}
+          aladin.search-url: ${{ secrets.AL_SEARCH_URL }}
+          aladin.ttbkey: ${{ secrets.AL_TTBKEY }}
+          aladin.default-params.cover: ${{ secrets.AL_COVER }}
+          aladin.default-params.output: ${{ secrets.AL_OUTPUT }}
+          aladin.default-params.version: ${{ secrets.AL_VERSION }}
+          aladin.item-id-type: ${{ secrets.AL_ITEM_ID_TYPE }}
 
-      - name: 빌드 (테스트 제외)
-        run: ./gradlew clean build --exclude-task test
+      - name: build bootJar
+        run: ./gradlew clean build
 
       - name: 빌드한 파일 이름 저장
         run: |
           FILENAME=$(basename ./server/build/libs/*.jar)
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
+      - name: 현재 GitHub Action IP 받아오기
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: AWS credential 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ap-northeast-2
+          role-to-assume: ${{ secrets.AWS_IAM_ARN }}
+
+      - name: 현재 IP를 EC2 보안그룹에 추가
+        run: aws ec2 authorize-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      
       - name: SCP 방식으로 EC2에 빌드 파일 전송
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -56,7 +72,7 @@ jobs:
           source: "./server/build/libs/${{ env.FILENAME }}"
           target: "/home/ubuntu/${{ env.FILENAME }}"
 
-      - name: 현재 실행 중인 프로세스 종료
+      - name: 현재 실행 중인 프로세스 종료 + 서버 실행 + 파일 삭제
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -72,3 +88,6 @@ jobs:
 
             echo "=== 전송한 파일 삭제 ==="
             rm -f ${{ env.FILENAME }}
+
+      - name: 현재 IP 보안그룹에서 삭제
+        run: aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
