@@ -6,26 +6,15 @@ import com.codecozy.server.dto.response.*;
 import com.codecozy.server.entity.*;
 import com.codecozy.server.repository.*;
 
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,9 +38,7 @@ public class BookService {
     private final MemoRepository memoRepository;
     private final BookmarkRepository bookmarkRepository;
     private final ConverterService converterService;
-
-    // 카테고리 이름 리스트
-    private static final List<String> categoryNameList = List.of("문학", "에세이", "인문사회", "과학", "자기계발", "원서", "예술", "기타");
+    private final AladinService aladinService;
 
     // 사용자가 독서노트 추가 시 실행 (책 등록, 위치 등록, 독서노트 등록, 최근 검색 위치 등록)
     public ResponseEntity<DefaultResponse> createBook(Long memberId, String isbn, ReadingBookCreateRequest request) {
@@ -361,10 +348,9 @@ public class BookService {
     }
 
     // 도서 정보 초기 조회 API
-    public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) throws IOException {
-        // URL로 도서 API 데이터 가져오기
-        String jsonResponse = getBookData(isbn);
-        SearchBookDataResponse dataResponse = dataParsing(jsonResponse);
+    public ResponseEntity<DefaultResponse> searchBookDetail(Long memberId, String isbn) {
+        // 특정 도서의 데이터 가져오기
+        SearchOneBookResponse response = aladinService.searchOneBook(isbn);
 
         // 사용자 받아오기
         Member member = memberRepository.findByMemberId(memberId);
@@ -373,28 +359,22 @@ public class BookService {
         Book book = bookRepository.findByIsbn(isbn);
         BookRecord bookRecord = bookRecordRepository.findByMemberAndBook(member, book);
 
-        // categoryName 수정
-        String categoryName = dataResponse.categoryName().substring(dataResponse.categoryName().lastIndexOf(">") + 1);
-        System.out.println(categoryName);
-        categoryName = extractCategory(categoryName);
-        int category = Category.getValueByName(categoryName);
-
         // readingStatus 검색
         int readingStatus = (bookRecord != null ? bookRecord.getReadingStatus() : ReadingStatus.UNREGISTERED);
+        response.setReadingStatus(readingStatus);
 
-        // commentCount 검색
+        // 한줄평 전체 개수 검색
         int commentCount = bookReviewRepository.countByBookRecordBook(book);
+        response.setCommentCount(commentCount);
 
-        // selectedReview를 검색해 한줄평 반응 찾기
+        // 전체 selectedReview 검색
         List<Integer> selectedReviewList = getSelectedReviewList(selectReviewRepository.findAllByBookRecordBook(book));
+        response.setSelectReviewList(selectedReviewList);
 
         // 해당 책에 대한 한줄평 정보(commentList)를 날짜 내림차순으로 검색해서 실제로 반환하는 commentList(최대 5개) 찾기
         List<String> commentList = getLatestCommentList(
                 bookReviewRepository.findAllByBookRecordBookOrderByReviewDateDesc(book));
-
-        SearchBookResponse response = new SearchBookResponse(dataResponse.cover(), dataResponse.title(), dataResponse.author(), category,
-                readingStatus, dataResponse.publisher(), dataResponse.publicationDate(),
-                dataResponse.totalPage(), dataResponse.description(), commentCount, selectedReviewList, commentList);
+        response.setCommentList(commentList);
 
         return new ResponseEntity<>(
                 DefaultResponse.from(StatusCode.OK, ResponseMessages.SUCCESS.get(), response),
@@ -1813,7 +1793,7 @@ public class BookService {
                 HttpStatus.OK);
     }
 
-    /** 헬퍼 클래스 및 메소드 **/
+    /** 헬퍼 메소드 **/
 
     // 중복 책 검색 및 등록
     private Book registerBook(String isbn, BookCreateRequest bookInformation) {
@@ -1858,94 +1838,6 @@ public class BookService {
         return bookReviewReviewerRepository.save(BookReviewReviewer.create(bookReview, member));
     }
 
-    // 도서정보 호출 API 데이터를 가져오는 메소드
-    private String getBookData(String isbn) throws IOException {
-        StringBuilder result = new StringBuilder();
-        String urlStr = createURL(isbn);
-
-        // URL 객체 생성 및 GET 요청
-        URL url = new URL(urlStr);
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        urlConnection.setRequestMethod("GET");
-
-        // 응답 데이터를 받아올 버퍼 생성
-        // try-with-resources (버퍼를 명시적으로 close 하지 않고, 간결하게 처리하기 위함)
-        try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(urlConnection.getInputStream(), StandardCharsets.UTF_8))) {
-            String returnLine;
-
-            // 응답 데이터 한 줄씩 기록
-            while ((returnLine = br.readLine()) != null) {
-                result.append(returnLine + "\n\r");
-            }
-        } finally {
-            urlConnection.disconnect();
-        }
-
-        // 응답 데이터 String 형식으로 변환 후 반환
-        return result.toString();
-    }
-
-    // yaml 파일 읽고 url 작성
-    private String createURL(String isbn) {
-        String baseUrl = null;
-        String ttbKey = null;
-        String cover = null;
-        String output = null;
-        String version = null;
-        String itemIdType = null;
-
-        Yaml yaml = new Yaml();
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("aladinConfig.yml");
-        if (inputStream != null) {
-            Map<String, Object> yamlData = yaml.load(inputStream);
-            Map<String, Object> aladinApi = (Map<String, Object>) yamlData.get("aladin_api");
-
-            baseUrl = (String) aladinApi.get("lookup_url");
-            ttbKey = (String) aladinApi.get("ttbkey");
-            cover = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("cover");
-            output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
-            version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
-            itemIdType = (String) aladinApi.get("item_id_type");
-        }
-
-        return String.format("%s?ttbkey=%s&itemIdType=%s&ItemId=%s&cover=%s&output=%s&Version=%s", baseUrl, ttbKey, itemIdType,
-                isbn, cover, output, version);
-    }
-
-    // 알라딘 API 데이터 파싱
-    private SearchBookDataResponse dataParsing(String jsonData) {
-        try {
-            JSONObject jsonResult, jsonResultSub;
-            JSONParser jsonParser = new JSONParser();
-
-            // 파싱할 json 문자열
-            JSONObject jsonString = (JSONObject) jsonParser.parse(jsonData);
-
-            // item 데이터 받기
-            JSONArray jsonArray = (JSONArray) jsonString.get("item");
-            jsonResult = (JSONObject) jsonArray.get(0);
-
-            // subInfo 데이터 받기
-            jsonResultSub = (JSONObject) jsonResult.get("subInfo");
-
-            return new SearchBookDataResponse(jsonResult.get("cover").toString(),
-                    jsonResult.get("title").toString(),
-                    jsonResult.get("author").toString(),
-                    jsonResult.get("categoryName").toString(),
-                    ReadingStatus.UNREGISTERED,
-                    jsonResult.get("publisher").toString(),
-                    jsonResult.get("pubDate").toString(),
-                    Integer.parseInt(jsonResultSub.get("itemPage").toString()),
-                    jsonResult.get("description").toString(), 0, null, null);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
     // 선택 리뷰 리스트 생성 메소드
     private List<Integer> getSelectedReviewList(List<SelectReview> selectedReviews) {
         if (selectedReviews.isEmpty()) {
@@ -1983,24 +1875,5 @@ public class BookService {
                 .map(BookReview::getReviewText)
                 .limit(5)
                 .collect(Collectors.toList());
-    }
-
-    // 카테고리 이름 수정 메소드
-    private String extractCategory(String categoryFullName) {
-        if (categoryFullName.contains("소설")) {
-            return categoryNameList.get(0);
-        }
-
-        if (categoryFullName.contains("인문")) {
-            return categoryNameList.get(2);
-        }
-
-        for (String category : categoryNameList) {
-            if (categoryFullName.contains(category)) {
-                return category;
-            }
-        }
-
-        return "기타";
     }
 }

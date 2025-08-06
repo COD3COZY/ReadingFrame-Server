@@ -1,6 +1,6 @@
 package com.codecozy.server.dto.response;
 
-public record SearchDto(
+public record SearchBookDto(
         String isbn,
         String cover,
         String title,

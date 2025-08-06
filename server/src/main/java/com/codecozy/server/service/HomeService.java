@@ -8,9 +8,9 @@ import com.codecozy.server.dto.response.FinishReadResponse;
 import com.codecozy.server.dto.response.MainBooksResponse;
 import com.codecozy.server.dto.response.GetMainResponse;
 import com.codecozy.server.dto.response.ReadingResponse;
-import com.codecozy.server.dto.response.SearchResponse;
+import com.codecozy.server.dto.response.SearchBookListResponse;
 import com.codecozy.server.dto.response.WantToReadResponse;
-import com.codecozy.server.dto.response.SearchDto;
+import com.codecozy.server.dto.response.SearchBookDto;
 import com.codecozy.server.entity.Book;
 import com.codecozy.server.entity.BookRecord;
 import com.codecozy.server.entity.BookReview;
@@ -19,28 +19,14 @@ import com.codecozy.server.entity.Member;
 import com.codecozy.server.repository.BookRecordRepository;
 import com.codecozy.server.repository.BookRepository;
 import com.codecozy.server.repository.MemberRepository;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
 
 @Slf4j
 @Service
@@ -51,6 +37,7 @@ public class HomeService {
     private final MemberRepository memberRepository;
     private final BookRepository bookRepository;
     private final BookRecordRepository bookRecordRepository;
+    private final AladinService aladinService;
 
     // 메인 화면 조회
     public ResponseEntity<DefaultResponse> getMainPage(Long memberId) {
@@ -178,10 +165,9 @@ public class HomeService {
     }
 
     // 검색
-    public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText)
-            throws IOException {
+    public ResponseEntity<DefaultResponse> getSearchList(Long memberId, String searchText) {
         // 응답 DTO
-        SearchResponse response = new SearchResponse(0, new ArrayList<>());
+        SearchBookListResponse response = new SearchBookListResponse(0, new ArrayList<>());
 
         // 독서노트 내 검색된 책들의 isbn 값을 저장하는 리스트 (중복 제거 위함)
         List<String> isbnList = new ArrayList<>();
@@ -194,7 +180,7 @@ public class HomeService {
         for (BookRecord bookRecord : bookRecordList) {
             Book book = bookRecord.getBook();
             String publicationDateStr = converterService.dateToString(book.getPublicationDate());
-            response.getSearchList().add(new SearchDto(
+            response.getSearchList().add(new SearchBookDto(
                     book.getIsbn(),
                     book.getCover(),
                     book.getTitle(),
@@ -213,36 +199,11 @@ public class HomeService {
 
         // 알라딘 내 책 검색 (1~4 페이지의 정보 모두 담기)
         for (int i = 1; i < 5; i++) {
-            String urlStr = createURL(searchText, i);
-
-            URL url = new URL(urlStr);
-
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-
-            BufferedReader br;
-            br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-
-            String returnLine;
-
-            StringBuilder result = new StringBuilder();
-            while ((returnLine = br.readLine()) != null) {
-                result.append(returnLine + "\n\r");
-            }
-
-            urlConnection.disconnect();
-
-            // 파싱이 제대로 이루어지도록 맨 끝 세미콜론 제거
-            int charIndex = result.lastIndexOf(";");
-            if (charIndex != -1) {
-                result.deleteCharAt(charIndex);
-            }
-
-            // 파싱
-            SearchResponse parsingData = parsingData(result.toString());
+            // 알라딘 책 검색 수행
+            SearchBookListResponse findList = aladinService.searchBookList(searchText, i);
 
             // 파싱 데이터에서 불러온 책 count 수 저장
-            int totalCount = parsingData.getTotalCount();
+            int totalCount = findList.getTotalCount();
 
             // 만일 파싱에서 뽑아온 책의 count 수가 200이 넘는다면
             // 실제 불러온 정보는 200권까지이므로.... 200으로 조정
@@ -250,7 +211,7 @@ public class HomeService {
                 totalCount = 200;
             }
             // 파싱 데이터 DTO 집어넣기 수행
-            for (SearchDto searchInfo : parsingData.getSearchList()) {
+            for (SearchBookDto searchInfo : findList.getSearchList()) {
                 // 중복된 책이면 책 카운트 줄이고 정보 안 담기
                 if (isbnList.contains(searchInfo.isbn())) {
                     totalCount--;
@@ -387,80 +348,6 @@ public class HomeService {
     }
 
     /** 헬퍼 메소드 **/
-
-    // 검색 시 불러온 응답 JSON 데이터를 원하는 값만 파싱하는 메소드
-    private SearchResponse parsingData(String jsonStr) {
-        // JSON 데이터 가져오기
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObj = new JSONObject();
-        try {
-            jsonObj = (JSONObject) jsonParser.parse(jsonStr);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        log.info("JSON 데이터 받아오기 성공");
-        log.debug(jsonObj.toJSONString());
-
-        // 검색 결과 리스트 가져오기
-        JSONArray itemList = (JSONArray) jsonObj.get("item");
-
-        // 총 검색 결과 수 가져오기
-        int itemCount = itemList.size();
-
-        // 프론트측에 보낼 응답 DTO 구성
-        List<SearchDto> searchDto = new ArrayList<>();
-        for (int i = 0; i < itemList.size(); i++) {
-            JSONObject item = (JSONObject) itemList.get(i);
-
-            String isbn = item.get("isbn13").toString();
-            String cover = item.get("cover").toString();
-            String title = item.get("title").toString();
-            String author = item.get("author").toString();
-            String publisher = item.get("publisher").toString();
-
-            // 날짜 형식 변환 (yyyy-MM-dd -> yyyy.MM.dd)
-            String tempPublicationDate = item.get("pubDate").toString();
-            LocalDate tempDate = LocalDate.parse(tempPublicationDate,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            String publicationDate = converterService.dateToString(tempDate);
-
-            // DTO 정보 넣기
-            searchDto.add(new SearchDto(
-                    isbn,
-                    cover,
-                    title,
-                    author,
-                    publisher,
-                    publicationDate
-            ));
-        }
-
-        // 최종 응답 DTO 구성
-        return new SearchResponse(itemCount, searchDto);
-    }
-
-    // 알라딘 책 검색 url을 작성하는 메소드
-    private String createURL(String searchText, int i) {
-        String baseUrl = null;
-        String ttbKey = null;
-        String output = null;
-        String version = null;
-
-        Yaml yaml = new Yaml();
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("aladinConfig.yml");
-        if (inputStream != null) {
-            Map<String, Object> yamlData = yaml.load(inputStream);
-            Map<String, Object> aladinApi = (Map<String, Object>) yamlData.get("aladin_api");
-
-            baseUrl = (String) aladinApi.get("search_url");
-            ttbKey = (String) aladinApi.get("ttbkey");
-            output = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("output");
-            version = (String) ((Map<String, Object>) aladinApi.get("default_params")).get("version");
-        }
-
-        return String.format("%s?ttbkey=%s&Query=%s&QueryType=Keyword&Start=%d&MaxResults=50&Cover=Big&Output=%s&Version=%s", baseUrl, ttbKey, searchText, i, output, version);
-    }
 
     // 읽고 있는 책 조회 시 필요한 정보들을 가져오는 메소드
     private ReadingResponse getReadingBookInfo(BookRecord bookRecord) {

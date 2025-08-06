@@ -21,11 +21,11 @@ public enum Category {
         this.value = value;
     }
 
-    public String getName() {
+    private String getName() {
         return name;
     }
 
-    public int getValue() {
+    private int getValue() {
         return value;
     }
 
@@ -40,6 +40,25 @@ public enum Category {
 
     // categoryName별 코드값 반환
     public static int getValueByName(String name) {
-        return nameToValueMap.get(name).intValue();
+        return nameToValueMap.get(name);
+    }
+
+    // 알라딘 API 내 카테고리 이름을 -> 리딩프레임 버전 카테고리 이름으로 변환하는 메소드
+    public static String extractCategory(String categoryFullName) {
+        if (categoryFullName.contains("소설")) {
+            return LITERATURE.name;
+        }
+
+        if (categoryFullName.contains("인문")) {
+            return HUMAN_SOCIAL.name;
+        }
+
+        for (String category : nameToValueMap.keySet()) {
+            if (categoryFullName.contains(category)) {
+                return category;
+            }
+        }
+
+        return ETC.name;
     }
 }

@@ -16,7 +16,7 @@ import com.codecozy.server.entity.MemberKakao;
 import com.codecozy.server.repository.MemberAppleRepository;
 import com.codecozy.server.repository.MemberKakaoRepository;
 import com.codecozy.server.repository.MemberRepository;
-import com.codecozy.server.security.TokenProvider;
+import com.codecozy.server.token.TokenProvider;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
