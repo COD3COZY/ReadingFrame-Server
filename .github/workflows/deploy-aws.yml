@@ -84,7 +84,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "${{ env.FILENAME }}"
           target: "/home/${{ secrets.EC2_USER }}"
-          debug: true
 
       - name: 현재 실행 중인 프로세스 종료 + 서버 실행 + 파일 삭제
         uses: appleboy/ssh-action@v1.0.3
@@ -95,13 +94,28 @@ jobs:
           script: |
             echo "=== 기존 프로세스 종료 ==="
             sudo kill -9 $(sudo lsof -ti:8080) || echo "8080 포트를 사용하는 프로세스가 없습니다."
-            sleep 2
+            sleep 3
 
             echo "=== 새로운 파일 실행 ==="
             sudo nohup java -jar -Dspring.profiles.active=prod ${{ env.FILENAME }} &
 
+            echo "=== 서버 시작 대기 ==="
+            for i in {1..30}; do
+              if netstat -tuln | grep :8080 > /dev/null 2>&1; then
+                echo "서버가 성공적으로 시작되었습니다!"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "서버 시작 확인 타임아웃"
+                exit 1
+              fi
+              echo "서버 시작 대기 중... ($i/30)"
+              sleep 5
+            done
+
             echo "=== 전송한 파일 삭제 ==="
             rm -f ${{ env.FILENAME }}
+            echo "빌드 파일 삭제 완료" 
 
       - name: 현재 IP 보안그룹에서 삭제
         run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
