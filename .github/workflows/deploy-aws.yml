@@ -58,6 +58,11 @@ jobs:
           FILENAME=$(basename ./server/build/libs/*.jar)
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
+      - name: 빌드한 파일을 루트 디렉토리로 이동
+        run: |
+          mv ./server/build/libs/${{ env.FILENAME }} ./${{ env.FILENAME }}
+          echo "파일 이동 완료: ${{ env.FILENAME }}"
+
       - name: 현재 GitHub Action IP 받아오기
         id: ip
         uses: haythem/public-ip@v1.2
