@@ -1,4 +1,4 @@
-package com.codecozy.server.security;
+package com.codecozy.server.token;
 
 import com.codecozy.server.context.ResponseMessages;
 import com.codecozy.server.context.StatusCode;

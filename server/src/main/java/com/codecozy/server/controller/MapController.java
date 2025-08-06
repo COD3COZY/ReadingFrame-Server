@@ -1,7 +1,7 @@
 package com.codecozy.server.controller;
 
 import com.codecozy.server.dto.request.MarkDetailRequest;
-import com.codecozy.server.security.TokenProvider;
+import com.codecozy.server.token.TokenProvider;
 import com.codecozy.server.service.MapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

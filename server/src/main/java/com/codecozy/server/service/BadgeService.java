@@ -101,7 +101,6 @@ public class BadgeService {
                     }
 
                     // 3. '장르 애호가' 뱃지 검사
-                    // TODO: 추후 테스트 필요
                     List<String> nowCategoryList = nowBookList.stream()
                                                               .map(CreateBookAction::book)
                                                               .map(Book::getCategory)
@@ -196,7 +195,7 @@ public class BadgeService {
                         // 0: 키워드
                         // 1: 선택
                         // 2: 한줄평
-                        Boolean[] hasReview = new Boolean[3];
+                        Boolean[] hasReview = {false, false, false};
                         for (NoteWithReview review : reviewList) {
                             if (review.keyword() != null) {
                                 hasReview[0] = true;

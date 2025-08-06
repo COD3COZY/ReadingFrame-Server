@@ -3,7 +3,7 @@ package com.codecozy.server.controller;
 import com.codecozy.server.annotation.TrackBadgeActivity;
 import com.codecozy.server.context.BadgeActionType;
 import com.codecozy.server.dto.request.*;
-import com.codecozy.server.security.TokenProvider;
+import com.codecozy.server.token.TokenProvider;
 import com.codecozy.server.service.BookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -25,11 +25,13 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
     @Mock
