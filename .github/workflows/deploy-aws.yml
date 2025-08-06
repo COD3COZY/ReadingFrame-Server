@@ -69,7 +69,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_IAM_ARN }}
 
       - name: 현재 IP를 EC2 보안그룹에 추가
-        run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}
+        run: aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
       
       - name: SCP 방식으로 EC2에 빌드 파일 전송
         uses: appleboy/scp-action@v0.1.7
