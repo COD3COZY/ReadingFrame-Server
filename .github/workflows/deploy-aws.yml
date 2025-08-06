@@ -2,10 +2,9 @@ name: CI/CD to AWS
 
 on:
   push:
-    branches: [ "feat/cicd" ]
+    branches: [ "release" ]
   pull_request:
     branches: [ "release" ]
-  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -97,6 +96,7 @@ jobs:
             sleep 3
 
             echo "=== 새로운 파일 실행 ==="
+            # output.log에 모든 서버 로그 저장
             sudo nohup java -jar -Dspring.profiles.active=prod ${{ env.FILENAME }} > ./output.log 2>&1 &
 
             echo "=== 서버 시작 대기 ==="
