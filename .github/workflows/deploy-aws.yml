@@ -78,7 +78,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           source: "./server/build/libs/${{ env.FILENAME }}"
-          target: "/home/ubuntu/${{ env.FILENAME }}"
+          target: "/home/${{ secrets.EC2_USER }}"
+          debug: true
 
       - name: 현재 실행 중인 프로세스 종료 + 서버 실행 + 파일 삭제
         uses: appleboy/ssh-action@v1.0.3
@@ -98,4 +99,4 @@ jobs:
             rm -f ${{ env.FILENAME }}
 
       - name: 현재 IP 보안그룹에서 삭제
-        run: aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        run: aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
