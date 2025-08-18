@@ -195,11 +195,17 @@ public class BookService {
             int markPercent = converterService.pageToPercent(markPage, totalPage);
             String dateStr = converterService.dateToString(bookmark.getDate());
 
+            String locationName = null;
+            LocationInfo locationInfo = bookmark.getLocationInfo();
+            if (locationInfo != null) {
+                locationName = locationInfo.getPlaceName();
+            }
+
             bookmarks.add(new BookmarkPreviewResponse(
                     dateStr,
                     markPage,
                     markPercent,
-                    bookmark.getLocationInfo().getPlaceName(),
+                    locationName,
                     bookmark.getUuid()
             ));
         }
