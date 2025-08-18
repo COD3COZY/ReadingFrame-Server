@@ -47,7 +47,7 @@ jobs:
         working-directory: ./server
         run: |
           chmod +x ./gradlew
-          ./gradlew build -Dspring.profiles.active=prod -x test
+          ./gradlew clean build -Dspring.profiles.active=prod -x test
 
       - name: 빌드한 파일 이름 저장
         run: |
