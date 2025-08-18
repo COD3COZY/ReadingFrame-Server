@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ "release" ]
+  pull_request:
+    branches: [ "release" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load file in GitHub Repository
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Test file
+        working-directory: ./server
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean test -Dspring.profiles.active=test
