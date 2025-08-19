@@ -7,7 +7,8 @@ on:
     branches: [ "release" ]
 
 jobs:
-  build:
+  test:
+    name: test
     runs-on: ubuntu-latest
 
     steps:
