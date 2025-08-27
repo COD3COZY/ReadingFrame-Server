@@ -11,6 +11,8 @@ import com.codecozy.server.repository.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -255,6 +257,27 @@ class BookServiceTest {
             assertThat(found.getReadingStatus()).isEqualTo(READING);
             assertThat(found.getMarkPage()).isEqualTo(0);
         }
+    }
+
+    @Test
+    @DisplayName("위치정보 없는 책갈피 등록 후 독서노트 정보 불러오기")
+    void getBookRecordWithBookmark() {
+        // given
+        Bookmark bookmark = Bookmark
+                .create(bookRecord, "3b7d", 50, null, LocalDate.of(2024, 12, 10));
+        List<Bookmark> bookmarks = new ArrayList<>();
+        bookmarks.add(bookmark);
+        when(bookmarkRepository.findTop3ByBookRecordOrderByDateDesc(bookRecord)).thenReturn(bookmarks);
+
+        // when
+        ResponseEntity<DefaultResponse> response = bookService.getReadingNote(member.getMemberId(), book.getIsbn());
+
+        // then
+        GetReadingNoteResponse found = (GetReadingNoteResponse) response.getBody().getData();
+        assertThat(found).isNotNull();
+        assertThat(found.bookmarks().size()).isEqualTo(1);
+        assertThat(found.bookmarks().get(0).uuid()).isEqualTo("3b7d");
+        assertThat(found.bookmarks().get(0).location()).isNull();
     }
 
     @Test

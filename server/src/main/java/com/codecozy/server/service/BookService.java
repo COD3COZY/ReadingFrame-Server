@@ -195,11 +195,17 @@ public class BookService {
             int markPercent = converterService.pageToPercent(markPage, totalPage);
             String dateStr = converterService.dateToString(bookmark.getDate());
 
+            String locationName = null;
+            LocationInfo locationInfo = bookmark.getLocationInfo();
+            if (locationInfo != null) {
+                locationName = locationInfo.getPlaceName();
+            }
+
             bookmarks.add(new BookmarkPreviewResponse(
                     dateStr,
                     markPage,
                     markPercent,
-                    bookmark.getLocationInfo().getPlaceName(),
+                    locationName,
                     bookmark.getUuid()
             ));
         }
@@ -1699,11 +1705,15 @@ public class BookService {
         List<Bookmark> bookmarks = bookRecord.getBookmarks();
         for (Bookmark bookmark : bookmarks) {
             // 위치 List 저장
-            List<String> location = new ArrayList<>();
-            location.add(bookmark.getLocationInfo().getPlaceName());
-            location.add(bookmark.getLocationInfo().getAddress());
-            location.add(String.valueOf(bookmark.getLocationInfo().getLatitude()));
-            location.add(String.valueOf(bookmark.getLocationInfo().getLongitude()));
+            BookmarkLocationInfoDto locationDto = null;
+            LocationInfo locationInfo = bookmark.getLocationInfo();
+            if (locationInfo != null) {
+                locationDto = new BookmarkLocationInfoDto(
+                        locationInfo.getPlaceName(),
+                        locationInfo.getAddress(),
+                        String.valueOf(locationInfo.getLatitude()),
+                        String.valueOf(locationInfo.getLongitude()));
+            }
 
             // 응답에 보낼 데이터들
             int markPage = bookmark.getMarkPage();
@@ -1713,11 +1723,11 @@ public class BookService {
             if (bookRecord.getBookType() == BookType.PAPER_BOOK) {
                 // 페이지 -> 퍼센트 계산
                 int percent = converterService.pageToPercent(markPage, book.getTotalPage());
-                bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, location, bookmark.getUuid()));
+                bookmarkList.add(new BookmarkResponse(dateStr, markPage, percent, locationDto, bookmark.getUuid()));
             } else { // 전자책, 오디오북이면
                 // 퍼센트 -> 페이지 계산
                 int page = converterService.percentToPage(markPage, book.getTotalPage());
-                bookmarkList.add(new BookmarkResponse(dateStr, page, markPage, location, bookmark.getUuid()));
+                bookmarkList.add(new BookmarkResponse(dateStr, page, markPage, locationDto, bookmark.getUuid()));
             }
         }
 
